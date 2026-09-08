@@ -1,0 +1,835 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #050505;
+  --surface: rgba(16, 16, 18, 0.65);
+  --surface-hover: rgba(28, 28, 32, 0.75);
+  --surface-active: rgba(40, 40, 48, 0.85);
+  --surface-elevated: rgba(14, 14, 16, 0.90);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.14);
+  --accent-glow: rgba(255, 255, 255, 0.12);
+
+  /* Motion tokens — Apple-quality easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Safe areas for mobile */
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.light {
+  --background: #f8fafc;
+  --surface: rgba(255, 255, 255, 0.75);
+  --surface-hover: rgba(241, 245, 249, 0.85);
+  --surface-active: rgba(226, 232, 240, 0.9);
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --border: rgba(0, 0, 0, 0.06);
+  --border-hover: rgba(0, 0, 0, 0.12);
+  --accent-glow: rgba(255, 255, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, 'Noto Sans', Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* ==========================================================================
+   Apple Liquid Glass Material Hierarchy
+   Level 0: Atmosphere  → dark charcoal canvas with dynamic multi-point blur
+   Level 1: Base Content → clean, solid/semi-solid content surfaces (no heavy blur)
+   Level 2: Glass       → floating player dock, navigation rail, floating panels
+   Level 3: High-Glass  → command palette, context menus, full player controls
+   ========================================================================== */
+
+/* Level 1: Content Surfaces */
+/* Level 1: Content Surfaces */
+.glass-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* Centralized AAPESH Liquid Glass Material System */
+.glass-primary {
+  background: rgba(16, 18, 24, 0.72);
+  backdrop-filter: blur(32px) saturate(1.8);
+  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.glass-secondary {
+  background: rgba(12, 14, 20, 0.65);
+  backdrop-filter: blur(28px) saturate(1.7);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 16px 40px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.glass-control {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.glass-dock {
+  background: rgba(14, 18, 26, 0.78);
+  backdrop-filter: blur(40px) saturate(2.0);
+  -webkit-backdrop-filter: blur(40px) saturate(2.0);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.glass-overlay {
+  background: rgba(10, 12, 18, 0.88);
+  backdrop-filter: blur(40px) saturate(2.0);
+  -webkit-backdrop-filter: blur(40px) saturate(2.0);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 32px 80px -16px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+}
+
+.glass-menu {
+  background: rgba(18, 20, 28, 0.86);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 16px 48px -8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Level 2: Floating Panels & Sheets */
+.glass-floating {
+  background: rgba(16, 20, 30, 0.58);
+  backdrop-filter: blur(32px) saturate(1.8);
+  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 18px 48px -12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Level 2: Navigation Rail */
+.glass-nav {
+  background: rgba(14, 18, 26, 0.65);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Level 2: Top Bar */
+.glass-topbar {
+  background: rgba(8, 10, 15, 0.72);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Level 2: Frosted Glass Pills & Segmented Controls */
+.glass-pill {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.glass-pill-active {
+  background: rgba(255, 255, 255, 0.96);
+  color: #050505;
+  font-weight: 700;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Level 3: Elevated High-Glass (Modals, Context Menus, Fullscreen) */
+.glass-elevated,
+.glass-modal {
+  background: rgba(15, 18, 26, 0.84);
+  backdrop-filter: blur(36px) saturate(2.0);
+  -webkit-backdrop-filter: blur(36px) saturate(2.0);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* Cinematic Lyrics Typography Hierarchy */
+.lyric-line-active {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.45);
+  transform: scale(1.02);
+  transition: all 0.25s var(--ease-out-expo);
+}
+
+.lyric-line-nearby {
+  color: rgba(255, 255, 255, 0.65) !important;
+  opacity: 0.65 !important;
+  font-weight: 600 !important;
+  transform: scale(1);
+  transition: all 0.25s var(--ease-out-expo);
+}
+
+.lyric-line-distant {
+  color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 0.28 !important;
+  font-weight: 400 !important;
+  filter: blur(0.35px);
+  transform: scale(0.985);
+  transition: all 0.25s var(--ease-out-expo);
+}
+
+/* Natural Artwork Reflection */
+.artwork-floor-reflection {
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, transparent 60%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, transparent 60%);
+  transform: scaleY(-1);
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+/* Backward compatibility alias */
+.glass-player {
+  background: rgba(14, 17, 24, 0.76);
+  backdrop-filter: blur(40px) saturate(1.9);
+  -webkit-backdrop-filter: blur(40px) saturate(1.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   Scrubber / Range Slider — Refined
+   ========================================================================== */
+.scrubber-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  cursor: pointer;
+  height: 4px;
+  transition: height 0.2s var(--ease-out-expo);
+}
+
+.scrubber-slider:hover {
+  height: 6px;
+}
+
+.scrubber-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out-expo), transform 0.2s var(--ease-out-expo);
+}
+
+.scrubber-slider:hover::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.scrubber-slider:active::-webkit-slider-thumb {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* Firefox range */
+.scrubber-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   AAPESH Primary Play Button (Solid White with Black Icon) & White Scrubber
+   ========================================================================== */
+.btn-play-aapesh {
+  background: #ffffff;
+  color: #050505;
+  box-shadow:
+    0 4px 16px -2px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+  transition: all 0.2s var(--ease-out-expo);
+}
+
+.btn-play-aapesh:hover {
+  transform: scale(1.05);
+  background: #f8fafc;
+  box-shadow:
+    0 6px 20px -2px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+.btn-play-aapesh:active {
+  transform: scale(0.95);
+}
+
+.scrubber-slider-aapesh {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  cursor: pointer;
+  height: 4px;
+  transition: height 0.2s var(--ease-out-expo);
+}
+
+.scrubber-slider-aapesh:hover {
+  height: 6px;
+}
+
+.scrubber-slider-aapesh::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  opacity: 1;
+  transition: transform 0.2s var(--ease-out-expo);
+}
+
+.scrubber-slider-aapesh:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+.scrubber-slider-aapesh::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* AAPESH Circular Avatar Ring */
+.aapesh-avatar-ring {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s var(--ease-out-expo);
+}
+
+.aapesh-avatar-ring:hover {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+/* Radiant Play Button & Cyan Scrubber (Backwards Compatibility) */
+.btn-play-radiant {
+  background: #ffffff;
+  color: #050505;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s var(--ease-out-expo);
+}
+
+.btn-play-radiant:hover {
+  transform: scale(1.06);
+}
+
+.btn-play-radiant:active {
+  transform: scale(0.94);
+}
+
+.scrubber-slider-cyan {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  cursor: pointer;
+  height: 4px;
+  transition: height 0.2s var(--ease-out-expo);
+}
+
+.scrubber-slider-cyan:hover {
+  height: 6px;
+}
+
+.scrubber-slider-cyan::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  opacity: 1;
+}
+
+.scrubber-slider-cyan::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+}
+
+.aapesh-avatar-ring {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px;
+  border-radius: 9999px;
+}
+
+/* Equalizer Animated Bars */
+@keyframes eq-bounce-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+@keyframes eq-bounce-2 {
+  0%, 100% { height: 13px; }
+  50% { height: 5px; }
+}
+@keyframes eq-bounce-3 {
+  0%, 100% { height: 6px; }
+  50% { height: 15px; }
+}
+.eq-bar-1 { animation: eq-bounce-1 0.8s ease-in-out infinite; }
+.eq-bar-2 { animation: eq-bounce-2 0.65s ease-in-out infinite 0.15s; }
+.eq-bar-3 { animation: eq-bounce-3 0.75s ease-in-out infinite 0.3s; }
+
+/* ==========================================================================
+   Artwork Shadow — naturalistic depth
+   ========================================================================== */
+.artwork-shadow {
+  box-shadow:
+    0 8px 30px -4px rgba(0, 0, 0, 0.5),
+    0 20px 60px -12px rgba(0, 0, 0, 0.4);
+}
+
+.artwork-shadow-lg {
+  box-shadow:
+    0 12px 40px -4px rgba(0, 0, 0, 0.6),
+    0 28px 80px -16px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   Premium Motion — replace default ease with Apple-quality curves
+   ========================================================================== */
+.transition-premium {
+  transition-timing-function: var(--ease-out-expo);
+}
+
+.transition-spring {
+  transition-timing-function: var(--ease-spring);
+}
+
+/* Shimmer Animation */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Multilingual & Multi-Script Typography Stack
+   ========================================================================== */
+
+.font-urdu {
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  line-height: 2.2 !important;
+}
+
+.font-arabic {
+  font-family: 'Noto Sans Arabic', 'Segoe UI Arabic', Tahoma, sans-serif;
+  line-height: 1.85 !important;
+}
+
+.font-devanagari {
+  font-family: 'Noto Sans Devanagari', 'Mangal', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-bengali {
+  font-family: 'Noto Sans Bengali', 'Vrinda', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-gurmukhi {
+  font-family: 'Noto Sans Gurmukhi', 'Raavi', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-gujarati {
+  font-family: 'Noto Sans Gujarati', 'Shruti', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-tamil {
+  font-family: 'Noto Sans Tamil', 'Latha', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-telugu {
+  font-family: 'Noto Sans Telugu', 'Gautami', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-kannada {
+  font-family: 'Noto Sans Kannada', 'Tunga', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-malayalam {
+  font-family: 'Noto Sans Malayalam', 'Kartika', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-japanese {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
+  line-height: 1.65 !important;
+}
+
+.font-korean {
+  font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  line-height: 1.65 !important;
+}
+
+.font-cjk {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.65 !important;
+}
+
+.font-thai {
+  font-family: 'Noto Sans Thai', 'Leelawadee UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
+/* Tabular Numerals for Durations and Timestamps */
+.tabular-nums,
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Bidirectional & RTL Lyrics Styling */
+.lyric-line-rtl {
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+.lyric-line-ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.lyric-line-center {
+  unicode-bidi: isolate;
+}
+
+/* Script-Specific Font Aliases */
+.lyrics-latin { font-family: var(--font-sans); }
+.lyrics-urdu { font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, sans-serif; line-height: 2.2 !important; }
+.lyrics-arabic { font-family: 'Noto Sans Arabic', 'Segoe UI Arabic', Tahoma, sans-serif; line-height: 1.85 !important; }
+.lyrics-devanagari { font-family: 'Noto Sans Devanagari', 'Mangal', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-bengali { font-family: 'Noto Sans Bengali', 'Vrinda', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-gurmukhi { font-family: 'Noto Sans Gurmukhi', 'Raavi', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-gujarati { font-family: 'Noto Sans Gujarati', 'Shruti', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-tamil { font-family: 'Noto Sans Tamil', 'Latha', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-telugu { font-family: 'Noto Sans Telugu', 'Gautami', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-kannada { font-family: 'Noto Sans Kannada', 'Tunga', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-malayalam { font-family: 'Noto Sans Malayalam', 'Kartika', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-japanese { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif; line-height: 1.65 !important; }
+.lyrics-korean { font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.65 !important; }
+.lyrics-cjk { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.65 !important; }
+
+/* ==========================================================================
+   Word-to-Word Karaoke Synchronization (Apple Music Sing Style)
+   ========================================================================== */
+
+.lyric-word {
+  display: inline-block;
+  transform-origin: center bottom;
+  will-change: transform, opacity, filter;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lyric-word-active {
+  color: #ffffff;
+  font-weight: 800;
+  opacity: 1;
+  transform: scale(1.08) translateY(-2px);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.5));
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.85);
+}
+
+.lyric-word-sung {
+  color: #ffffff;
+  opacity: 0.95;
+  font-weight: 700;
+  transform: scale(1) translateY(0);
+}
+
+.lyric-word-upcoming {
+  color: rgba(255, 255, 255, 0.38);
+  opacity: 0.42;
+  font-weight: 500;
+  transform: scale(1) translateY(0);
+}
+
+/* ==========================================================================
+   iOS 28 Liquid Glass & Apple Music + Spotify Hybrid System
+   ========================================================================== */
+
+/* Hyper-Refined iOS 28 Glass Surface */
+.glass-ios28-surface {
+  background: rgba(18, 22, 32, 0.65);
+  backdrop-filter: blur(32px) saturate(1.85);
+  -webkit-backdrop-filter: blur(32px) saturate(1.85);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 16px 40px -12px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.glass-ios28-surface-interactive {
+  background: rgba(18, 22, 32, 0.65);
+  backdrop-filter: blur(32px) saturate(1.85);
+  -webkit-backdrop-filter: blur(32px) saturate(1.85);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 12px 32px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-ios28-surface-interactive:hover {
+  background: rgba(28, 34, 48, 0.8);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Continuous Squircle iOS 28 Floating Player Dock */
+.glass-ios28-dock {
+  background: rgba(14, 18, 26, 0.78);
+  backdrop-filter: blur(42px) saturate(2.0);
+  -webkit-backdrop-filter: blur(42px) saturate(2.0);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Spotify-Style Category Filter Pills in iOS 28 Glass */
+.glass-ios28-pill {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-ios28-pill:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.glass-ios28-pill-active {
+  background: #ffffff !important;
+  color: #06090e !important;
+  font-weight: 600 !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow:
+    0 4px 16px rgba(255, 255, 255, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(0) !important;
+}
+
+/* AAPESH Primary Play Button & Hybrid Fallback */
+.btn-play-hybrid {
+  background: #ffffff;
+  color: #050505;
+  box-shadow:
+    0 4px 16px -2px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-play-hybrid:hover {
+  transform: scale(1.05);
+  background: #f8fafc;
+  box-shadow:
+    0 6px 20px -2px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+.btn-play-hybrid:active {
+  transform: scale(0.95);
+}
+
+/* Monochromatic Equalizer Bars */
+.eq-hybrid-1, .eq-aapesh-1 {
+  background: #ffffff;
+  animation: eq-bounce-1 0.75s ease-in-out infinite alternate;
+}
+
+.eq-hybrid-2, .eq-aapesh-2 {
+  background: rgba(255, 255, 255, 0.85);
+  animation: eq-bounce-2 0.6s ease-in-out infinite alternate;
+}
+
+.eq-hybrid-3, .eq-aapesh-3 {
+  background: rgba(255, 255, 255, 0.95);
+  animation: eq-bounce-3 0.85s ease-in-out infinite alternate;
+}
+
+/* Glass Shelf Container (Image 1 "Top Playlist" / Image 2 Shelves) */
+.glass-shelf {
+  background: rgba(14, 14, 16, 0.60);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 24px;
+}
+
+/* Continuous Squircle Presets */
+.squircle-28 {
+  border-radius: 28px;
+}
+
+.squircle-24 {
+  border-radius: 24px;
+}
+
+.squircle-20 {
+  border-radius: 20px;
+}
+
+.squircle-16 {
+  border-radius: 16px;
+}
+
+/* 10-Band Pro Equalizer Vertical Slider Styles */
+.eq-vertical-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 6px;
+  height: 120px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eq-vertical-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s ease;
+}
+
+.eq-vertical-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.eq-slider-preamp::-webkit-slider-thumb {
+  background: #f43f5e;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+}
+
+.eq-slider-band::-webkit-slider-thumb {
+  background: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+}
+
+.eq-slider-preamp {
+  background: linear-gradient(to top, #f43f5e 0%, rgba(244, 63, 94, 0.3) 100%);
+}
+
+.eq-slider-band {
+  background: linear-gradient(to top, #38bdf8 0%, rgba(56, 189, 248, 0.25) 100%);
+}
+
