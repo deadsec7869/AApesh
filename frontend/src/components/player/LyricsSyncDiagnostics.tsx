@@ -41,6 +41,8 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
 }) => {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const playerDuration = usePlayerStore((s) => s.duration);
+  const getEffectiveQualityInfo = usePlayerStore((s) => s.getEffectiveQualityInfo);
+  const qualityInfo = getEffectiveQualityInfo();
 
   // Instant calculated delta between player audio time and lyric timestamp
   const realTimeDeltaMs =
@@ -210,6 +212,38 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
           <p className="font-sans text-neutral-300 italic truncate bg-white/5 p-1.5 rounded-lg text-xs mt-1">
             "{activeLyricText || 'Instrumental / Silence'}"
           </p>
+        </div>
+
+        {/* Stream Quality Engine Diagnostics */}
+        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1 text-[11px]">
+          <div className="flex items-center justify-between pb-1 border-b border-white/5">
+            <span className="text-neutral-500 text-[10px] uppercase font-bold">Stream Quality</span>
+            <span className="font-bold text-white text-[10px] uppercase">{qualityInfo.providerName}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Requested:</span>
+            <span className="font-semibold text-white uppercase">{qualityInfo.requestedQuality}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Effective:</span>
+            <span className="font-semibold text-white">{qualityInfo.effectiveLabel}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Bitrate:</span>
+            <span className="font-semibold text-neutral-200">{qualityInfo.effectiveBitrate || 'Not exposed by provider'}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Codec:</span>
+            <span className="font-semibold text-neutral-200">{qualityInfo.effectiveCodec || 'Not exposed by provider'}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Lossless:</span>
+            <span className="font-semibold text-neutral-300">{qualityInfo.isLossless ? 'Yes' : 'No'}</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Hi-Res:</span>
+            <span className="font-semibold text-neutral-300">{qualityInfo.isHiRes ? 'Yes' : 'No'}</span>
+          </div>
         </div>
 
         {durationDifference !== null && (

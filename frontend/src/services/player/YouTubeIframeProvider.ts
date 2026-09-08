@@ -1,4 +1,13 @@
 import { Track } from '@/types/music';
+import {
+  StreamingQualityTier,
+  StreamingQualityCapability,
+  EffectiveQualityResolution,
+} from '@/types/quality';
+import {
+  YOUTUBE_QUALITY_CAPABILITIES,
+  resolveStreamingQuality,
+} from '@/services/audio/qualityResolver';
 import { PlaybackProvider, PlaybackCallbacks } from './PlaybackProvider';
 
 declare global {
@@ -254,6 +263,20 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       this.player = null;
     }
     this.isReady = false;
+  }
+
+  // Streaming Quality 2.0 extension
+  getQualityCapabilities(): StreamingQualityCapability[] {
+    return YOUTUBE_QUALITY_CAPABILITIES;
+  }
+
+  getEffectiveQuality(requested: StreamingQualityTier): EffectiveQualityResolution {
+    return resolveStreamingQuality(requested);
+  }
+
+  setPreferredQuality(_tier: StreamingQualityTier): void {
+    // YouTube Iframe API does not support programmatic bitrate selection.
+    // Quality preference is tracked at application level without restarting playback.
   }
 }
 

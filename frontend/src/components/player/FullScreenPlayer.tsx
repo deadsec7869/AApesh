@@ -27,6 +27,7 @@ import {
   SlidersHorizontal,
   Headphones,
   Disc,
+  Activity,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -84,6 +85,8 @@ export const FullScreenPlayer: React.FC = () => {
     playTrack,
     fullscreenTab,
     setFullscreenTab,
+    toggleQualityModal,
+    getEffectiveQualityInfo,
   } = usePlayerStore();
 
   const { isLiked, toggleLike } = useLibraryStore();
@@ -107,6 +110,7 @@ export const FullScreenPlayer: React.FC = () => {
   const [shareToast, setShareToast] = useState(false);
 
   const displayedTime = scrubValue !== null ? scrubValue : currentTime;
+  const qualityInfo = getEffectiveQualityInfo();
 
   // Synchronized Lyrics Engine
   const {
@@ -1266,12 +1270,16 @@ export const FullScreenPlayer: React.FC = () => {
 
         {/* Minimalist Floating Workstation Status Surface (Lower Left) */}
         <div className="fixed bottom-6 left-6 z-40 hidden md:block">
-          <div className="rounded-full bg-black/40 backdrop-blur-xl border border-white/[0.06] px-3.5 py-1.5 shadow-xl flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+          <button
+            onClick={toggleQualityModal}
+            className="rounded-full bg-black/40 backdrop-blur-xl border border-white/[0.08] px-3.5 py-1.5 shadow-xl flex items-center gap-2 opacity-70 hover:opacity-100 hover:border-white/20 transition-all cursor-pointer group text-left"
+            title="Configure Streaming Quality"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse" />
-            <span className="text-[10px] font-mono font-normal text-neutral-400">
-              AAPESH Engine • {spatialAudio ? 'Spatial DSP 3D' : 'Lossless Stereo'} • 48kHz
+            <span className="text-[10px] font-mono font-normal text-neutral-400 group-hover:text-neutral-200 transition-colors">
+              AAPESH Engine • {qualityInfo.statusLabel} {spatialAudio ? '• Spatial DSP 3D' : ''}
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Modals */}

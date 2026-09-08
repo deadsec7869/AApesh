@@ -1,4 +1,9 @@
 import { Track } from '@/types/music';
+import {
+  StreamingQualityTier,
+  StreamingQualityCapability,
+  EffectiveQualityResolution,
+} from '@/types/quality';
 
 export interface PlaybackCallbacks {
   onStateChange: (isPlaying: boolean, isBuffering: boolean) => void;
@@ -18,4 +23,9 @@ export interface PlaybackProvider {
   destroy(): void;
   getCurrentTime(): number;
   getDuration(): number;
+
+  // Streaming Quality 2.0 extension
+  getQualityCapabilities?(): StreamingQualityCapability[];
+  getEffectiveQuality?(requested: StreamingQualityTier): EffectiveQualityResolution;
+  setPreferredQuality?(tier: StreamingQualityTier): void;
 }

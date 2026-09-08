@@ -19,6 +19,7 @@ import {
   Sparkles,
   Radio,
   Moon,
+  Activity,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
@@ -51,11 +52,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     sleepTimer,
     setSleepTimer,
     cancelSleepTimer,
+    toggleQualityModal,
+    streamingQuality,
   } = usePlayerStore();
 
   const { theme, setTheme, toggleAmbientGlow } = useThemeStore();
 
   const commands = [
+    {
+      id: 'settings-quality',
+      label: `Streaming Quality: ${streamingQuality.replace('_', ' ').toUpperCase()} (Settings)`,
+      category: 'Audio Engine',
+      icon: Activity,
+      action: () => toggleQualityModal(),
+    },
     {
       id: 'nav-home',
       label: 'Go to Home',

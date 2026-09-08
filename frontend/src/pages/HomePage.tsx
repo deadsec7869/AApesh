@@ -235,7 +235,7 @@ export const HomePage: React.FC = () => {
             {getGreeting()}
           </h1>
           <p className="text-xs sm:text-sm text-neutral-400 max-w-xl">
-            Stream millions of tracks ad-free with lossless clarity in open guest mode.
+            Stream millions of tracks ad-free with high-fidelity clarity in open guest mode.
           </p>
         </div>
 

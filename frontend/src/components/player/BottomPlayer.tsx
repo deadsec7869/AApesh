@@ -21,6 +21,7 @@ import {
   Sparkles,
   SlidersHorizontal,
   Headphones,
+  Activity,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -66,6 +67,8 @@ export const BottomPlayer: React.FC = () => {
     toggleLyrics,
     toggleVideoDock,
     togglePlayerExpanded,
+    toggleQualityModal,
+    getEffectiveQualityInfo,
     setBottomPlayerDimensions,
   } = usePlayerStore();
 
@@ -159,6 +162,7 @@ export const BottomPlayer: React.FC = () => {
   const displayedTime = scrubValue !== null ? scrubValue : currentTime;
   const progressPercent = duration > 0 ? (displayedTime / duration) * 100 : 0;
   const currentVolume = isMuted ? 0 : volume;
+  const qualityInfo = getEffectiveQualityInfo();
 
   return (
     <>
@@ -418,6 +422,21 @@ export const BottomPlayer: React.FC = () => {
             RIGHT: Utilities (Spatial Audio, Synced Lyrics, Queue, VideoDock, EQ, Volume, Fullscreen)
             ==================================================================== */}
         <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
+          {/* Streaming Quality Badge */}
+          {qualityInfo && (
+            <motion.button
+              whileHover={controlButtonHover}
+              whileTap={controlButtonTap}
+              onClick={toggleQualityModal}
+              aria-label="Streaming Quality"
+              title={`Streaming Quality: ${qualityInfo.statusLabel} (${qualityInfo.providerName})`}
+              className="hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-white/[0.04] hover:bg-white/10 text-neutral-400 hover:text-white border border-white/[0.08] transition-all cursor-pointer"
+            >
+              <Activity className="w-3 h-3 text-neutral-400" />
+              <span>{qualityInfo.shortBadge}</span>
+            </motion.button>
+          )}
+
           {/* Spatial Audio Pill */}
           <motion.button
             whileHover={controlButtonHover}

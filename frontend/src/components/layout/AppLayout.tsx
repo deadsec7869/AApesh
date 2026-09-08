@@ -10,6 +10,7 @@ import { LyricsPanel } from '../player/LyricsPanel';
 import { VideoDock } from '../player/VideoDock';
 import { CommandPalette } from '../common/CommandPalette';
 import { EqualizerModal } from '../common/EqualizerModal';
+import { StreamingQualityModal } from '../common/StreamingQualityModal';
 import { DynamicArtworkBackground } from './DynamicArtworkBackground';
 import { SpatialArtworkEnvironment } from '../spatial/SpatialArtworkEnvironment';
 import { usePlayerStore } from '@/stores/usePlayerStore';
@@ -162,6 +163,9 @@ export const AppLayout: React.FC = () => {
 
       {/* 10-Band Pro Equalizer Modal */}
       <EqualizerModal />
+
+      {/* Streaming Quality Engine Modal */}
+      <StreamingQualityModal />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />

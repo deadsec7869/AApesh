@@ -4,6 +4,11 @@ import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
 import { PlaybackProvider } from '@/services/player/PlaybackProvider';
 import { extractArtworkPalette, ArtworkPalette } from '@/lib/colorExtractor';
 import { ShuffleMode, smartShuffleQueue, standardShuffle } from '@/utils/smartShuffle';
+import {
+  StreamingQualityTier,
+  EffectiveQualityResolution,
+} from '@/types/quality';
+import { resolveStreamingQuality } from '@/services/audio/qualityResolver';
 import { api } from '@/api/client';
 
 export interface SleepTimerState {
@@ -33,6 +38,8 @@ interface PlayerState {
   isQueueOpen: boolean;
   isLyricsOpen: boolean;
   isVideoDockOpen: boolean;
+  isQualityModalOpen: boolean;
+  streamingQuality: StreamingQualityTier;
   fullscreenTab: 'art' | 'lyrics' | 'queue' | 'video';
   atmospherePalette: ArtworkPalette | null;
   recentlyPlayed: Track[];
@@ -42,6 +49,10 @@ interface PlayerState {
 
   // Actions
   setBottomPlayerDimensions: (height: number, clearance: number) => void;
+  setStreamingQuality: (tier: StreamingQualityTier) => void;
+  toggleQualityModal: () => void;
+  setQualityModalOpen: (open: boolean) => void;
+  getEffectiveQualityInfo: () => EffectiveQualityResolution;
   initEngine: () => Promise<void>;
   playTrack: (track: Track, newQueue?: Track[]) => Promise<void>;
   addToRecentlyPlayed: (track: Track) => void;
@@ -83,6 +94,7 @@ const STORAGE_KEYS = {
   SHUFFLE: 'aapesh_shuffle',
   SHUFFLE_MODE: 'aapesh_shuffle_mode',
   AUTOPLAY: 'aapesh_autoplay',
+  STREAMING_QUALITY: 'aapesh_streaming_quality',
   LAST_TRACK: 'aapesh_last_track',
   QUEUE: 'aapesh_queue',
   RECENTLY_PLAYED: 'aapesh_recently_played',
@@ -130,6 +142,23 @@ const getSavedAutoplay = (): boolean => {
   return safeGetItem(STORAGE_KEYS.AUTOPLAY) !== 'false';
 };
 
+const getSavedStreamingQuality = (): StreamingQualityTier => {
+  const val = safeGetItem(STORAGE_KEYS.STREAMING_QUALITY);
+  if (
+    val === 'auto' ||
+    val === 'low' ||
+    val === 'normal' ||
+    val === 'high' ||
+    val === 'always_high' ||
+    val === 'very_high' ||
+    val === 'lossless' ||
+    val === 'hi_res'
+  ) {
+    return val;
+  }
+  return 'auto';
+};
+
 const getSavedRecentlyPlayed = (): Track[] => {
   try {
     const saved = safeGetItem(STORAGE_KEYS.RECENTLY_PLAYED);
@@ -164,6 +193,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isQueueOpen: false,
   isLyricsOpen: false,
   isVideoDockOpen: false,
+  isQualityModalOpen: false,
+  streamingQuality: getSavedStreamingQuality(),
   fullscreenTab: 'art',
   atmospherePalette: null,
   recentlyPlayed: getSavedRecentlyPlayed(),
@@ -173,6 +204,27 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setBottomPlayerDimensions: (height: number, clearance: number) => {
     set({ bottomPlayerHeight: height, bottomPlayerClearance: clearance });
+  },
+
+  setStreamingQuality: (tier: StreamingQualityTier) => {
+    safeSetItem(STORAGE_KEYS.STREAMING_QUALITY, tier);
+    set({ streamingQuality: tier });
+    if (playbackEngine && typeof playbackEngine.setPreferredQuality === 'function') {
+      playbackEngine.setPreferredQuality(tier);
+    }
+  },
+
+  toggleQualityModal: () => {
+    set((s) => ({ isQualityModalOpen: !s.isQualityModalOpen }));
+  },
+
+  setQualityModalOpen: (open: boolean) => {
+    set({ isQualityModalOpen: open });
+  },
+
+  getEffectiveQualityInfo: () => {
+    const requested = get().streamingQuality;
+    return resolveStreamingQuality(requested, playbackEngine);
   },
 
   initEngine: async () => {
