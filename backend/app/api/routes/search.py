@@ -53,3 +53,14 @@ def clear_search_history(db: Session = Depends(get_db)):
     db.query(SearchHistory).delete()
     db.commit()
     return {"status": "success", "message": "Search history cleared"}
+
+
+@router.delete("/history/{item_id}")
+def delete_search_history_item(item_id: str, db: Session = Depends(get_db)):
+    """Delete a single search history item by ID."""
+    item = db.query(SearchHistory).filter(SearchHistory.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return {"status": "success", "message": "History item removed"}
+

@@ -175,7 +175,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
             {/* Header: Live Suggestions & Enter Hint */}
             <div className="flex items-center justify-between text-[11px] pb-2 border-b border-white/[0.06]">
               <div className="flex items-center gap-1.5 font-bold tracking-wider uppercase text-neutral-300">
-                <Zap className="w-3.5 h-3.5 text-rose-500 fill-current" />
+                <Zap className="w-3.5 h-3.5 text-neutral-200 fill-current" />
                 <span>LIVE SUGGESTIONS</span>
               </div>
               <span className="text-neutral-500 text-[10px] font-mono">
@@ -280,7 +280,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
           title="10-Band Graphic Pro Equalizer"
           className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-xs text-neutral-300 hover:text-white transition-colors"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5 text-rose-500" />
+          <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-300" />
           <span className="font-semibold">EQ</span>
         </button>
 
@@ -291,7 +291,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
           title="Spatial Sound DSP"
           className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
             spatialAudio
-              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 font-bold'
+              ? 'bg-white/20 text-white border border-white/40 shadow-[0_0_12px_rgba(255,255,255,0.25)] font-bold'
               : 'bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-neutral-400 hover:text-white'
           }`}
         >
