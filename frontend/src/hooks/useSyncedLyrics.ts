@@ -14,6 +14,7 @@ export interface UseSyncedLyricsOptions {
   lyrics: LyricsResponse | null;
   currentTime: number; // in seconds from PlayerStore
   isPlaying: boolean;
+  isActive?: boolean;
   onSeek?: (seconds: number) => void;
 }
 
@@ -80,6 +81,7 @@ export const useSyncedLyrics = ({
   lyrics,
   currentTime,
   isPlaying,
+  isActive = true,
   onSeek,
 }: UseSyncedLyricsOptions): UseSyncedLyricsReturn => {
   const [activeLineIndex, setActiveLineIndex] = useState<number>(-1);
@@ -166,6 +168,11 @@ export const useSyncedLyrics = ({
 
   // High-Resolution Playback Clock via requestAnimationFrame
   useEffect(() => {
+    if (!isActive) {
+      setHighResTimeMs(Math.round(currentTime * 1000));
+      return;
+    }
+
     let rafId: number;
     let isCancelled = false;
 
@@ -196,7 +203,7 @@ export const useSyncedLyrics = ({
       isCancelled = true;
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isPlaying, currentTime]);
+  }, [isPlaying, currentTime, isActive]);
 
   // Sign convention: effectiveTimeMs = highResTimeMs + lyricsOffsetMs
   const effectiveTimeMs = Math.max(0, highResTimeMs + lyricsOffsetMs);

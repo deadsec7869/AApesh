@@ -25,9 +25,21 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   private timeUpdateTimer: any = null;
   private pendingTrack: Track | null = null;
   private targetVolume = 80;
+  private currentTrackId: string | null = null;
+  private lastKnownTime = 0;
+  private lastKnownDuration = 0;
+  private lastTimePolledAt = 0;
+  private lastSeekTime = 0;
 
   async init(callbacks: PlaybackCallbacks): Promise<void> {
     this.callbacks = callbacks;
+
+    if (this.player && this.isReady) {
+      if (import.meta.env.DEV) {
+        console.debug('[YT REUSE] Reusing existing YouTube player instance');
+      }
+      return;
+    }
 
     return new Promise((resolve) => {
       // Ensure target element exists in DOM
@@ -55,6 +67,9 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
       const initPlayer = () => {
         try {
+          if (import.meta.env.DEV) {
+            console.debug(`[YT RECREATE] time=${Date.now()} reason=initialization`);
+          }
           this.player = new window.YT.Player('aurora-youtube-player', {
             height: '100%',
             width: '100%',
@@ -135,9 +150,14 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     this.stopTimeTimer();
     this.timeUpdateTimer = setInterval(() => {
       if (this.player && this.callbacks && typeof this.player.getCurrentTime === 'function') {
-        const currentTime = this.player.getCurrentTime() || 0;
-        const duration = this.player.getDuration() || 0;
-        this.callbacks.onTimeUpdate(currentTime, duration);
+        try {
+          const currentTime = this.player.getCurrentTime() || 0;
+          const duration = this.player.getDuration() || 0;
+          this.lastKnownTime = currentTime;
+          this.lastKnownDuration = duration;
+          this.lastTimePolledAt = performance.now();
+          this.callbacks.onTimeUpdate(currentTime, duration);
+        } catch {}
       }
     }, 250);
   }
@@ -173,9 +193,29 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   }
 
   async load(track: Track): Promise<void> {
+    if (!track?.videoId) return;
+
+    // Guard against redundant reloads of the same song
+    if (this.currentTrackId === track.videoId && this.isReady) {
+      if (import.meta.env.DEV) {
+        console.debug(`[YT LOAD] Skip redundant reload: ${track.videoId}`);
+      }
+      return;
+    }
+
     if (!this.isReady || !this.player) {
       this.pendingTrack = track;
       return;
+    }
+
+    this.currentTrackId = track.videoId;
+    this.lastKnownTime = 0;
+    this.lastKnownDuration = track.duration_seconds || 0;
+
+    if (import.meta.env.DEV) {
+      console.debug(
+        `[YT LOAD] time=${Date.now()} videoId=${track.videoId} reason=track-load`
+      );
     }
 
     try {
@@ -183,7 +223,6 @@ export class YouTubeIframeProvider implements PlaybackProvider {
         this.player.loadVideoById({
           videoId: track.videoId,
           startSeconds: 0,
-          suggestedQuality: 'small',
         });
       }
     } catch (e) {
@@ -193,6 +232,11 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
   async play(): Promise<void> {
     if (!this.player || !this.isReady) return;
+    if (import.meta.env.DEV) {
+      console.debug(
+        `[YT PLAY] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime}`
+      );
+    }
     try {
       if (typeof this.player.playVideo === 'function') {
         this.player.playVideo();
@@ -204,6 +248,11 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
   pause(): void {
     if (!this.player || !this.isReady) return;
+    if (import.meta.env.DEV) {
+      console.debug(
+        `[YT PAUSE] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime}`
+      );
+    }
     try {
       if (typeof this.player.pauseVideo === 'function') {
         this.player.pauseVideo();
@@ -213,15 +262,23 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     }
   }
 
-  private lastSeekTime = 0;
   seek(timeInSeconds: number): void {
     if (!this.player || !this.isReady) return;
     const now = Date.now();
     if (now - this.lastSeekTime < 50) return;
     this.lastSeekTime = now;
+
     try {
       const dur = this.getDuration();
       const clamped = Math.max(0, Math.min(dur > 0 ? dur : timeInSeconds, timeInSeconds));
+      this.lastKnownTime = clamped;
+
+      if (import.meta.env.DEV) {
+        console.debug(
+          `[YT SEEK] time=${now} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} requestedTime=${timeInSeconds} reason=user-seek`
+        );
+      }
+
       if (typeof this.player.seekTo === 'function') {
         this.player.seekTo(clamped, true);
       }
@@ -243,26 +300,45 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   }
 
   getCurrentTime(): number {
-    if (this.player && this.isReady && typeof this.player.getCurrentTime === 'function') {
-      return this.player.getCurrentTime() || 0;
+    if (!this.player || !this.isReady) return this.lastKnownTime;
+
+    const now = performance.now();
+    // Cache queries to avoid flooding the YouTube iframe postMessage bridge
+    if (now - this.lastTimePolledAt > 150 && typeof this.player.getCurrentTime === 'function') {
+      try {
+        const t = this.player.getCurrentTime();
+        if (typeof t === 'number' && !isNaN(t)) {
+          this.lastKnownTime = t;
+          this.lastTimePolledAt = now;
+        }
+      } catch {}
     }
-    return 0;
+    return this.lastKnownTime;
   }
 
   getDuration(): number {
     if (this.player && this.isReady && typeof this.player.getDuration === 'function') {
-      return this.player.getDuration() || 0;
+      try {
+        const d = this.player.getDuration();
+        if (typeof d === 'number' && !isNaN(d) && d > 0) {
+          this.lastKnownDuration = d;
+        }
+      } catch {}
     }
-    return 0;
+    return this.lastKnownDuration;
   }
 
   destroy(): void {
+    if (import.meta.env.DEV) {
+      console.debug(`[YT STOP] time=${Date.now()} videoId=${this.currentTrackId} reason=destroy`);
+    }
     this.stopTimeTimer();
     if (this.player && typeof this.player.destroy === 'function') {
       this.player.destroy();
       this.player = null;
     }
     this.isReady = false;
+    this.currentTrackId = null;
   }
 
   // Streaming Quality 2.0 extension

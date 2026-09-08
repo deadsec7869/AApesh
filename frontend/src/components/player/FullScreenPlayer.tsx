@@ -141,6 +141,7 @@ export const FullScreenPlayer: React.FC = () => {
     lyrics: lyricsData,
     currentTime,
     isPlaying,
+    isActive: isPlayerExpanded,
   });
 
   // Global shortcut for diagnostics HUD (Ctrl+Shift+D)

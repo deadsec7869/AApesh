@@ -50,6 +50,7 @@ export const LyricsPanel: React.FC = () => {
     lyrics: lyricsData,
     currentTime,
     isPlaying,
+    isActive: isLyricsOpen,
   });
 
   // Global shortcut to toggle Developer Diagnostics (Ctrl+Shift+D)
