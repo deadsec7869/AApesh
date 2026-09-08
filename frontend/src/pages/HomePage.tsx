@@ -10,23 +10,70 @@ import {
   Heart,
   RotateCw,
   Headphones,
+  User,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import { HomeResponse, Track, ShelfItem } from '@/types/music';
 import { SkeletonHero, SkeletonCard } from '@/components/common/Skeletons';
 import { usePlayerStore } from '@/stores/usePlayerStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
 import { TrackRow } from '@/components/music/TrackRow';
+import { ArtworkImage } from '@/components/common/ArtworkImage';
+
+const DEFAULT_TOP_TRACKS: Track[] = [
+  {
+    videoId: '4NRXx6U8ABQ',
+    title: 'Blinding Lights',
+    artists: [{ name: 'The Weeknd' }],
+    album: 'After Hours',
+    duration: '3:20',
+    duration_seconds: 200,
+    thumbnail: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&h=400&q=80',
+  },
+  {
+    videoId: 'nYh-n7EOtMA',
+    title: 'SICKO MODE',
+    artists: [{ name: 'Travis Scott' }],
+    album: 'ASTROWORLD',
+    duration: '5:12',
+    duration_seconds: 312,
+    thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&h=400&q=80',
+  },
+  {
+    videoId: 'JGwWNGJdvx8',
+    title: 'Shape of You',
+    artists: [{ name: 'Ed Sheeran' }],
+    album: '÷ (Divide)',
+    duration: '3:53',
+    duration_seconds: 233,
+    thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&h=400&q=80',
+  },
+  {
+    videoId: 'L3wKzyIN1yk',
+    title: 'Starboy',
+    artists: [{ name: 'The Weeknd, Daft Punk' }],
+    album: 'Starboy',
+    duration: '3:50',
+    duration_seconds: 230,
+    thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&h=400&q=80',
+  },
+];
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { playTrack } = usePlayerStore();
+  const { playTrack, recentlyPlayed } = usePlayerStore();
+  const { followedArtists } = useLibraryStore();
 
   const [homeData, setHomeData] = useState<HomeResponse | null>(null);
   const [recommendations, setRecommendations] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
+  const displayedRecs = recommendations.length > 0 ? recommendations : DEFAULT_TOP_TRACKS;
+
   const topMixesRef = useRef<HTMLDivElement>(null);
+  const recentlyPlayedRef = useRef<HTMLDivElement>(null);
+  const followedArtistsRef = useRef<HTMLDivElement>(null);
 
   const categories = ['All', 'Music', 'Chill', 'Focus', 'Energy', 'Late Night'];
 
@@ -61,10 +108,10 @@ export const HomePage: React.FC = () => {
     };
   }, []);
 
-  const scrollMixes = (direction: 'left' | 'right') => {
-    if (topMixesRef.current) {
+  const scrollContainer = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
       const scrollAmount = direction === 'left' ? -380 : 380;
-      topMixesRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
@@ -102,7 +149,7 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  // Spotify-Style 6-Card Quick-Jump Items
+  // 6-Card Quick-Jump Items
   const quickJumpCards = [
     {
       title: 'Liked Songs',
@@ -155,103 +202,9 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  // Visual Reference Image 2: Top Recommendation Cards
-  const topRecommendations = [
-    {
-      title: 'Devil In A New Dress (feat. Rick Ross)',
-      artist: 'Kanye West',
-      thumbnail:
-        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&h=400&q=80',
-      query: 'Kanye West Devil In A New Dress',
-      accentColor: '#dc2626',
-    },
-    {
-      title: 'Blinding Lights',
-      artist: 'The Weeknd',
-      thumbnail:
-        'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&h=400&q=80',
-      query: 'The Weeknd Blinding Lights',
-      accentColor: '#f59e0b',
-    },
-    {
-      title: 'Memory Reboot',
-      artist: 'VØJ, Narvent',
-      thumbnail:
-        'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&h=400&q=80',
-      query: 'VOJ Narvent Memory Reboot',
-      accentColor: '#06b6d4',
-    },
-  ];
-
-  // Visual Reference Image 2: Following Artists
-  const followingArtists = [
-    {
-      name: 'Linkin Park',
-      songs: '241 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'Linkin Park',
-    },
-    {
-      name: 'The Weeknd',
-      songs: '147 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'The Weeknd',
-    },
-    {
-      name: 'Greyhounds',
-      songs: '412 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'Greyhounds band',
-    },
-    {
-      name: 'Tesco Disco',
-      songs: '29 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'Tesco Disco',
-    },
-    {
-      name: 'Ferrari Boyz',
-      songs: '725 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1445985543470-41fdd6ce755a?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'Ferrari Boyz Gucci Mane',
-    },
-    {
-      name: 'White Mustang',
-      songs: '780 songs',
-      thumbnail:
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=250&h=250&q=80',
-      query: 'White Mustang Lana Del Rey',
-    },
-  ];
-
-  // Visual Reference Image 2: Continue Playing Track Rows
-  const continuePlayingTracks = [
-    {
-      title: 'Devil In A New Dress (feat. Rick Ross)',
-      artist: 'Kanye West',
-      thumbnail:
-        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=200&h=200&q=80',
-      plays: '120k',
-      query: 'Kanye West Devil In A New Dress',
-    },
-    {
-      title: 'Blinding Lights',
-      artist: 'The Weeknd',
-      thumbnail:
-        'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&h=200&q=80',
-      plays: '120k',
-      query: 'The Weeknd Blinding Lights',
-    },
-  ];
-
   if (isLoading) {
     return (
-      <div className="p-6 md:p-10 flex flex-col gap-10">
+      <div className="p-6 md:p-10 flex flex-col gap-10 pb-28">
         <SkeletonHero />
         <div className="flex flex-col gap-4">
           <div className="h-6 w-40 bg-white/10 rounded shimmer" />
@@ -266,7 +219,7 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 md:p-10 flex flex-col gap-9 animate-in fade-in duration-300">
+    <div className="p-6 md:p-10 flex flex-col gap-9 animate-in fade-in duration-300 max-w-full overflow-x-hidden">
       {/* ====================================================================
           1. HEADER: Dynamic Time-Based Greeting + Category Pills
           ==================================================================== */}
@@ -305,7 +258,7 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* ====================================================================
-          2. SPOTIFY-STYLE 6-CARD QUICK JUMP GRID (iOS 28 Liquid Glass Squircles)
+          2. QUICK RECOMMENDATION / CONTENT AREA (Quick-Jump Grid)
           ==================================================================== */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {quickJumpCards.map((card) => (
@@ -321,7 +274,7 @@ export const HomePage: React.FC = () => {
                   <Heart className="w-7 h-7 text-rose-500 fill-current drop-shadow-md" />
                 </div>
               ) : (
-                <img
+                <ArtworkImage
                   src={card.thumbnail}
                   alt={card.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
@@ -350,7 +303,172 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ====================================================================
-          3. TOP RECOMMENDATION SHELF (Exact Visual Direction: Screenshot 3)
+          3. RECENTLY PLAYED SECTION (Real History, Denser Layout & Error Fallback)
+          ==================================================================== */}
+      <section className="flex flex-col gap-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-300" />
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Recently Played
+            </h2>
+          </div>
+          {recentlyPlayed.length > 5 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => scrollContainer(recentlyPlayedRef, 'left')}
+                aria-label="Previous recently played"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollContainer(recentlyPlayedRef, 'right')}
+                aria-label="Next recently played"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {recentlyPlayed.length > 0 ? (
+          <div
+            ref={recentlyPlayedRef}
+            className="flex gap-3 overflow-x-auto pb-2 pr-4 scroll-smooth no-scrollbar w-full"
+          >
+            {recentlyPlayed.map((track) => (
+              <div
+                key={track.videoId}
+                onClick={() => playTrack(track, recentlyPlayed)}
+                className="group relative flex flex-col p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/15 transition-all duration-200 cursor-pointer w-32 sm:w-36 md:w-40 shrink-0 min-w-0"
+              >
+                {/* Artwork Container */}
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-md mb-2">
+                  <ArtworkImage
+                    src={track.thumbnail}
+                    alt={track.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
+                    fallbackIconClassName="w-5 h-5 text-neutral-400"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                      <Play className="w-3.5 h-3.5 fill-current translate-x-0.5 text-black" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="flex flex-col min-w-0 px-0.5">
+                  <div className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-white">
+                    {track.title}
+                  </div>
+                  <div className="text-[10px] sm:text-[11px] text-neutral-400 truncate mt-0.5">
+                    {track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-neutral-400 shrink-0">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-white">Nothing played yet</span>
+              <span className="text-xs text-neutral-400 mt-0.5">
+                Start listening and your recent tracks will appear here.
+              </span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ====================================================================
+          4. FOLLOWING ARTISTS SECTION (Real Followed Artists & Compact Rail)
+          ==================================================================== */}
+      <section className="flex flex-col gap-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Headphones className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-300" />
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Following Artists
+            </h2>
+          </div>
+          {followedArtists.length > 5 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => scrollContainer(followedArtistsRef, 'left')}
+                aria-label="Previous following artists"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollContainer(followedArtistsRef, 'right')}
+                aria-label="Next following artists"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {followedArtists.length > 0 ? (
+          <div
+            ref={followedArtistsRef}
+            className="flex gap-4 overflow-x-auto pb-2 pr-4 scroll-smooth no-scrollbar w-full"
+          >
+            {followedArtists.map((artist) => (
+              <div
+                key={artist.id}
+                onClick={() => navigate(`/artist/${artist.id}`)}
+                className="group flex flex-col items-center text-center gap-2 p-2 rounded-2xl hover:bg-white/[0.04] transition-all cursor-pointer w-24 sm:w-28 shrink-0 min-w-0"
+              >
+                {/* Circular Artwork */}
+                <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 border border-white/15 group-hover:border-white/35 flex items-center justify-center overflow-hidden shrink-0 transition-colors shadow-md">
+                  <ArtworkImage
+                    src={artist.thumbnail}
+                    alt={artist.name}
+                    className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fallbackIconClassName="w-5 h-5 text-neutral-400"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
+                    <Play className="w-4 h-4 text-white fill-current translate-x-0.5" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center min-w-0 w-full px-1">
+                  <span className="font-semibold text-xs text-white truncate w-full group-hover:underline">
+                    {artist.name}
+                  </span>
+                  <span className="text-[10px] text-neutral-400 truncate mt-0.5">
+                    {artist.songs || 'Artist'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-neutral-400 shrink-0">
+              <User className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-white">No followed artists</span>
+              <span className="text-xs text-neutral-400 mt-0.5">
+                Follow artists to build your artist rail.
+              </span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ====================================================================
+          5. TOP RECOMMENDATION / DISCOVERY CONTENT
           ==================================================================== */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -371,51 +489,23 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Compact Squircle Cards (as shown in Screenshot 3) */}
+        {/* 4 Compact Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-          {(recommendations.length >= 4 ? recommendations.slice(0, 4) : [
-            {
-              videoId: 'dummy-1',
-              title: 'Lahanga Se Mahanga (feat. Niharica Raizada)',
-              artists: [{ name: 'Pawan Singh, Shivani Singh' }],
-              thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&h=400&q=80',
-            },
-            {
-              videoId: 'dummy-2',
-              title: 'HIGHEST IN THE ROOM',
-              artists: [{ name: 'Travis Scott' }],
-              thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&h=400&q=80',
-            },
-            {
-              videoId: 'dummy-3',
-              title: 'SICKO MODE',
-              artists: [{ name: 'Travis Scott' }],
-              thumbnail: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&h=400&q=80',
-            },
-            {
-              videoId: 'dummy-4',
-              title: 'Magnolia',
-              artists: [{ name: 'Playboi Carti' }],
-              thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&h=400&q=80',
-            },
-          ]).map((item: any) => (
+          {displayedRecs.slice(0, 4).map((item) => (
             <div
               key={item.videoId || item.title}
               onClick={() => {
-                if (item.videoId && !item.videoId.startsWith('dummy')) {
-                  playTrack(item, recommendations);
-                } else {
-                  handlePlayMix(item.title, `${item.title} ${item.artists?.[0]?.name || ''}`);
-                }
+                playTrack(item, displayedRecs);
               }}
               className="group relative flex flex-col p-3 sm:p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/15 transition-all duration-200 overflow-hidden cursor-pointer"
             >
               {/* Artwork Container */}
               <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-lg mb-3">
-                <img
+                <ArtworkImage
                   src={item.thumbnail}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
+                  fallbackIconClassName="w-6 h-6 text-neutral-400"
                 />
                 <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-xl scale-95 group-hover:scale-100 transition-transform">
@@ -430,7 +520,7 @@ export const HomePage: React.FC = () => {
                   {item.title}
                 </h3>
                 <p className="text-[11px] text-neutral-400 truncate mt-0.5">
-                  {item.artists?.map((a: any) => a.name).join(', ') || item.artist}
+                  {item.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist'}
                 </p>
               </div>
             </div>
@@ -439,89 +529,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ====================================================================
-          4. FOLLOWING ARTISTS & CONTINUE PLAYING (Exact Visual Direction: Image 2)
-          ==================================================================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        {/* Left (2/3 width on xl): Circular Following Artists */}
-        <section className="xl:col-span-2 flex flex-col gap-4 min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Following Artists
-          </h2>
-
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 min-w-0">
-            {followingArtists.map((artist) => (
-              <div
-                key={artist.name}
-                onClick={() => navigate(`/search?q=${encodeURIComponent(artist.query)}`)}
-                className="group flex flex-col items-center text-center gap-2 p-1.5 rounded-2xl hover:bg-white/[0.04] transition-all cursor-pointer min-w-0"
-              >
-                {/* Circular Avatar */}
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 aapesh-avatar-ring flex items-center justify-center overflow-hidden shrink-0">
-                  <img
-                    src={artist.thumbnail}
-                    alt={artist.name}
-                    className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
-                    <Play className="w-5 h-5 text-white fill-current translate-x-0.5" />
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center min-w-0 w-full px-1">
-                  <span className="font-bold text-xs sm:text-sm text-white truncate w-full group-hover:underline">
-                    {artist.name}
-                  </span>
-                  <span className="text-[11px] text-neutral-400 truncate flex items-center gap-1 mt-0.5">
-                    <Headphones className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{artist.songs}</span>
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Right (1/3 width on xl): Continue Playing Track Rows */}
-        <section className="flex flex-col gap-4 min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Continue Playing
-          </h2>
-
-          <div className="flex flex-col gap-2.5 min-w-0">
-            {continuePlayingTracks.map((item) => (
-              <div
-                key={item.title}
-                onClick={() => handlePlayMix(item.title, item.query)}
-                className="group flex items-center justify-between gap-3 p-3 rounded-2xl glass-ios28-surface-interactive cursor-pointer min-w-0"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-12 h-12 rounded-xl object-cover shrink-0 bg-charcoal-800 shadow-sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-xs text-white truncate">
-                      {item.title}
-                    </div>
-                    <div className="text-[11px] text-neutral-400 truncate mt-0.5">
-                      {item.artist}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-neutral-400 bg-white/[0.06] hover:bg-white/10 px-2.5 py-1.5 rounded-full shrink-0 border border-white/[0.06] transition-colors">
-                  <Play className="w-3 h-3 fill-current text-white" />
-                  <span>{item.plays}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* ====================================================================
-          5. CURATED HERO MIXES: Wide Hero Mix + Carousel Cards
+          6. CURATED HERO MIXES: Wide Hero Mix + Carousel Cards
           ==================================================================== */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -530,14 +538,14 @@ export const HomePage: React.FC = () => {
           </h2>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => scrollMixes('left')}
+              onClick={() => scrollContainer(topMixesRef, 'left')}
               aria-label="Previous mixes"
               className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
-              onClick={() => scrollMixes('right')}
+              onClick={() => scrollContainer(topMixesRef, 'right')}
               aria-label="Next mixes"
               className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
             >
@@ -549,9 +557,9 @@ export const HomePage: React.FC = () => {
         {/* Carousel Row */}
         <div
           ref={topMixesRef}
-          className="flex items-stretch gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar"
+          className="flex items-stretch gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar w-full"
         >
-          {/* A. Wide Hero Card: Late Night Essentials */}
+          {/* A. Wide Hero Card */}
           <div
             onClick={() => handlePlayMix('Late Night Essentials', 'late night chill beats')}
             className="group relative w-[300px] sm:w-[380px] md:w-[420px] aspect-[16/10] squircle-28 overflow-hidden shadow-2xl cursor-pointer shrink-0 border border-white/10 bg-charcoal-800"
@@ -660,35 +668,33 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ====================================================================
-          6. QUICK PICKS (Live Recommendations from YouTube Music)
+          7. QUICK PICKS (Live Recommendations from YouTube Music)
           ==================================================================== */}
-      {recommendations.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio className="w-5 h-5 text-white" />
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Quick Picks for You
-              </h2>
-            </div>
-            <span className="text-xs text-neutral-400">Stream now</span>
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Radio className="w-5 h-5 text-white" />
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              Quick Picks for You
+            </h2>
           </div>
+          <span className="text-xs text-neutral-400">Stream now</span>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {recommendations.slice(0, 8).map((track, idx) => (
-              <TrackRow
-                key={track.videoId}
-                track={track}
-                index={idx}
-                contextQueue={recommendations}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {displayedRecs.slice(0, 8).map((track, idx) => (
+            <TrackRow
+              key={track.videoId}
+              track={track}
+              index={idx}
+              contextQueue={displayedRecs}
+            />
+          ))}
+        </div>
+      </section>
 
       {/* ====================================================================
-          7. LIVE YOUTUBE MUSIC CURATED SHELVES
+          8. LIVE YOUTUBE MUSIC CURATED SHELVES
           ==================================================================== */}
       {homeData?.shelves?.map((shelf, shelfIdx) => {
         if (!shelf.contents || shelf.contents.length === 0) return null;
@@ -704,7 +710,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             {/* Horizontal Scroll */}
-            <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scroll-smooth no-scrollbar">
+            <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scroll-smooth no-scrollbar w-full">
               {shelf.contents.map((item, itemIdx) => (
                 <div
                   key={`${item.id}-${itemIdx}`}
@@ -716,36 +722,26 @@ export const HomePage: React.FC = () => {
                       item.type === 'artist' ? 'rounded-full' : 'rounded-xl'
                     }`}
                   >
-                    {item.thumbnail ? (
-                      <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-charcoal-700 text-neutral-500 text-sm">
-                        ♪
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                      <button
-                        aria-label={`Play ${item.title}`}
-                        className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-play-btn scale-90 group-hover:scale-100 transition-transform duration-200 ease-out-expo"
-                      >
+                    <ArtworkImage
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallbackIconClassName="w-5 h-5 text-neutral-400"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg">
                         <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
-                      </button>
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex flex-col min-w-0">
-                    <h3 className="font-semibold text-xs sm:text-sm text-neutral-100 truncate group-hover:text-white transition-colors">
+                    <span className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-white">
                       {item.title}
-                    </h3>
-                    <p className="text-[10px] sm:text-xs text-neutral-400 truncate mt-0.5">
-                      {item.subtitle || (item.type.charAt(0).toUpperCase() + item.type.slice(1))}
-                    </p>
+                    </span>
+                    <span className="text-[11px] text-neutral-400 truncate mt-0.5">
+                      {item.subtitle || item.artists?.map((a) => a.name).join(', ') || ''}
+                    </span>
                   </div>
                 </div>
               ))}

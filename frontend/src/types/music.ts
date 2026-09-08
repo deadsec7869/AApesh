@@ -60,6 +60,14 @@ export interface Artist {
   relatedArtists: ArtistBasic[];
 }
 
+export interface FollowedArtist {
+  id: string;
+  name: string;
+  thumbnail?: string;
+  subscribers?: string;
+  songs?: string;
+}
+
 export interface PlaylistSummary {
   id: string;
   title: string;

@@ -11,12 +11,14 @@ import { VideoDock } from '../player/VideoDock';
 import { CommandPalette } from '../common/CommandPalette';
 import { EqualizerModal } from '../common/EqualizerModal';
 import { DynamicArtworkBackground } from './DynamicArtworkBackground';
+import { SpatialArtworkEnvironment } from '../spatial/SpatialArtworkEnvironment';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const { fetchLibrary } = useLibraryStore();
+  const { currentTrack } = usePlayerStore();
 
   // Load library on start
   useEffect(() => {
@@ -115,6 +117,9 @@ export const AppLayout: React.FC = () => {
       {/* Dynamic Current-Song Artwork Background (Crossfading full-viewport atmospheric canvas) */}
       <DynamicArtworkBackground />
 
+      {/* 3D Spatial Immersive WebGL Layer */}
+      <SpatialArtworkEnvironment />
+
       {/* Floating Sidebar / Navigation Rail */}
       <Sidebar />
 
@@ -123,8 +128,12 @@ export const AppLayout: React.FC = () => {
         {/* Top Header */}
         <TopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
-        {/* Scrollable Page Body - extra padding for floating dock */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-44 md:pb-32 min-w-0">
+        {/* Scrollable Page Body - dynamic safe space for floating dock */}
+        <main
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${
+            currentTrack ? 'pb-36 md:pb-32' : 'pb-20 md:pb-16'
+          } min-w-0`}
+        >
           <div className="w-full max-w-[1500px] mx-auto min-w-0">
             <Outlet />
           </div>

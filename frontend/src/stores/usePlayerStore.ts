@@ -33,12 +33,15 @@ interface PlayerState {
   isQueueOpen: boolean;
   isLyricsOpen: boolean;
   isVideoDockOpen: boolean;
+  fullscreenTab: 'art' | 'lyrics' | 'queue' | 'video';
   atmospherePalette: ArtworkPalette | null;
+  recentlyPlayed: Track[];
   error: string | null;
 
   // Actions
   initEngine: () => Promise<void>;
   playTrack: (track: Track, newQueue?: Track[]) => Promise<void>;
+  addToRecentlyPlayed: (track: Track) => void;
   togglePlay: () => Promise<void>;
   play: () => Promise<void>;
   pause: () => void;
@@ -67,24 +70,26 @@ interface PlayerState {
   toggleLyrics: () => void;
   toggleVideoDock: () => void;
   setVideoDockOpen: (open: boolean) => void;
+  setFullscreenTab: (tab: 'art' | 'lyrics' | 'queue' | 'video') => void;
   setError: (error: string | null) => void;
 }
 
 const STORAGE_KEYS = {
-  VOLUME: 'aurora_volume',
-  REPEAT: 'aurora_repeat',
-  SHUFFLE: 'aurora_shuffle',
-  SHUFFLE_MODE: 'aurora_shuffle_mode',
-  AUTOPLAY: 'aurora_autoplay',
-  LAST_TRACK: 'aurora_last_track',
-  QUEUE: 'aurora_queue',
+  VOLUME: 'aapesh_volume',
+  REPEAT: 'aapesh_repeat',
+  SHUFFLE: 'aapesh_shuffle',
+  SHUFFLE_MODE: 'aapesh_shuffle_mode',
+  AUTOPLAY: 'aapesh_autoplay',
+  LAST_TRACK: 'aapesh_last_track',
+  QUEUE: 'aapesh_queue',
+  RECENTLY_PLAYED: 'aapesh_recently_played',
 };
 
 // Safe LocalStorage helpers
 export const safeGetItem = (key: string): string | null => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(key);
+      return window.localStorage.getItem(key) ?? window.localStorage.getItem(key.replace('aapesh_', 'aurora_'));
     }
   } catch {}
   return null;
@@ -122,6 +127,14 @@ const getSavedAutoplay = (): boolean => {
   return safeGetItem(STORAGE_KEYS.AUTOPLAY) !== 'false';
 };
 
+const getSavedRecentlyPlayed = (): Track[] => {
+  try {
+    const saved = safeGetItem(STORAGE_KEYS.RECENTLY_PLAYED);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return [];
+};
+
 let engineInitialized = false;
 let playbackEngine: PlaybackProvider = defaultPlaybackEngine;
 let sleepTimerInterval: any = null;
@@ -148,12 +161,36 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isQueueOpen: false,
   isLyricsOpen: false,
   isVideoDockOpen: false,
+  fullscreenTab: 'art',
   atmospherePalette: null,
+  recentlyPlayed: getSavedRecentlyPlayed(),
   error: null,
 
   initEngine: async () => {
     if (engineInitialized) return;
     engineInitialized = true;
+
+    // If local history is empty, try loading backend history
+    if (get().recentlyPlayed.length === 0) {
+      try {
+        const res = await fetch('/api/history?limit=30');
+        if (res.ok) {
+          const histData = await res.json();
+          if (Array.isArray(histData) && histData.length > 0) {
+            const tracks: Track[] = histData.map((h: any) => ({
+              videoId: h.video_id,
+              title: h.title,
+              artists: [{ name: h.artist }],
+              album: h.album,
+              thumbnail: h.thumbnail_url,
+              duration: h.duration,
+            }));
+            set({ recentlyPlayed: tracks });
+            safeSetItem(STORAGE_KEYS.RECENTLY_PLAYED, JSON.stringify(tracks));
+          }
+        }
+      } catch {}
+    }
 
     await playbackEngine.init({
       onStateChange: (isPlaying, isBuffering) => {
@@ -306,6 +343,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(queue));
     } catch {}
 
+    // Update Recently Played: Deduplicate to front, max 30 items
+    get().addToRecentlyPlayed(track);
+
     // Update Media Session
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       const artistName = track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
@@ -336,6 +376,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           duration: track.duration || '0:00',
         }),
       }).catch(() => {});
+    } catch {}
+  },
+
+  addToRecentlyPlayed: (track: Track) => {
+    const current = get().recentlyPlayed;
+    const filtered = current.filter((t) => t.videoId !== track.videoId);
+    const updated = [track, ...filtered].slice(0, 30);
+    set({ recentlyPlayed: updated });
+    try {
+      safeSetItem(STORAGE_KEYS.RECENTLY_PLAYED, JSON.stringify(updated));
     } catch {}
   },
 
@@ -671,9 +721,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   toggleLyrics: () => set((s) => ({ isLyricsOpen: !s.isLyricsOpen, isQueueOpen: false })),
   toggleVideoDock: () => set((s) => ({ isVideoDockOpen: !s.isVideoDockOpen })),
   setVideoDockOpen: (isVideoDockOpen) => set({ isVideoDockOpen }),
+  setFullscreenTab: (fullscreenTab) => set({ fullscreenTab }),
   setError: (error) => set({ error }),
 }));
 
 if (typeof window !== 'undefined') {
+  (window as any).__aapeshPlayerStore = usePlayerStore;
   (window as any).__auroraPlayerStore = usePlayerStore;
 }

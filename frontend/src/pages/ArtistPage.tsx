@@ -7,18 +7,21 @@ import { TrackRow } from '@/components/music/TrackRow';
 import { AlbumCard } from '@/components/music/AlbumCard';
 import { SkeletonHero, SkeletonList } from '@/components/common/Skeletons';
 import { usePlayerStore } from '@/stores/usePlayerStore';
+import { useLibraryStore } from '@/stores/useLibraryStore';
 import { formatCompactNumber } from '@/lib/utils';
 
 export const ArtistPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { playTrack } = usePlayerStore();
+  const { followArtist, unfollowArtist, isFollowingArtist } = useLibraryStore();
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'related' | 'lyrics'>('overview');
-  const [isFollowing, setIsFollowing] = useState(true);
+
+  const isFollowing = id ? isFollowingArtist(id) : false;
 
   useEffect(() => {
     if (!id) return;
@@ -152,14 +155,27 @@ export const ArtistPage: React.FC = () => {
           {/* Action Buttons: Following + Play all */}
           <div className="flex items-center gap-3 pt-3">
             <button
-              onClick={() => setIsFollowing(!isFollowing)}
+              onClick={() => {
+                if (!id || !artist) return;
+                if (isFollowing) {
+                  unfollowArtist(id);
+                } else {
+                  followArtist({
+                    id,
+                    name: artist.name,
+                    thumbnail: artist.thumbnail,
+                    subscribers: artist.subscribers,
+                    songs: `${songCount} songs`,
+                  });
+                }
+              }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 ${
                 isFollowing
                   ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
                   : 'bg-white text-black hover:bg-white/90'
               }`}
             >
-              <Check className="w-4 h-4" />
+              {isFollowing && <Check className="w-4 h-4" />}
               <span>{isFollowing ? 'Following' : 'Follow'}</span>
             </button>
 

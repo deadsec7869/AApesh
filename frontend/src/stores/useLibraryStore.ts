@@ -1,10 +1,31 @@
 import { create } from 'zustand';
-import { Track, CustomPlaylist } from '@/types/music';
+import { Track, CustomPlaylist, FollowedArtist } from '@/types/music';
+
+const ARTISTS_STORAGE_KEY = 'aapesh_followed_artists';
+
+const getSavedFollowedArtists = (): FollowedArtist[] => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem(ARTISTS_STORAGE_KEY) ?? window.localStorage.getItem('aurora_followed_artists');
+      if (saved) return JSON.parse(saved);
+    }
+  } catch {}
+  return [];
+};
+
+const saveFollowedArtists = (artists: FollowedArtist[]) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(ARTISTS_STORAGE_KEY, JSON.stringify(artists));
+    }
+  } catch {}
+};
 
 interface LibraryState {
   likedTracks: Track[];
   likedSet: Set<string>;
   playlists: CustomPlaylist[];
+  followedArtists: FollowedArtist[];
   isLoading: boolean;
   error: string | null;
 
@@ -13,6 +34,9 @@ interface LibraryState {
   fetchLikedTracks: () => Promise<void>;
   isLiked: (videoId: string) => boolean;
   toggleLike: (track: Track) => Promise<boolean>;
+  followArtist: (artist: FollowedArtist) => void;
+  unfollowArtist: (artistId: string) => void;
+  isFollowingArtist: (artistId: string) => boolean;
   createPlaylist: (title: string, description?: string) => Promise<CustomPlaylist | null>;
   deletePlaylist: (playlistId: string) => Promise<boolean>;
   addTrackToPlaylist: (playlistId: string, track: Track) => Promise<boolean>;
@@ -23,6 +47,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   likedTracks: [],
   likedSet: new Set<string>(),
   playlists: [],
+  followedArtists: getSavedFollowedArtists(),
   isLoading: false,
   error: null,
 
@@ -128,6 +153,25 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         return false;
       }
     }
+  },
+
+  followArtist: (artist: FollowedArtist) => {
+    const current = get().followedArtists;
+    if (!current.some((a) => a.id === artist.id)) {
+      const updated = [artist, ...current];
+      set({ followedArtists: updated });
+      saveFollowedArtists(updated);
+    }
+  },
+
+  unfollowArtist: (artistId: string) => {
+    const updated = get().followedArtists.filter((a) => a.id !== artistId);
+    set({ followedArtists: updated });
+    saveFollowedArtists(updated);
+  },
+
+  isFollowingArtist: (artistId: string) => {
+    return get().followedArtists.some((a) => a.id === artistId);
   },
 
   createPlaylist: async (title: string, description: string = '') => {

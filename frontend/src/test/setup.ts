@@ -59,3 +59,24 @@ if (typeof navigator !== 'undefined') {
     },
   });
 }
+
+// Mock Canvas 2D context for WebGL texture helpers in jsdom
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = function (contextType: string) {
+    if (contextType === '2d') {
+      return {
+        fillRect: () => {},
+        clearRect: () => {},
+        getImageData: () => ({ data: new Uint8ClampedArray(64 * 64 * 4) }),
+        putImageData: () => {},
+        createImageData: () => ({ data: new Uint8ClampedArray(64 * 64 * 4) }),
+        drawImage: () => {},
+        createRadialGradient: () => ({
+          addColorStop: () => {},
+        }),
+      } as any;
+    }
+    return null;
+  };
+}
+

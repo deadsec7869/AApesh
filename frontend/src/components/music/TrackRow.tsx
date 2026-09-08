@@ -4,6 +4,7 @@ import { Play, Pause, Heart, MoreHorizontal } from 'lucide-react';
 import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { ArtworkImage } from '@/components/common/ArtworkImage';
 import { ContextMenu } from './ContextMenu';
 
 interface TrackRowProps {
@@ -93,18 +94,12 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           onClick={handleRowClick}
           className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-charcoal-800 shadow-sm border border-white/5"
         >
-          {track.thumbnail ? (
-            <img
-              src={track.thumbnail}
-              alt={track.title}
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-charcoal-700 text-neutral-500 text-xs">
-              ♪
-            </div>
-          )}
+          <ArtworkImage
+            src={track.thumbnail}
+            alt={track.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            fallbackIconClassName="w-4 h-4 text-neutral-400"
+          />
         </div>
       )}
 

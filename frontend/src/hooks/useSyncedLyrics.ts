@@ -88,7 +88,8 @@ export const useSyncedLyrics = ({
 
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem(`aurora_lyrics_offset_${lyrics.videoId}`);
+        const saved = window.localStorage.getItem(`aapesh_lyrics_offset_${lyrics.videoId}`) ??
+          window.localStorage.getItem(`aurora_lyrics_offset_${lyrics.videoId}`);
         if (saved !== null) {
           const parsed = parseInt(saved, 10);
           if (!isNaN(parsed)) {
@@ -114,9 +115,10 @@ export const useSyncedLyrics = ({
       if (lyrics?.videoId && typeof window !== 'undefined' && window.localStorage) {
         try {
           if (clamped === 0) {
+            window.localStorage.removeItem(`aapesh_lyrics_offset_${lyrics.videoId}`);
             window.localStorage.removeItem(`aurora_lyrics_offset_${lyrics.videoId}`);
           } else {
-            window.localStorage.setItem(`aurora_lyrics_offset_${lyrics.videoId}`, String(clamped));
+            window.localStorage.setItem(`aapesh_lyrics_offset_${lyrics.videoId}`, String(clamped));
           }
         } catch {}
       }
