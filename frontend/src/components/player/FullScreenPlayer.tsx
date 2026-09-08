@@ -289,7 +289,7 @@ export const FullScreenPlayer: React.FC = () => {
             LAYER 3 — UI: TOP NAVIGATION & UTILITY BAR
             (Collapse on left, floating segmented control center, tools on right)
             ==================================================================== */}
-        <header className="relative z-30 flex items-center justify-between px-6 py-5 md:px-12 md:py-6 w-full max-w-7xl mx-auto shrink-0">
+        <header className="relative z-30 flex items-center justify-between px-6 md:px-12 h-20 w-full max-w-7xl mx-auto shrink-0">
           {/* Top-Left: Circular Collapse Control */}
           <button
             onClick={togglePlayerExpanded}
@@ -414,23 +414,23 @@ export const FullScreenPlayer: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center justify-center gap-6 w-full max-w-lg mx-auto my-auto"
+              className="flex flex-col items-center justify-center gap-7 sm:gap-8 w-full max-w-xl mx-auto my-auto"
             >
               {/* Responsive Hero Artwork Card */}
               <div className="relative group shrink-0">
-                <div className="relative w-64 h-64 sm:w-76 sm:h-76 md:w-88 md:h-88 lg:w-[380px] lg:h-[380px] xl:w-[410px] xl:h-[410px] max-h-[44vh] aspect-square rounded-[28px] overflow-hidden shadow-[0_28px_70px_rgba(0,0,0,0.9)] border border-white/[0.12] bg-[#12141a]">
+                <div className="relative w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 lg:w-[410px] lg:h-[410px] xl:w-[450px] xl:h-[450px] max-h-[48vh] aspect-square rounded-[30px] overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.92)] border border-white/[0.12] bg-[#12141a]">
                   <ArtworkImage
                     src={currentTrack.thumbnail}
                     alt={currentTrack.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                    fallbackIconClassName="w-14 h-14 text-neutral-500"
+                    fallbackIconClassName="w-16 h-16 text-neutral-500"
                   />
-                  <div className="absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/15 pointer-events-none" />
+                  <div className="absolute inset-0 rounded-[30px] ring-1 ring-inset ring-white/15 pointer-events-none" />
                 </div>
 
                 {/* Ambient Floor Shadow */}
                 <div
-                  className="absolute -bottom-6 inset-x-6 h-12 rounded-full opacity-35 blur-2xl pointer-events-none -z-10 transition-all duration-700"
+                  className="absolute -bottom-6 inset-x-6 h-14 rounded-full opacity-35 blur-2xl pointer-events-none -z-10 transition-all duration-700"
                   style={{
                     background: atmospherePalette?.glow
                       ? `radial-gradient(ellipse, ${atmospherePalette.glow} 0%, transparent 70%)`
@@ -439,18 +439,24 @@ export const FullScreenPlayer: React.FC = () => {
                 />
               </div>
 
-              {/* Track Hierarchy: Title, Artist, Actions */}
-              <div className="flex items-center justify-between w-full px-1">
-                <div className="min-w-0 pr-4">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight truncate">
+              {/* Track Hierarchy & Action Controls Group */}
+              <div className="flex items-start justify-between w-full px-1 gap-4">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight truncate">
                     {currentTrack.title}
                   </h1>
-                  <p className="text-xs sm:text-sm text-neutral-400 font-medium truncate mt-1">
+                  <p className="text-sm sm:text-base text-neutral-300 font-medium truncate mt-1">
                     {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
                   </p>
+                  {currentTrack.album && (
+                    <p className="text-xs text-neutral-500 font-medium truncate mt-0.5">
+                      {currentTrack.album}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                {/* Seamlessly Integrated Metadata Action Controls */}
+                <div className="flex items-center gap-2 shrink-0 pt-1">
                   <button
                     onClick={() => toggleLike(currentTrack)}
                     aria-label={liked ? 'Unlike song' : 'Like song'}
