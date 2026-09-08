@@ -8,6 +8,7 @@ import {
   StreamingQualityTier,
   EffectiveQualityResolution,
 } from '@/types/quality';
+import { PlaybackStatus, BufferHealth } from '@/types/playback';
 import { resolveStreamingQuality } from '@/services/audio/qualityResolver';
 import { api } from '@/api/client';
 
@@ -24,6 +25,8 @@ interface PlayerState {
   currentIndex: number;
   isPlaying: boolean;
   isBuffering: boolean;
+  playbackStatus: PlaybackStatus;
+  bufferHealth: BufferHealth;
   currentTime: number;
   duration: number;
   volume: number;
@@ -179,6 +182,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentIndex: -1,
   isPlaying: false,
   isBuffering: false,
+  playbackStatus: 'idle',
+  bufferHealth: {
+    loadedFraction: null,
+    bufferAheadSeconds: null,
+    targetBufferSeconds: 10,
+    networkTier: 'unknown',
+    isPrebuffering: false,
+  },
   currentTime: 0,
   duration: 0,
   volume: getSavedVolume(),
@@ -260,6 +271,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
         }
       },
+      onStatusChange: (playbackStatus) => {
+        set({ playbackStatus });
+      },
+      onBufferHealth: (bufferHealth) => {
+        set({ bufferHealth });
+      },
       onTimeUpdate: (currentTime, duration) => {
         const state = get();
         set({
@@ -296,7 +313,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
       },
       onError: (error) => {
-        set({ error, isPlaying: false, isBuffering: false });
+        set({ error, isPlaying: false, isBuffering: false, playbackStatus: 'error' });
       },
     });
 
@@ -384,6 +401,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentIndex: index,
       isPlaying: true,
       isBuffering: true,
+      playbackStatus: 'prebuffering',
       currentTime: 0,
       duration: track.duration_seconds || 0,
       error: null,
@@ -408,7 +426,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     get().addToRecentlyPlayed(track);
 
     // Update Media Session
-    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
       const artistName = track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
       navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title,

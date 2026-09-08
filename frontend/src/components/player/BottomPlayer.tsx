@@ -45,6 +45,7 @@ export const BottomPlayer: React.FC = () => {
     atmospherePalette,
     isPlaying,
     isBuffering,
+    playbackStatus,
     currentTime,
     duration,
     volume,
@@ -236,10 +237,16 @@ export const BottomPlayer: React.FC = () => {
                   {currentTrack.title}
                 </div>
                 <div
-                  className="text-[11px] text-neutral-400 truncate mt-0.5"
+                  className="text-[11px] text-neutral-400 truncate mt-0.5 flex items-center gap-1.5"
                   title={currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
                 >
-                  {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+                  <span className="truncate">{currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}</span>
+                  {playbackStatus === 'prebuffering' && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-mono shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Preparing audio…
+                    </span>
+                  )}
                 </div>
               </motion.div>
             </AnimatePresence>

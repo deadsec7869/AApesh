@@ -80,3 +80,30 @@ if (typeof HTMLCanvasElement !== 'undefined') {
   };
 }
 
+// Mock window.YT for unit tests
+if (typeof window !== 'undefined') {
+  (window as any).YT = {
+    Player: class MockYTPlayer {
+      constructor(_id: string, options: any) {
+        setTimeout(() => {
+          options?.events?.onReady?.();
+        }, 0);
+      }
+      loadVideoById() {}
+      playVideo() {}
+      pauseVideo() {}
+      seekTo() {}
+      setVolume() {}
+      getCurrentTime() {
+        return 0;
+      }
+      getDuration() {
+        return 240;
+      }
+      getVideoLoadedFraction() {
+        return 0.25;
+      }
+      destroy() {}
+    },
+  };
+}

@@ -41,6 +41,8 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
 }) => {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const playerDuration = usePlayerStore((s) => s.duration);
+  const playbackStatus = usePlayerStore((s) => s.playbackStatus);
+  const bufferHealth = usePlayerStore((s) => s.bufferHealth);
   const getEffectiveQualityInfo = usePlayerStore((s) => s.getEffectiveQualityInfo);
   const qualityInfo = getEffectiveQualityInfo();
 
@@ -212,6 +214,56 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
           <p className="font-sans text-neutral-300 italic truncate bg-white/5 p-1.5 rounded-lg text-xs mt-1">
             "{activeLyricText || 'Instrumental / Silence'}"
           </p>
+        </div>
+
+        {/* Playback & Anti-Buffer Telemetry */}
+        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1 text-[11px]">
+          <div className="flex items-center justify-between pb-1 border-b border-white/5">
+            <span className="text-neutral-500 text-[10px] uppercase font-bold">Buffer & Playback Health</span>
+            <span
+              className={`font-bold text-[10px] uppercase px-1.5 py-0.2 rounded ${
+                playbackStatus === 'playing'
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : playbackStatus === 'prebuffering' || playbackStatus === 'buffering'
+                  ? 'bg-amber-500/20 text-amber-300'
+                  : 'bg-white/10 text-neutral-300'
+              }`}
+            >
+              {playbackStatus.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Buffer Ahead:</span>
+            <span className="font-semibold text-neutral-200">
+              {bufferHealth.bufferAheadSeconds !== null
+                ? `${bufferHealth.bufferAheadSeconds.toFixed(1)} sec`
+                : 'Unavailable'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Loaded Fraction:</span>
+            <span className="font-semibold text-neutral-200">
+              {bufferHealth.loadedFraction !== null
+                ? `${Math.round(bufferHealth.loadedFraction * 100)}%`
+                : 'Unavailable'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Prebuffer Target:</span>
+            <span className="font-semibold text-white">
+              {bufferHealth.targetBufferSeconds} sec
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Network Tier:</span>
+            <span className="font-semibold text-white capitalize">
+              {bufferHealth.networkTier}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Provider:</span>
+            <span className="font-semibold text-neutral-300">YouTube IFrame</span>
+          </div>
         </div>
 
         {/* Stream Quality Engine Diagnostics */}

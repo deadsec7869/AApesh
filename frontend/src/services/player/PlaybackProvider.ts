@@ -4,12 +4,15 @@ import {
   StreamingQualityCapability,
   EffectiveQualityResolution,
 } from '@/types/quality';
+import { PlaybackStatus, BufferHealth } from '@/types/playback';
 
 export interface PlaybackCallbacks {
   onStateChange: (isPlaying: boolean, isBuffering: boolean) => void;
   onTimeUpdate: (currentTime: number, duration: number) => void;
   onEnded: () => void;
   onError: (error: string) => void;
+  onStatusChange?: (status: PlaybackStatus) => void;
+  onBufferHealth?: (health: BufferHealth) => void;
 }
 
 export interface PlaybackProvider {
@@ -23,6 +26,10 @@ export interface PlaybackProvider {
   destroy(): void;
   getCurrentTime(): number;
   getDuration(): number;
+
+  // Smart Pre-buffering extension
+  getBufferHealth?(): BufferHealth;
+  getPlaybackStatus?(): PlaybackStatus;
 
   // Streaming Quality 2.0 extension
   getQualityCapabilities?(): StreamingQualityCapability[];

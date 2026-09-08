@@ -59,6 +59,7 @@ export const FullScreenPlayer: React.FC = () => {
     atmospherePalette,
     isPlaying,
     isBuffering,
+    playbackStatus,
     currentTime,
     duration,
     volume,
@@ -472,8 +473,14 @@ export const FullScreenPlayer: React.FC = () => {
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight truncate">
                       {currentTrack.title}
                     </h1>
-                    <p className="text-sm sm:text-base text-neutral-300 font-medium truncate mt-1">
-                      {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+                    <p className="text-sm sm:text-base text-neutral-300 font-medium truncate mt-1 flex items-center gap-2">
+                      <span className="truncate">{currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}</span>
+                      {playbackStatus === 'prebuffering' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          Preparing audio…
+                        </span>
+                      )}
                     </p>
                     {currentTrack.album && (
                       <p className="text-xs text-neutral-500 font-medium truncate mt-0.5">
@@ -1278,7 +1285,7 @@ export const FullScreenPlayer: React.FC = () => {
           >
             <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse" />
             <span className="text-[10px] font-mono font-normal text-neutral-400 group-hover:text-neutral-200 transition-colors">
-              AAPESH Engine • {qualityInfo.statusLabel} {spatialAudio ? '• Spatial DSP 3D' : ''}
+              AAPESH Engine • {playbackStatus === 'prebuffering' ? 'Preparing audio… • ' : ''}{qualityInfo.statusLabel} {spatialAudio ? '• Spatial DSP 3D' : ''}
             </span>
           </button>
         </div>
