@@ -20,8 +20,10 @@ import {
   Radio,
   Moon,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { modalBackdropVariants, modalSurfaceVariants } from '@/lib/motion';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -239,86 +241,96 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[10001] flex items-start justify-center pt-[15vh] p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-150"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-2xl glass-modal border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
-      >
-        {/* Search Header */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/10">
-          <Search className="w-5 h-5 text-neutral-400 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a command or search music..."
-            className="w-full bg-transparent text-white placeholder-neutral-500 text-base focus:outline-none"
-          />
-          <kbd className="px-2 py-0.5 text-[10px] font-mono uppercase rounded bg-white/10 text-neutral-400 border border-white/10">
-            Esc
-          </kbd>
-        </div>
-
-        {/* Results List */}
-        <div className="max-h-[380px] overflow-y-auto p-2 flex flex-col gap-1">
-          {query.trim() && (
-            <div
-              onClick={() => {
-                navigate(`/search/${encodeURIComponent(query.trim())}`);
-                onClose();
-              }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-neutral-200 cursor-pointer transition-colors"
-            >
-              <Search className="w-4 h-4 text-neutral-400" />
-              <span>Search music for <strong className="text-white">"{query}"</strong></span>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          variants={modalBackdropVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          onClick={onClose}
+          className="fixed inset-0 z-[10001] flex items-start justify-center pt-[15vh] p-4 bg-black/75 backdrop-blur-md"
+        >
+          <motion.div
+            variants={modalSurfaceVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl rounded-2xl glass-modal border border-white/10 shadow-2xl overflow-hidden flex flex-col"
+          >
+            {/* Search Header */}
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/10">
+              <Search className="w-5 h-5 text-neutral-400 shrink-0" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a command or search music..."
+                className="w-full bg-transparent text-white placeholder-neutral-500 text-base focus:outline-none"
+              />
+              <kbd className="px-2 py-0.5 text-[10px] font-mono uppercase rounded bg-white/10 text-neutral-400 border border-white/10">
+                Esc
+              </kbd>
             </div>
-          )}
 
-          {filteredCommands.length === 0 && !query.trim() ? (
-            <div className="py-8 text-center text-xs text-neutral-500">
-              No matching commands
-            </div>
-          ) : (
-            filteredCommands.map((cmd, idx) => {
-              const Icon = cmd.icon;
-              const isSelected = idx === selectedIndex;
-              return (
+            {/* Results List */}
+            <div className="max-h-[380px] overflow-y-auto p-2 flex flex-col gap-1">
+              {query.trim() && (
                 <div
-                  key={cmd.id}
                   onClick={() => {
-                    cmd.action();
+                    navigate(`/search/${encodeURIComponent(query.trim())}`);
                     onClose();
                   }}
-                  onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm cursor-pointer transition-all duration-150 ${
-                    isSelected ? 'bg-white/[0.12] text-white shadow-sm border border-white/[0.08]' : 'text-neutral-300 hover:bg-white/[0.06] border border-transparent'
-                  }`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-neutral-200 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-neutral-400'}`} />
-                    <span>{cmd.label}</span>
-                  </div>
-                  <span
-                    className={`text-[11px] px-2 py-0.5 rounded ${
-                      isSelected ? 'bg-white/20 text-white' : 'text-neutral-500 bg-white/5'
-                    }`}
-                  >
-                    {cmd.category}
-                  </span>
+                  <Search className="w-4 h-4 text-neutral-400" />
+                  <span>Search music for <strong className="text-white">"{query}"</strong></span>
                 </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
+              )}
+
+              {filteredCommands.length === 0 && !query.trim() ? (
+                <div className="py-8 text-center text-xs text-neutral-500">
+                  No matching commands
+                </div>
+              ) : (
+                filteredCommands.map((cmd, idx) => {
+                  const Icon = cmd.icon;
+                  const isSelected = idx === selectedIndex;
+                  return (
+                    <div
+                      key={cmd.id}
+                      onClick={() => {
+                        cmd.action();
+                        onClose();
+                      }}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm cursor-pointer transition-all duration-150 ${
+                        isSelected ? 'bg-white/[0.12] text-white shadow-sm border border-white/[0.08]' : 'text-neutral-300 hover:bg-white/[0.06] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-neutral-400'}`} />
+                        <span>{cmd.label}</span>
+                      </div>
+                      <span
+                        className={`text-[11px] px-2 py-0.5 rounded ${
+                          isSelected ? 'bg-white/20 text-white' : 'text-neutral-500 bg-white/5'
+                        }`}
+                      >
+                        {cmd.category}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

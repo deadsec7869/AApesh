@@ -1,7 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { LyricsResponse, LyricLine } from '@/types/music';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { LyricsResponse, LyricLine, LyricTimingLevel } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import {
+  getLineWords,
+  getWordStatus,
+  getWordProgress,
+  getCharacterProgress,
+  determineLyricsTimingLevel,
+} from '@/utils/wordSync';
 
 export interface UseSyncedLyricsOptions {
   lyrics: LyricsResponse | null;
@@ -16,16 +23,25 @@ export interface UseSyncedLyricsReturn {
   seekToLine: (index: number) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   setLineRef: (index: number, el: HTMLDivElement | null) => void;
+  // Auto-follow / Manual scroll state
+  isAutoFollowPaused: boolean;
+  resumeAutoFollow: () => void;
+  handleUserScroll: () => void;
   // Offset Calibration
   lyricsOffsetMs: number;
   setLyricsOffsetMs: (offset: number) => void;
   adjustLyricsOffsetMs: (delta: number) => void;
   resetLyricsOffset: () => void;
-  // Real-time Diagnostics
+  // Real-time Diagnostics & Karaoke State
   highResTimeMs: number;
   effectiveTimeMs: number;
   currentLineTimestamp: number | null;
   activeLyricText: string | null;
+  activeWordText: string | null;
+  activeWordProgress: number;
+  activeCharProgress: string | null;
+  timingLevel: LyricTimingLevel;
+  isWordEstimated: boolean;
   provider: string | null;
   syncConfidence: 'excellent' | 'good' | 'uncertain' | 'poor' | null;
   durationDifference: number | null;
@@ -70,16 +86,26 @@ export const useSyncedLyrics = ({
   const [lineProgress, setLineProgress] = useState<number>(0);
   const [highResTimeMs, setHighResTimeMs] = useState<number>(0);
   const [lyricsOffsetMs, setLyricsOffsetState] = useState<number>(0);
+  const [isAutoFollowPaused, setIsAutoFollowPaused] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null!);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const previousLineRef = useRef<number>(-1);
   const offsetRef = useRef<number>(0);
+  const isAutoFollowPausedRef = useRef<boolean>(false);
 
   const seekFromStore = usePlayerStore((s) => s.seek);
 
+  // Sync ref with state
+  useEffect(() => {
+    isAutoFollowPausedRef.current = isAutoFollowPaused;
+  }, [isAutoFollowPaused]);
+
   // Load per-track offset from localStorage whenever track/videoId changes
   useEffect(() => {
+    setIsAutoFollowPaused(false);
+    isAutoFollowPausedRef.current = false;
+
     if (!lyrics?.videoId) {
       setLyricsOffsetState(0);
       offsetRef.current = 0;
@@ -88,7 +114,8 @@ export const useSyncedLyrics = ({
 
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem(`aapesh_lyrics_offset_${lyrics.videoId}`) ??
+        const saved =
+          window.localStorage.getItem(`aapesh_lyrics_offset_${lyrics.videoId}`) ??
           window.localStorage.getItem(`aurora_lyrics_offset_${lyrics.videoId}`);
         if (saved !== null) {
           const parsed = parseInt(saved, 10);
@@ -137,9 +164,7 @@ export const useSyncedLyrics = ({
     setLyricsOffsetMs(0);
   }, [setLyricsOffsetMs]);
 
-  // High-Resolution Playback Clock:
-  // Continuously queries the YouTube IFrame player's actual getCurrentTime() via requestAnimationFrame
-  // without synthetic elapsed counters or wall-clock drift
+  // High-Resolution Playback Clock via requestAnimationFrame
   useEffect(() => {
     let rafId: number;
     let isCancelled = false;
@@ -174,8 +199,6 @@ export const useSyncedLyrics = ({
   }, [isPlaying, currentTime]);
 
   // Sign convention: effectiveTimeMs = highResTimeMs + lyricsOffsetMs
-  // If offset > 0 (e.g. +500ms): advances lyrics earlier (for lyrics that lagged behind audio)
-  // If offset < 0 (e.g. -500ms): delays lyrics later (for lyrics that appeared ahead of audio)
   const effectiveTimeMs = Math.max(0, highResTimeMs + lyricsOffsetMs);
 
   // Determine active lyric line & progress
@@ -207,15 +230,11 @@ export const useSyncedLyrics = ({
     }
   }, [effectiveTimeMs, lyrics]);
 
-  // Auto-scroll: ONLY trigger when activeLineIndex changes
-  useEffect(() => {
-    if (activeLineIndex === previousLineRef.current) return;
-    previousLineRef.current = activeLineIndex;
-
-    if (activeLineIndex < 0) return;
-
+  // Smoothly center a specific line inside the container
+  const scrollLineIntoView = useCallback((lineIndex: number, instant = false) => {
+    if (lineIndex < 0) return;
     const container = containerRef.current;
-    const targetElement = lineRefs.current[activeLineIndex];
+    const targetElement = lineRefs.current[lineIndex];
 
     if (container && targetElement) {
       const prefersReducedMotion =
@@ -225,16 +244,58 @@ export const useSyncedLyrics = ({
       const containerRect = container.getBoundingClientRect();
       const targetRect = targetElement.getBoundingClientRect();
 
-      // Center the active line smoothly inside scroll container
       const relativeTop = targetRect.top - containerRect.top;
-      const targetOffset = relativeTop - container.clientHeight / 2 + targetRect.height / 2;
+      // Position active line around 46% of container height for natural visual balance
+      const targetOffset = relativeTop - container.clientHeight * 0.46 + targetRect.height / 2;
 
       container.scrollBy({
         top: targetOffset,
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        behavior: instant || prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
+  }, []);
+
+  // Auto-scroll: ONLY trigger when activeLineIndex changes AND auto-follow is NOT paused
+  useEffect(() => {
+    if (activeLineIndex === previousLineRef.current) return;
+    previousLineRef.current = activeLineIndex;
+
+    if (activeLineIndex < 0 || isAutoFollowPausedRef.current) return;
+
+    scrollLineIntoView(activeLineIndex);
+  }, [activeLineIndex, scrollLineIntoView]);
+
+  // Handle user manual scroll: detect if user scrolled away from the active line
+  const handleUserScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || activeLineIndex < 0) return;
+
+    const targetElement = lineRefs.current[activeLineIndex];
+    if (targetElement) {
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = targetElement.getBoundingClientRect();
+
+      const lineCenter = targetRect.top + targetRect.height / 2;
+      const containerCenter = containerRect.top + containerRect.height / 2;
+      const distanceFromCenter = Math.abs(lineCenter - containerCenter);
+
+      // If user scrolled more than 140px away from the active line, pause auto-follow
+      if (distanceFromCenter > 140) {
+        setIsAutoFollowPaused(true);
+      } else {
+        setIsAutoFollowPaused(false);
+      }
+    }
   }, [activeLineIndex]);
+
+  // Resume auto-follow and smoothly return to active line
+  const resumeAutoFollow = useCallback(() => {
+    setIsAutoFollowPaused(false);
+    isAutoFollowPausedRef.current = false;
+    if (activeLineIndex >= 0) {
+      scrollLineIntoView(activeLineIndex);
+    }
+  }, [activeLineIndex, scrollLineIntoView]);
 
   // Click-to-seek directly to the exact lyric line timestamp
   const seekToLine = useCallback(
@@ -248,9 +309,13 @@ export const useSyncedLyrics = ({
         } else {
           seekFromStore(targetSeconds);
         }
+        // Immediately resume follow on seek
+        setIsAutoFollowPaused(false);
+        isAutoFollowPausedRef.current = false;
+        scrollLineIntoView(index);
       }
     },
-    [lyrics, onSeek, seekFromStore]
+    [lyrics, onSeek, seekFromStore, scrollLineIntoView]
   );
 
   const setLineRef = useCallback((index: number, el: HTMLDivElement | null) => {
@@ -259,12 +324,41 @@ export const useSyncedLyrics = ({
 
   const activeLine = activeLineIndex !== -1 && lyrics?.lines ? lyrics.lines[activeLineIndex] : null;
 
+  // Compute active word and character-level karaoke progression
+  const timingLevel: LyricTimingLevel = useMemo(() => {
+    if (!lyrics?.synced || !lyrics.lines || lyrics.lines.length === 0) return 'none';
+    if (lyrics.timingLevel) return lyrics.timingLevel;
+    return determineLyricsTimingLevel(lyrics.lines);
+  }, [lyrics]);
+
+  let activeWordText: string | null = null;
+  let activeWordProgress = 0;
+  let activeCharProgress: string | null = null;
+  let isWordEstimated = false;
+
+  if (activeLine) {
+    const nextStart = lyrics?.lines ? lyrics.lines[activeLineIndex + 1]?.startTime : undefined;
+    const words = getLineWords(activeLine, nextStart);
+    const activeWord = words.find((w) => getWordStatus(w, effectiveTimeMs) === 'active');
+
+    if (activeWord) {
+      activeWordText = activeWord.text;
+      activeWordProgress = getWordProgress(activeWord, effectiveTimeMs);
+      const charDetails = getCharacterProgress(activeWord, effectiveTimeMs);
+      activeCharProgress = `${charDetails.highlightedCount} / ${charDetails.totalChars}`;
+      isWordEstimated = activeWord.isEstimated ?? false;
+    }
+  }
+
   return {
     activeLineIndex,
     lineProgress,
     seekToLine,
     containerRef,
     setLineRef,
+    isAutoFollowPaused,
+    resumeAutoFollow,
+    handleUserScroll,
     lyricsOffsetMs,
     setLyricsOffsetMs,
     adjustLyricsOffsetMs,
@@ -273,6 +367,11 @@ export const useSyncedLyrics = ({
     effectiveTimeMs,
     currentLineTimestamp: activeLine?.startTime ?? null,
     activeLyricText: activeLine?.text ?? null,
+    activeWordText,
+    activeWordProgress,
+    activeCharProgress,
+    timingLevel,
+    isWordEstimated,
     provider: lyrics?.provider ?? null,
     syncConfidence: lyrics?.syncConfidence ?? null,
     durationDifference: lyrics?.durationDifference ?? null,

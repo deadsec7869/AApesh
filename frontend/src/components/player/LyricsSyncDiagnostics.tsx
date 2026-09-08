@@ -1,7 +1,8 @@
 import React from 'react';
-import { Activity, X, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Activity, X, AlertTriangle, CheckCircle2, Info, Mic } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { usePlayerStore } from '@/stores/usePlayerStore';
+import { LyricTimingLevel } from '@/types/music';
 
 export interface LyricsSyncDiagnosticsProps {
   highResTimeMs: number;
@@ -9,6 +10,11 @@ export interface LyricsSyncDiagnosticsProps {
   currentLineTimestamp: number | null;
   activeLineIndex: number;
   activeLyricText: string | null;
+  activeWordText?: string | null;
+  activeWordProgress?: number;
+  activeCharProgress?: string | null;
+  timingLevel?: LyricTimingLevel;
+  isWordEstimated?: boolean;
   lyricsOffsetMs: number;
   provider: string | null;
   syncConfidence: 'excellent' | 'good' | 'uncertain' | 'poor' | null;
@@ -22,6 +28,11 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
   currentLineTimestamp,
   activeLineIndex,
   activeLyricText,
+  activeWordText,
+  activeWordProgress = 0,
+  activeCharProgress,
+  timingLevel = 'line',
+  isWordEstimated = false,
   lyricsOffsetMs,
   provider,
   syncConfidence,
@@ -152,6 +163,44 @@ export const LyricsSyncDiagnostics: React.FC<LyricsSyncDiagnosticsProps> = ({
               {lyricsOffsetMs >= 0 ? `+${lyricsOffsetMs}` : lyricsOffsetMs}ms
             </span>
           </div>
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-500 text-[10px] uppercase">Timing Level</span>
+            <span className="font-bold text-white uppercase text-[11px] px-1.5 py-0.5 rounded bg-white/10">
+              {timingLevel === 'character'
+                ? 'Character (Exact)'
+                : timingLevel === 'word'
+                ? 'Word (Exact)'
+                : timingLevel === 'estimated-word'
+                ? 'Word (Phonetic Estimated)'
+                : timingLevel === 'line'
+                ? 'Line Sync'
+                : 'None'}
+            </span>
+          </div>
+
+          {activeWordText && (
+            <div className="pt-1 border-t border-white/5 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-500 text-[10px]">Active Word:</span>
+                <span className="font-bold text-white text-xs">"{activeWordText}"</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-500 text-[10px]">Word Progress:</span>
+                <span className="font-bold text-emerald-400 text-xs">
+                  {Math.round(activeWordProgress * 100)}%
+                </span>
+              </div>
+              {activeCharProgress && (
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500 text-[10px]">Char Progress:</span>
+                  <span className="font-bold text-neutral-300 text-xs">{activeCharProgress}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

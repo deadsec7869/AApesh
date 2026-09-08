@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "motion": "^13.2.0",
     "ytmusic-api": "^5.3.1"
   }
 }

@@ -10,6 +10,7 @@ import {
   FolderPlus,
   Trash2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -120,104 +121,112 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       };
 
   return (
-    <div
-      ref={menuRef}
-      style={style}
-      className="w-52 rounded-xl glass-modal p-1.5 shadow-2xl border border-white/10 text-sm animate-in fade-in zoom-in-95 duration-100"
-    >
-      <button
-        onClick={handlePlay}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/[0.08] transition-colors"
-      >
-        <Play className="w-4 h-4 text-white fill-current" />
-        <span>Play</span>
-      </button>
-
-      <button
-        onClick={handlePlayNext}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/[0.08] transition-colors"
-      >
-        <Play className="w-4 h-4 rotate-90" />
-        <span>Play Next</span>
-      </button>
-
-      <button
-        onClick={handleAddToQueue}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
-      >
-        <ListPlus className="w-4 h-4 text-neutral-400" />
-        <span>Add to Queue</span>
-      </button>
-
-      <div className="h-px bg-white/10 my-1" />
-
-      {onAddToPlaylist && (
-        <button
-          onClick={() => {
-            onAddToPlaylist();
-            onClose();
-          }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          ref={menuRef}
+          style={style}
+          initial={{ opacity: 0, scale: 0.95, y: -4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -4 }}
+          transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+          className="w-52 rounded-xl glass-modal p-1.5 shadow-2xl border border-white/10 text-sm"
         >
-          <FolderPlus className="w-4 h-4 text-neutral-400" />
-          <span>Add to Playlist</span>
-        </button>
+          <button
+            onClick={handlePlay}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/[0.08] transition-colors"
+          >
+            <Play className="w-4 h-4 text-white fill-current" />
+            <span>Play</span>
+          </button>
+
+          <button
+            onClick={handlePlayNext}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/[0.08] transition-colors"
+          >
+            <Play className="w-4 h-4 rotate-90" />
+            <span>Play Next</span>
+          </button>
+
+          <button
+            onClick={handleAddToQueue}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <ListPlus className="w-4 h-4 text-neutral-400" />
+            <span>Add to Queue</span>
+          </button>
+
+          <div className="h-px bg-white/10 my-1" />
+
+          {onAddToPlaylist && (
+            <button
+              onClick={() => {
+                onAddToPlaylist();
+                onClose();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <FolderPlus className="w-4 h-4 text-neutral-400" />
+              <span>Add to Playlist</span>
+            </button>
+          )}
+
+          {onRemoveFromPlaylist && (
+            <button
+              onClick={() => {
+                onRemoveFromPlaylist();
+                onClose();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Remove from Playlist</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleToggleLike}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <Heart
+              className={`w-4 h-4 ${
+                liked ? 'text-pink-500 fill-pink-500' : 'text-neutral-400'
+              }`}
+            />
+            <span>{liked ? 'Remove from Liked' : 'Save to Liked Songs'}</span>
+          </button>
+
+          {track.artists && track.artists[0]?.id && (
+            <button
+              onClick={handleGoToArtist}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <User className="w-4 h-4 text-neutral-400" />
+              <span>Go to Artist</span>
+            </button>
+          )}
+
+          {track.albumId && (
+            <button
+              onClick={handleGoToAlbum}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Disc className="w-4 h-4 text-neutral-400" />
+              <span>Go to Album</span>
+            </button>
+          )}
+
+          <div className="h-px bg-white/10 my-1" />
+
+          <button
+            onClick={handleShare}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <Share2 className="w-4 h-4 text-neutral-400" />
+            <span>Share</span>
+          </button>
+        </motion.div>
       )}
-
-      {onRemoveFromPlaylist && (
-        <button
-          onClick={() => {
-            onRemoveFromPlaylist();
-            onClose();
-          }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-        >
-          <Trash2 className="w-4 h-4 text-red-400" />
-          <span>Remove from Playlist</span>
-        </button>
-      )}
-
-      <button
-        onClick={handleToggleLike}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
-      >
-        <Heart
-          className={`w-4 h-4 ${
-            liked ? 'text-pink-500 fill-pink-500' : 'text-neutral-400'
-          }`}
-        />
-        <span>{liked ? 'Remove from Liked' : 'Save to Liked Songs'}</span>
-      </button>
-
-      {track.artists && track.artists[0]?.id && (
-        <button
-          onClick={handleGoToArtist}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
-        >
-          <User className="w-4 h-4 text-neutral-400" />
-          <span>Go to Artist</span>
-        </button>
-      )}
-
-      {track.albumId && (
-        <button
-          onClick={handleGoToAlbum}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
-        >
-          <Disc className="w-4 h-4 text-neutral-400" />
-          <span>Go to Album</span>
-        </button>
-      )}
-
-      <div className="h-px bg-white/10 my-1" />
-
-      <button
-        onClick={handleShare}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
-      >
-        <Share2 className="w-4 h-4 text-neutral-400" />
-        <span>Share</span>
-      </button>
-    </div>
+    </AnimatePresence>
   );
 };

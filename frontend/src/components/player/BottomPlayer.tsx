@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Play,
   Pause,
@@ -29,6 +30,13 @@ import { AddToPlaylistModal } from '@/components/common/AddToPlaylistModal';
 import { SleepTimerModal } from '@/components/common/SleepTimerModal';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
 import { api } from '@/api/client';
+import {
+  iconCrossfadeVariants,
+  controlButtonHover,
+  controlButtonTap,
+  playButtonHover,
+  playButtonTap,
+} from '@/lib/motion';
 
 export const BottomPlayer: React.FC = () => {
   const {
@@ -137,36 +145,61 @@ export const BottomPlayer: React.FC = () => {
             LEFT: Artwork Thumbnail + Track Title + Artist + Like Button
             ==================================================================== */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 max-w-[180px] sm:max-w-[220px] lg:max-w-[260px] shrink-0">
-          <div
+          <motion.div
             onClick={togglePlayerExpanded}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className="group relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden bg-charcoal-800 shadow-md shrink-0 cursor-pointer border border-white/10"
             title="Expand player view"
           >
-            <ArtworkImage
-              src={currentTrack.thumbnail}
-              alt={currentTrack.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              fallbackIconClassName="w-4 h-4 text-neutral-400"
-            />
-          </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTrack.videoId}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="w-full h-full"
+              >
+                <ArtworkImage
+                  src={currentTrack.thumbnail}
+                  alt={currentTrack.title}
+                  className="w-full h-full object-cover"
+                  fallbackIconClassName="w-4 h-4 text-neutral-400"
+                />
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
 
           <div className="min-w-0 flex-1">
-            <div
-              onClick={togglePlayerExpanded}
-              className="font-bold text-xs sm:text-sm text-white truncate cursor-pointer hover:underline"
-              title={currentTrack.title}
-            >
-              {currentTrack.title}
-            </div>
-            <div
-              className="text-[11px] text-neutral-400 truncate mt-0.5"
-              title={currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
-            >
-              {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTrack.videoId}
+                initial={{ opacity: 0, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -3 }}
+                transition={{ duration: 0.18 }}
+              >
+                <div
+                  onClick={togglePlayerExpanded}
+                  className="font-bold text-xs sm:text-sm text-white truncate cursor-pointer hover:underline"
+                  title={currentTrack.title}
+                >
+                  {currentTrack.title}
+                </div>
+                <div
+                  className="text-[11px] text-neutral-400 truncate mt-0.5"
+                  title={currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+                >
+                  {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={() => toggleLike(currentTrack)}
             aria-label={liked ? 'Unlike track' : 'Like track'}
             className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
@@ -176,7 +209,7 @@ export const BottomPlayer: React.FC = () => {
                 liked ? 'text-rose-500 fill-current' : 'text-neutral-400'
               }`}
             />
-          </button>
+          </motion.button>
         </div>
 
         {/* ====================================================================
@@ -186,7 +219,9 @@ export const BottomPlayer: React.FC = () => {
           {/* Top transport buttons row */}
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Shuffle */}
-            <button
+            <motion.button
+              whileHover={controlButtonHover}
+              whileTap={controlButtonTap}
               onClick={cycleShuffleMode}
               aria-label={`Shuffle: ${shuffleMode}`}
               title={
@@ -209,43 +244,77 @@ export const BottomPlayer: React.FC = () => {
               ) : (
                 <Shuffle className="w-3.5 h-3.5" />
               )}
-            </button>
+            </motion.button>
 
             {/* Previous Track */}
-            <button
+            <motion.button
+              whileHover={controlButtonHover}
+              whileTap={controlButtonTap}
               onClick={previous}
               aria-label="Previous Track"
               className="p-1.5 text-neutral-300 hover:text-white transition-colors"
             >
               <SkipBack className="w-4 h-4 fill-current" />
-            </button>
+            </motion.button>
 
             {/* Focal Play/Pause Button */}
-            <button
+            <motion.button
+              whileHover={playButtonHover}
+              whileTap={playButtonTap}
               onClick={togglePlay}
               aria-label={isPlaying ? 'Pause' : 'Play'}
-              className="btn-play-aapesh w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform"
+              className="btn-play-aapesh w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg transition-transform"
             >
-              {isBuffering ? (
-                <Loader2 className="w-4 h-4 animate-spin text-black" />
-              ) : isPlaying ? (
-                <Pause className="w-4 h-4 fill-current text-black" />
-              ) : (
-                <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
-              )}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                {isBuffering ? (
+                  <motion.div
+                    key="loader"
+                    variants={iconCrossfadeVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                  </motion.div>
+                ) : isPlaying ? (
+                  <motion.div
+                    key="pause"
+                    variants={iconCrossfadeVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <Pause className="w-4 h-4 fill-current text-black" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="play"
+                    variants={iconCrossfadeVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
 
             {/* Next Track */}
-            <button
+            <motion.button
+              whileHover={controlButtonHover}
+              whileTap={controlButtonTap}
               onClick={next}
               aria-label="Next Track"
               className="p-1.5 text-neutral-300 hover:text-white transition-colors"
             >
               <SkipForward className="w-4 h-4 fill-current" />
-            </button>
+            </motion.button>
 
             {/* Repeat */}
-            <button
+            <motion.button
+              whileHover={controlButtonHover}
+              whileTap={controlButtonTap}
               onClick={toggleRepeat}
               aria-label={`Repeat: ${repeatMode}`}
               title={`Repeat: ${repeatMode}`}
@@ -260,7 +329,7 @@ export const BottomPlayer: React.FC = () => {
               ) : (
                 <Repeat className="w-3.5 h-3.5" />
               )}
-            </button>
+            </motion.button>
           </div>
 
           {/* Integrated Scrubber Bar with Time Stamps */}
@@ -306,7 +375,9 @@ export const BottomPlayer: React.FC = () => {
             ==================================================================== */}
         <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
           {/* Spatial Audio Pill */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={toggleSpatialAudio}
             aria-label="Spatial Audio"
             title="Spatial Sound DSP"
@@ -318,10 +389,12 @@ export const BottomPlayer: React.FC = () => {
           >
             <Headphones className="w-3.5 h-3.5" />
             <span className="w-1 h-1 rounded-full bg-rose-500" />
-          </button>
+          </motion.button>
 
           {/* Lyrics Button */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={toggleLyrics}
             aria-label="Lyrics"
             title="Synced Lyrics"
@@ -332,10 +405,12 @@ export const BottomPlayer: React.FC = () => {
             }`}
           >
             <Mic2 className="w-4 h-4" />
-          </button>
+          </motion.button>
 
           {/* Queue Button */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={toggleQueue}
             aria-label="Queue"
             title="Play Queue"
@@ -346,10 +421,12 @@ export const BottomPlayer: React.FC = () => {
             }`}
           >
             <ListMusic className="w-4 h-4" />
-          </button>
+          </motion.button>
 
           {/* VideoDock Toggle */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={toggleVideoDock}
             aria-label="Video Dock"
             title="Toggle Video Dock"
@@ -360,21 +437,25 @@ export const BottomPlayer: React.FC = () => {
             }`}
           >
             <Tv className="w-4 h-4" />
-          </button>
+          </motion.button>
 
           {/* Equalizer Modal Trigger */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={toggleEqualizer}
             aria-label="Equalizer"
             title="10-Band Graphic Equalizer"
             className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-flex"
           >
             <SlidersHorizontal className="w-4 h-4 text-rose-500" />
-          </button>
+          </motion.button>
 
           {/* Volume Control */}
           <div className="hidden lg:flex items-center gap-1.5 ml-1">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={toggleMute}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
               className="text-neutral-400 hover:text-white transition-colors"
@@ -386,7 +467,7 @@ export const BottomPlayer: React.FC = () => {
               ) : (
                 <Volume2 className="w-4 h-4" />
               )}
-            </button>
+            </motion.button>
             <input
               type="range"
               min="0"
@@ -402,14 +483,16 @@ export const BottomPlayer: React.FC = () => {
           </div>
 
           {/* Fullscreen Expand */}
-          <button
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
             onClick={togglePlayerExpanded}
             aria-label="Expand Fullscreen Player"
             title="Expand Fullscreen"
             className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors ml-0.5"
           >
             <Maximize2 className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
       </footer>
 

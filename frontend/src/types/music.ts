@@ -143,10 +143,21 @@ export interface SearchResults {
   videos: Track[];
 }
 
+export type LyricTimingLevel = 'character' | 'word' | 'estimated-word' | 'line' | 'none';
+
+export interface CharacterTiming {
+  character: string;
+  startTime: number;
+  endTime: number;
+  estimated?: boolean;
+}
+
 export interface LyricWord {
   text: string;
   startTime: number;
   endTime?: number;
+  characters?: CharacterTiming[];
+  isEstimated?: boolean;
 }
 
 export interface LyricLine {
@@ -155,6 +166,7 @@ export interface LyricLine {
   startTime?: number;
   endTime?: number;
   words?: LyricWord[];
+  timingLevel?: LyricTimingLevel;
   script?: string;
   direction?: 'ltr' | 'rtl' | 'auto';
   language?: string;
@@ -170,6 +182,7 @@ export interface LyricsResponse {
   lyrics?: string | null;
   source?: string | null;
   provider?: 'youtube_musixmatch' | 'open_synced_lrclib' | 'lrclib' | string | null;
+  timingLevel?: LyricTimingLevel | null;
   syncConfidence?: 'excellent' | 'good' | 'uncertain' | 'poor' | null;
   lyricsDuration?: number | null;
   mediaDuration?: number | null;

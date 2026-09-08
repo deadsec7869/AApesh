@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   SlidersHorizontal,
   RotateCcw,
@@ -14,6 +14,12 @@ import {
   EqualizerBands,
 } from '@/stores/useEqualizerStore';
 import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import {
+  modalBackdropVariants,
+  modalSurfaceVariants,
+  controlButtonHover,
+  controlButtonTap,
+} from '@/lib/motion';
 
 const PRESET_LIST: EqualizerPreset[] = [
   'Flat',
@@ -98,12 +104,18 @@ export const EqualizerModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+      <motion.div
+        variants={modalBackdropVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+      >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 15 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 15 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          variants={modalSurfaceVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
           className="relative w-full max-w-[580px] bg-[#12151c]/95 border border-white/[0.09] rounded-[28px] p-6 shadow-[0_32px_80px_rgba(0,0,0,0.85)] flex flex-col gap-5 text-white font-sans overflow-hidden select-none"
         >
           {/* ==================================================================
@@ -319,7 +331,7 @@ export const EqualizerModal: React.FC = () => {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </AnimatePresence>
   );
 };

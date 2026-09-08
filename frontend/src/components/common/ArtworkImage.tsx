@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Music } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ArtworkImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src?: string | null;
@@ -31,20 +32,28 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
 
   return (
     <div className={`relative w-full h-full overflow-hidden bg-[#12141c] ${className}`}>
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03] animate-pulse">
-          <Music className={fallbackIconClassName} />
-        </div>
-      )}
-      <img
+      <AnimatePresence>
+        {!isLoaded && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 flex items-center justify-center bg-white/[0.03] animate-pulse"
+          >
+            <Music className={fallbackIconClassName} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.img
         src={src}
         alt={alt}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isLoaded ? 1 : 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          isLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        {...props}
+        className="w-full h-full object-cover"
+        {...(props as any)}
       />
     </div>
   );

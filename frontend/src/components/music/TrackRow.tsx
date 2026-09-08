@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Pause, Heart, MoreHorizontal } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
+import { controlButtonTap } from '@/lib/motion';
 import { ContextMenu } from './ContextMenu';
 
 interface TrackRowProps {
@@ -158,20 +160,22 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       )}
 
       {/* Like Button */}
-      <button
+      <motion.button
+        whileTap={controlButtonTap}
+        whileHover={{ scale: 1.15 }}
         onClick={(e) => {
           e.stopPropagation();
           toggleLike(track);
         }}
         aria-label={liked ? 'Unlike track' : 'Like track'}
-        className={`p-1.5 rounded-full transition-all duration-150 ${
+        className={`p-1.5 rounded-full transition-colors duration-150 ${
           liked
             ? 'text-rose-500 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)]'
             : 'text-neutral-500 hover:text-neutral-200 opacity-0 group-hover:opacity-100'
         }`}
       >
         <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-      </button>
+      </motion.button>
 
       {/* Duration */}
       <div className="text-caption-1 text-neutral-500 font-mono tabular-nums w-10 text-right shrink-0">

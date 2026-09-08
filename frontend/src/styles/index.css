@@ -200,31 +200,44 @@ html, body, #root {
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
-/* Cinematic Lyrics Typography Hierarchy */
+/* Cinematic Lyrics 2.0 Typography Hierarchy (Crisp, Confident, Monochromatic) */
 .lyric-line-active {
   color: #ffffff !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   opacity: 1 !important;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
-  transform: scale(1.02);
-  transition: all 0.25s var(--ease-out-expo);
+  transform: scale(1.015);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.2s ease;
 }
 
 .lyric-line-nearby {
-  color: rgba(255, 255, 255, 0.65) !important;
-  opacity: 0.65 !important;
-  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.70) !important;
+  opacity: 0.70 !important;
+  font-weight: 500 !important;
   transform: scale(1);
-  transition: all 0.25s var(--ease-out-expo);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.2s ease;
 }
 
 .lyric-line-distant {
-  color: rgba(255, 255, 255, 0.28) !important;
-  opacity: 0.28 !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  opacity: 0.42 !important;
   font-weight: 400 !important;
-  filter: blur(0.35px);
-  transform: scale(0.985);
-  transition: all 0.25s var(--ease-out-expo);
+  transform: scale(0.99);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.2s ease;
+}
+
+.lyric-translation {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.85em;
+  font-weight: 400;
+  margin-top: 0.35rem;
+  line-height: 1.4;
+  letter-spacing: normal;
 }
 
 /* Natural Artwork Reflection */
@@ -615,32 +628,29 @@ html, body, #root {
 .lyric-word {
   display: inline-block;
   transform-origin: center bottom;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
   transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+              color 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lyric-word-active {
   color: #ffffff;
   font-weight: 800;
   opacity: 1;
-  transform: scale(1.08) translateY(-2px);
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45));
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  transform: scale(1.02) translateY(-0.5px);
 }
 
 .lyric-word-sung {
   color: #ffffff;
-  opacity: 0.95;
-  font-weight: 700;
+  opacity: 1;
+  font-weight: 800;
   transform: scale(1) translateY(0);
 }
 
 .lyric-word-upcoming {
-  color: rgba(255, 255, 255, 0.38);
-  opacity: 0.42;
+  color: rgba(255, 255, 255, 0.40);
+  opacity: 0.50;
   font-weight: 500;
   transform: scale(1) translateY(0);
 }
