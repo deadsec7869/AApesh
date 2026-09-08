@@ -18,7 +18,7 @@ import { useLibraryStore } from '@/stores/useLibraryStore';
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const { fetchLibrary } = useLibraryStore();
-  const { currentTrack } = usePlayerStore();
+  const { currentTrack, bottomPlayerClearance } = usePlayerStore();
 
   // Load library on start
   useEffect(() => {
@@ -130,9 +130,10 @@ export const AppLayout: React.FC = () => {
 
         {/* Scrollable Page Body - dynamic safe space for floating dock */}
         <main
-          className={`flex-1 overflow-y-auto overflow-x-hidden ${
-            currentTrack ? 'pb-36 md:pb-32' : 'pb-20 md:pb-16'
-          } min-w-0`}
+          className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 scroll-smooth"
+          style={{
+            paddingBottom: `${bottomPlayerClearance || (currentTrack ? 136 : 96)}px`,
+          }}
         >
           <div className="w-full max-w-[1500px] mx-auto min-w-0">
             <Outlet />

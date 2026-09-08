@@ -336,7 +336,7 @@ export const HomePage: React.FC = () => {
         {recentlyPlayed.length > 0 ? (
           <div
             ref={recentlyPlayedRef}
-            className="flex gap-3 overflow-x-auto pb-2 pr-4 scroll-smooth no-scrollbar w-full"
+            className="flex gap-3.5 overflow-x-auto pb-3 pt-1 pr-4 scroll-smooth no-scrollbar w-full"
           >
             {recentlyPlayed.map((track) => (
               <div
@@ -420,7 +420,7 @@ export const HomePage: React.FC = () => {
         {followedArtists.length > 0 ? (
           <div
             ref={followedArtistsRef}
-            className="flex gap-4 overflow-x-auto pb-2 pr-4 scroll-smooth no-scrollbar w-full"
+            className="flex gap-4 overflow-x-auto pb-3 pt-1 pr-4 scroll-smooth no-scrollbar w-full"
           >
             {followedArtists.map((artist) => (
               <div

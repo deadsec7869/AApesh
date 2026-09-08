@@ -36,9 +36,12 @@ interface PlayerState {
   fullscreenTab: 'art' | 'lyrics' | 'queue' | 'video';
   atmospherePalette: ArtworkPalette | null;
   recentlyPlayed: Track[];
+  bottomPlayerHeight: number;
+  bottomPlayerClearance: number;
   error: string | null;
 
   // Actions
+  setBottomPlayerDimensions: (height: number, clearance: number) => void;
   initEngine: () => Promise<void>;
   playTrack: (track: Track, newQueue?: Track[]) => Promise<void>;
   addToRecentlyPlayed: (track: Track) => void;
@@ -164,7 +167,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   fullscreenTab: 'art',
   atmospherePalette: null,
   recentlyPlayed: getSavedRecentlyPlayed(),
+  bottomPlayerHeight: 76,
+  bottomPlayerClearance: 128,
   error: null,
+
+  setBottomPlayerDimensions: (height: number, clearance: number) => {
+    set({ bottomPlayerHeight: height, bottomPlayerClearance: clearance });
+  },
 
   initEngine: async () => {
     if (engineInitialized) return;

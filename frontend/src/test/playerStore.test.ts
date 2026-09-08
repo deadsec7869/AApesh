@@ -165,5 +165,16 @@ describe('usePlayerStore', () => {
     expect(restoredState.queue.map((t) => t.videoId)).toEqual(tenTracks.map((t) => t.videoId));
     expect(restoredState.currentIndex).toBe(0);
   });
+
+  it('measures and updates bottom player height and dynamic clearance', () => {
+    const { setBottomPlayerDimensions } = usePlayerStore.getState();
+    expect(usePlayerStore.getState().bottomPlayerHeight).toBe(76);
+    expect(usePlayerStore.getState().bottomPlayerClearance).toBe(128);
+
+    setBottomPlayerDimensions(84, 140);
+    expect(usePlayerStore.getState().bottomPlayerHeight).toBe(84);
+    expect(usePlayerStore.getState().bottomPlayerClearance).toBe(140);
+  });
 });
+
 

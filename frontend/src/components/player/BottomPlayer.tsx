@@ -66,6 +66,7 @@ export const BottomPlayer: React.FC = () => {
     toggleLyrics,
     toggleVideoDock,
     togglePlayerExpanded,
+    setBottomPlayerDimensions,
   } = usePlayerStore();
 
   const { isLiked, toggleLike } = useLibraryStore();
@@ -75,10 +76,52 @@ export const BottomPlayer: React.FC = () => {
   const [sleepTimerModalOpen, setSleepTimerModalOpen] = useState(false);
   const [scrubValue, setScrubValue] = useState<number | null>(null);
 
+  const footerRef = React.useRef<HTMLElement>(null);
+
+  // Measure actual rendered BottomPlayer height and calculate dynamic bottom clearance
+  React.useEffect(() => {
+    const updateDimensions = () => {
+      const el = footerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const height = Math.round(rect.height);
+      // Actual occupied space from bottom of viewport to the top of BottomPlayer
+      const occupiedBottomSpace = Math.max(0, window.innerHeight - rect.top);
+      // Small visual breathing margin (32px)
+      const breathingMargin = 32;
+      const clearance = Math.round(occupiedBottomSpace + breathingMargin);
+
+      setBottomPlayerDimensions(height, clearance);
+      document.documentElement.style.setProperty('--bottom-player-height', `${height}px`);
+      document.documentElement.style.setProperty('--bottom-player-clearance', `${clearance}px`);
+    };
+
+    updateDimensions();
+
+    const el = footerRef.current;
+    let observer: ResizeObserver | null = null;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        updateDimensions();
+      });
+      observer.observe(el);
+    }
+
+    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('orientationchange', updateDimensions);
+
+    return () => {
+      if (observer && el) observer.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('orientationchange', updateDimensions);
+    };
+  }, [currentTrack, setBottomPlayerDimensions]);
+
   // Minimal Empty State when no track is active
   if (!currentTrack) {
     return (
       <footer
+        ref={footerRef}
         aria-label="Audio Player Standby"
         className="fixed bottom-4 md:bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[68%] max-w-5xl h-14 md:h-16 z-40 bg-[#0e1117]/85 backdrop-blur-2xl rounded-[22px] border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.75)] px-4 md:px-6 flex items-center justify-between pointer-events-auto transition-all duration-300"
       >
@@ -120,6 +163,7 @@ export const BottomPlayer: React.FC = () => {
   return (
     <>
       <footer
+        ref={footerRef}
         aria-label="Floating Audio Player"
         className="fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[76%] max-w-5xl h-20 md:h-[76px] z-40 bg-[#0d1016]/90 backdrop-blur-2xl rounded-[24px] border border-white/[0.09] shadow-[0_24px_64px_rgba(0,0,0,0.85)] px-3 md:px-5 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-2 md:gap-4"
       >
