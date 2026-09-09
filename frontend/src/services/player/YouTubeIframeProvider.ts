@@ -14,7 +14,7 @@ import {
   YOUTUBE_QUALITY_CAPABILITIES,
   resolveStreamingQuality,
 } from '@/services/audio/qualityResolver';
-import { PlaybackProvider, PlaybackCallbacks } from './PlaybackProvider';
+import { PlaybackProvider, PlaybackCallbacks, AudioCapabilities } from './PlaybackProvider';
 
 declare global {
   interface Window {
@@ -66,10 +66,10 @@ export class YouTubeIframeProvider implements PlaybackProvider {
           parent = document.createElement('div');
           parent.id = 'aurora-youtube-container';
           parent.style.position = 'fixed';
-          parent.style.bottom = '0';
-          parent.style.right = '0';
-          parent.style.width = '1px';
-          parent.style.height = '1px';
+          parent.style.left = '-9999px';
+          parent.style.top = '-9999px';
+          parent.style.width = '360px';
+          parent.style.height = '225px';
           parent.style.opacity = '0.001';
           parent.style.zIndex = '-9999';
           parent.style.pointerEvents = 'none';
@@ -83,9 +83,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
       const initPlayer = () => {
         try {
-          if (import.meta.env.DEV) {
-            console.debug(`[YT RECREATE] time=${Date.now()} reason=initialization`);
-          }
+          console.info(`[YT RECREATE] time=${Date.now()} reason=initialization`);
           this.player = new window.YT.Player('aurora-youtube-player', {
             height: '100%',
             width: '100%',
@@ -186,8 +184,8 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       } catch {}
     }
 
-    const dur = this.getDuration();
-    const cur = this.getCurrentTime();
+    const dur = this.lastKnownDuration > 0 ? this.lastKnownDuration : this.getDuration();
+    const cur = this.lastKnownTime;
     const bufferAhead =
       fraction !== null && dur > 0 ? Math.max(0, fraction * dur - cur) : null;
     const net = getNetworkTier();
@@ -218,6 +216,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
   private startTimeTimer() {
     this.stopTimeTimer();
+    let tickCount = 0;
     this.timeUpdateTimer = setInterval(() => {
       if (this.player && this.callbacks && typeof this.player.getCurrentTime === 'function') {
         try {
@@ -227,7 +226,11 @@ export class YouTubeIframeProvider implements PlaybackProvider {
           this.lastKnownDuration = duration;
           this.lastTimePolledAt = performance.now();
           this.callbacks.onTimeUpdate(currentTime, duration);
-          this.updateBufferHealth();
+          tickCount++;
+          // Update buffer health once per second to prevent iframe postMessage saturation
+          if (tickCount % 4 === 0) {
+            this.updateBufferHealth();
+          }
         } catch {}
       }
     }, 250);
@@ -253,18 +256,27 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     // YT.PlayerState: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
     if (state === 1) {
       // PLAYING
+      console.info(
+        `[YT PLAYING] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} reason=playback-started`
+      );
       this.stopPrebufferTimer();
       this.setStatus('playing');
       this.callbacks.onStateChange(true, false);
       this.startTimeTimer();
     } else if (state === 2) {
       // PAUSED
+      console.info(
+        `[YT PAUSE] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} reason=player-state-paused`
+      );
       this.stopPrebufferTimer();
-      this.setStatus('ready');
+      this.setStatus('paused');
       this.callbacks.onStateChange(false, false);
       this.stopTimeTimer();
     } else if (state === 3) {
       // BUFFERING (mid-playback recovery)
+      console.info(
+        `[YT BUFFERING] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} reason=network-buffer`
+      );
       if (this.playbackStatus !== 'prebuffering') {
         this.setStatus('buffering');
       }
@@ -272,7 +284,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     } else if (state === 0) {
       // ENDED
       this.stopPrebufferTimer();
-      this.setStatus('idle');
+      this.setStatus('ended');
       this.callbacks.onStateChange(false, false);
       this.stopTimeTimer();
       this.callbacks.onEnded();
@@ -303,11 +315,9 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     this.stopPrebufferTimer();
     this.setStatus('prebuffering');
 
-    if (import.meta.env.DEV) {
-      console.debug(
-        `[YT LOAD] time=${Date.now()} videoId=${track.videoId} reason=track-load`
-      );
-    }
+    console.info(
+      `[YT LOAD] time=${Date.now()} videoId=${track.videoId} reason=track-load`
+    );
 
     try {
       if (typeof this.player.loadVideoById === 'function') {
@@ -320,7 +330,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
         const startTime = Date.now();
         const network = getNetworkTier();
         const targetSeconds = computeTargetBufferSeconds(network, track.duration_seconds || 200);
-        const maxPrebufferWaitMs = network === 'slow' ? 4500 : 2500;
+        const maxPrebufferWaitMs = network === 'slow' ? 3500 : 1800;
 
         this.prebufferTimer = setInterval(() => {
           if (!this.player || !this.isReady) return;
@@ -330,7 +340,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
           // Check if prebuffer conditions are satisfied:
           // 1. Buffer ahead meets target
-          // 2. Or fraction loaded >= 10%
+          // 2. Or fraction loaded >= 8%
           // 3. Or max wait timeout reached (never stall indefinitely)
           const bufferSatisfied =
             health.bufferAheadSeconds !== null && health.bufferAheadSeconds >= targetSeconds;
@@ -340,16 +350,14 @@ export class YouTubeIframeProvider implements PlaybackProvider {
 
           if (bufferSatisfied || fractionSatisfied || timeoutReached) {
             this.stopPrebufferTimer();
-            if (this.intendedPlayState && typeof this.player.playVideo === 'function') {
-              if (import.meta.env.DEV) {
-                console.debug(
-                  `[YT PREBUFFER] Ready after ${elapsed}ms (bufferAhead=${health.bufferAheadSeconds}s, fraction=${health.loadedFraction})`
-                );
-              }
+            if (this.intendedPlayState && this.playbackStatus !== 'playing' && typeof this.player.playVideo === 'function') {
+              console.info(
+                `[YT PREBUFFER] Ready after ${elapsed}ms (bufferAhead=${health.bufferAheadSeconds}s, fraction=${health.loadedFraction})`
+              );
               this.player.playVideo();
             }
           }
-        }, 120);
+        }, 180);
       }
     } catch (e) {
       console.error('[YouTubeIframeProvider] loadVideoById error:', e);
@@ -360,11 +368,10 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   async play(): Promise<void> {
     this.intendedPlayState = true;
     if (!this.player || !this.isReady) return;
-    if (import.meta.env.DEV) {
-      console.debug(
-        `[YT PLAY] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime}`
-      );
-    }
+    if (this.playbackStatus === 'playing') return;
+    console.info(
+      `[YT PLAY] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} reason=user-play`
+    );
     try {
       if (typeof this.player.playVideo === 'function') {
         this.player.playVideo();
@@ -378,11 +385,9 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     this.intendedPlayState = false;
     this.stopPrebufferTimer();
     if (!this.player || !this.isReady) return;
-    if (import.meta.env.DEV) {
-      console.debug(
-        `[YT PAUSE] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime}`
-      );
-    }
+    console.info(
+      `[YT PAUSE] time=${Date.now()} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} reason=user-pause`
+    );
     try {
       if (typeof this.player.pauseVideo === 'function') {
         this.player.pauseVideo();
@@ -403,11 +408,9 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       const clamped = Math.max(0, Math.min(dur > 0 ? dur : timeInSeconds, timeInSeconds));
       this.lastKnownTime = clamped;
 
-      if (import.meta.env.DEV) {
-        console.debug(
-          `[YT SEEK] time=${now} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} requestedTime=${timeInSeconds} reason=user-seek`
-        );
-      }
+      console.info(
+        `[YT SEEK] time=${now} videoId=${this.currentTrackId} currentTime=${this.lastKnownTime} requestedTime=${timeInSeconds} reason=user-seek`
+      );
 
       if (typeof this.player.seekTo === 'function') {
         this.player.seekTo(clamped, true);
@@ -472,6 +475,50 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     this.isReady = false;
     this.currentTrackId = null;
     this.setStatus('idle');
+  }
+
+  // Audio Lab 2.0 extension
+  setPlaybackRate(rate: number): void {
+    if (this.player && this.isReady && typeof this.player.setPlaybackRate === 'function') {
+      try {
+        this.player.setPlaybackRate(rate);
+      } catch (e) {
+        console.warn('[YouTubeIframeProvider] setPlaybackRate error:', e);
+      }
+    }
+  }
+
+  getPlaybackRate(): number {
+    if (this.player && this.isReady && typeof this.player.getPlaybackRate === 'function') {
+      try {
+        const rate = this.player.getPlaybackRate();
+        if (typeof rate === 'number' && !isNaN(rate) && rate > 0) {
+          return rate;
+        }
+      } catch {}
+    }
+    return 1;
+  }
+
+  getAudioCapabilities(): AudioCapabilities {
+    return {
+      providerName: 'YouTube IFrame Engine',
+      volume: 'supported',
+      playbackRate: 'supported',
+      availablePlaybackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+      eq: 'unsupported',
+      eqReason: 'YouTube IFrame audio is isolated within a sandboxed cross-origin frame. Web Audio DSP nodes cannot intercept this protected audio stream.',
+      balance: 'unsupported',
+      balanceReason: 'Stereo balance panning requires direct Web Audio node attachment.',
+      spatialDsp: 'unsupported',
+      spatialDspReason: 'Spatial surround audio DSP requires multi-channel Web Audio PannerNode graph.',
+      spatialVisualization: 'supported',
+      analyser: 'limited',
+      analyserReason: 'Using telemetry-driven visual harmonic synthesis. Real-time byte frequency analysis activates when direct Web Audio source is attached.',
+      maxBitrateKbps: 256,
+      codec: 'Opus / AAC',
+      qualityDescription: 'Adaptive YouTube Stream (Up to 256 kbps)',
+    };
   }
 
   // Streaming Quality 2.0 extension

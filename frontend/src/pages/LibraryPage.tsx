@@ -4,6 +4,7 @@ import { Library, Heart, Plus, ListMusic, Play } from 'lucide-react';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { CreatePlaylistModal } from '@/components/common/CreatePlaylistModal';
+import { SpotlightCard } from '@/components/react-bits';
 
 export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,9 +45,11 @@ export const LibraryPage: React.FC = () => {
       {/* Grid of Playlists & Liked Songs Hero Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Liked Songs Special Banner Card */}
-        <div
+        <SpotlightCard
           onClick={() => navigate('/library/liked')}
-          className="group relative flex flex-col justify-between p-6 rounded-3xl glass-dock border border-white/10 shadow-xl cursor-pointer hover:scale-[1.02] hover:border-white/20 transition-all min-h-[220px]"
+          spotlightColor="rgba(244, 63, 94, 0.15)"
+          spotlightRadius={280}
+          className="group relative flex flex-col justify-between p-6 rounded-3xl glass-dock border border-white/10 shadow-xl cursor-pointer hover:border-white/20 transition-all min-h-[220px]"
         >
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-2xl bg-charcoal-900 border border-white/10 flex items-center justify-center text-white shadow-md">
@@ -70,7 +73,7 @@ export const LibraryPage: React.FC = () => {
               {likedTracks.length} {likedTracks.length === 1 ? 'song' : 'songs'} saved
             </p>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* User Playlists */}
         {playlists.map((pl) => (

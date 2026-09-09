@@ -14,6 +14,7 @@ export type ScriptFamily =
   | 'telugu'
   | 'kannada'
   | 'malayalam'
+  | 'sinhala'
   | 'japanese'
   | 'korean'
   | 'cjk'
@@ -51,6 +52,7 @@ const SCRIPT_RANGES: ScriptRange[] = [
   { name: 'telugu', start: 0x0c00, end: 0x0c7f }, // Telugu
   { name: 'kannada', start: 0x0c80, end: 0x0cff }, // Kannada
   { name: 'malayalam', start: 0x0d00, end: 0x0d7f }, // Malayalam
+  { name: 'sinhala', start: 0x0d80, end: 0x0dff }, // Sinhala
 
   // Thai
   { name: 'thai', start: 0x0e00, end: 0x0e7f },
@@ -194,6 +196,12 @@ export function analyzeTextScriptAndDirection(text: string): ScriptAnalysis {
     case 'malayalam':
       fontClass = 'font-malayalam';
       break;
+    case 'sinhala':
+      fontClass = 'font-sinhala';
+      break;
+    case 'hebrew':
+      fontClass = 'font-hebrew';
+      break;
     case 'japanese':
       fontClass = 'font-japanese';
       break;
@@ -240,6 +248,8 @@ export function getLineFontClass(text: string, serverScript?: string): string {
         return 'font-urdu';
       case 'arabic':
         return 'font-arabic';
+      case 'hebrew':
+        return 'font-hebrew';
       case 'devanagari':
         return 'font-devanagari';
       case 'bengali':
@@ -256,6 +266,8 @@ export function getLineFontClass(text: string, serverScript?: string): string {
         return 'font-kannada';
       case 'malayalam':
         return 'font-malayalam';
+      case 'sinhala':
+        return 'font-sinhala';
       case 'japanese':
         return 'font-japanese';
       case 'korean':

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
 
 export type EqualizerPreset =
   | 'Flat'
@@ -238,6 +239,7 @@ export const useEqualizerStore = create<EqualizerState>((set, get) => ({
   setPlaybackSpeed: (playbackSpeed) => {
     set({ playbackSpeed });
     try {
+      defaultPlaybackEngine.setPlaybackRate?.(playbackSpeed);
       const state = { ...get(), playbackSpeed };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {}
@@ -272,8 +274,10 @@ export const useEqualizerStore = create<EqualizerState>((set, get) => ({
       stereoBalance: 0,
       playbackSpeed: 1,
       spatialAudio: false,
+      concentricMode: false,
     });
     try {
+      defaultPlaybackEngine.setPlaybackRate?.(1);
       window.localStorage.removeItem(STORAGE_KEY);
     } catch {}
   },

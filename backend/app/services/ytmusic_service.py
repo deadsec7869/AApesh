@@ -503,21 +503,51 @@ class YTMusicService:
         return parse_lrc_lines(text)
 
     def get_lyrics(self, video_id: str) -> Dict[str, Any]:
-        cache_key = f"lyrics_v3_multi_{video_id}"
+        cache_key = f"lyrics_v5_unicode_{video_id}"
         cached = cache_service.get(cache_key)
         if cached:
             return cached
 
         try:
-            song_info = self.get_song(video_id)
-            duration_seconds = song_info.get("duration_seconds") or 0
-            media_dur = float(duration_seconds) if duration_seconds > 0 else None
-            title = song_info.get("title") or ""
-            artist = song_info.get("author") or ""
-            artists_list = song_info.get("artists") or []
-            if artists_list and isinstance(artists_list, list) and isinstance(artists_list[0], dict):
-                artist = artists_list[0].get("name") or artist
-            album = song_info.get("album") or ""
+            title = ""
+            artist = ""
+            media_dur = None
+            album = ""
+
+            # Attempt 1: Fetch song details via client.get_song
+            try:
+                song_raw = self.client.get_song(video_id)
+                if song_raw and isinstance(song_raw, dict):
+                    video_details = song_raw.get("videoDetails", {})
+                    title = video_details.get("title") or ""
+                    artist = video_details.get("author") or ""
+                    len_sec = int(video_details.get("lengthSeconds") or 0)
+                    if len_sec > 0:
+                        media_dur = float(len_sec)
+            except Exception as e:
+                logger.debug("get_song error for %s: %s", video_id, e)
+
+            # Attempt 2: If title or artist missing, fetch watch playlist
+            if not title or not artist:
+                try:
+                    watch_data = self.client.get_watch_playlist(videoId=video_id)
+                    tracks = watch_data.get("tracks") or []
+                    if tracks and isinstance(tracks[0], dict):
+                        t0 = tracks[0]
+                        title = title or t0.get("title") or ""
+                        if not artist:
+                            art_list = t0.get("artists") or []
+                            if art_list and isinstance(art_list, list):
+                                artist = art_list[0].get("name") if isinstance(art_list[0], dict) else str(art_list[0])
+                        dur_str = t0.get("length")
+                        if not media_dur and dur_str and ":" in dur_str:
+                            parts = [int(p) for p in dur_str.split(":")]
+                            if len(parts) == 2:
+                                media_dur = float(parts[0] * 60 + parts[1])
+                            elif len(parts) == 3:
+                                media_dur = float(parts[0] * 3600 + parts[1] * 60 + parts[2])
+                except Exception as e:
+                    logger.debug("get_watch_playlist metadata error for %s: %s", video_id, e)
 
             track_info = {
                 "videoId": video_id,
@@ -529,7 +559,7 @@ class YTMusicService:
             }
 
             result = self.lyrics_engine.get_lyrics(track_info)
-            ttl = 86400 if result.get("hasLyrics") else 3600
+            ttl = 86400 if result.get("hasLyrics") else 300
             cache_service.set(cache_key, result, ttl=ttl)
             return result
         except Exception as e:

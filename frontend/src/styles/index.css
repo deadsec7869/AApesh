@@ -85,107 +85,113 @@ html, body, #root {
 
 /* Centralized AAPESH Liquid Glass Material System */
 .glass-primary {
-  background: rgba(16, 18, 24, 0.72);
-  backdrop-filter: blur(32px) saturate(1.8);
-  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  background: rgba(18, 19, 24, 0.72);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow:
-    0 20px 48px -12px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    0 20px 48px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .glass-secondary {
-  background: rgba(12, 14, 20, 0.65);
-  backdrop-filter: blur(28px) saturate(1.7);
-  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  background: rgba(16, 17, 21, 0.65);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 16px 40px -10px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 16px 40px -10px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .glass-control {
   background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .glass-dock {
-  background: rgba(14, 18, 26, 0.78);
-  backdrop-filter: blur(40px) saturate(2.0);
-  -webkit-backdrop-filter: blur(40px) saturate(2.0);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 24px 64px -12px rgba(0, 0, 0, 0.85),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
-.glass-overlay {
-  background: rgba(10, 12, 18, 0.88);
-  backdrop-filter: blur(40px) saturate(2.0);
-  -webkit-backdrop-filter: blur(40px) saturate(2.0);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 32px 80px -16px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.20);
-}
-
-.glass-menu {
-  background: rgba(18, 20, 28, 0.86);
-  backdrop-filter: blur(30px) saturate(1.8);
-  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  background: rgba(18, 19, 24, 0.82);
+  backdrop-filter: blur(32px) saturate(1.7);
+  -webkit-backdrop-filter: blur(32px) saturate(1.7);
   border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow:
-    0 16px 48px -8px rgba(0, 0, 0, 0.8),
+    0 24px 64px rgba(0, 0, 0, 0.85),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
-/* Level 2: Floating Panels & Sheets */
+.glass-overlay {
+  background: rgba(12, 13, 16, 0.88);
+  backdrop-filter: blur(36px) saturate(1.7);
+  -webkit-backdrop-filter: blur(36px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 32px 80px -16px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.glass-menu {
+  background: rgba(20, 21, 26, 0.88);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 16px 48px -8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Level 2: Floating Workspace Panel */
 .glass-floating {
-  background: rgba(16, 20, 30, 0.58);
-  backdrop-filter: blur(32px) saturate(1.8);
-  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  background: rgba(18, 19, 24, 0.62);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 18px 48px -12px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 24px 64px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 /* Level 2: Navigation Rail */
 .glass-nav {
-  background: rgba(14, 18, 26, 0.65);
-  backdrop-filter: blur(28px) saturate(1.8);
-  -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 19, 24, 0.75);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 /* Level 2: Top Bar */
 .glass-topbar {
-  background: rgba(8, 10, 15, 0.72);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(18, 19, 24, 0.78);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* Level 2: Frosted Glass Pills & Segmented Controls */
 .glass-pill {
   background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .glass-pill-active {
-  background: rgba(255, 255, 255, 0.96);
-  color: #050505;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.20);
+  color: #ffffff;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.25);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Level 3: Elevated High-Glass (Modals, Context Menus, Fullscreen) */
@@ -205,29 +211,26 @@ html, body, #root {
   color: #ffffff !important;
   font-weight: 700 !important;
   opacity: 1 !important;
-  transform: scale(1.015);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+  text-shadow: none !important;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               color 0.2s ease;
 }
 
 .lyric-line-nearby {
-  color: rgba(255, 255, 255, 0.70) !important;
-  opacity: 0.70 !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  opacity: 0.65 !important;
   font-weight: 500 !important;
-  transform: scale(1);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+  text-shadow: none !important;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               color 0.2s ease;
 }
 
 .lyric-line-distant {
-  color: rgba(255, 255, 255, 0.42) !important;
-  opacity: 0.42 !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  opacity: 0.35 !important;
   font-weight: 400 !important;
-  transform: scale(0.99);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+  text-shadow: none !important;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               color 0.2s ease;
 }
 
@@ -346,6 +349,11 @@ html, body, #root {
   height: 6px;
 }
 
+.scrubber-slider-aapesh:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
 .scrubber-slider-aapesh::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -356,7 +364,11 @@ html, body, #root {
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
   opacity: 1;
-  transition: transform 0.2s var(--ease-out-expo);
+  transition: transform 0.2s var(--ease-out-expo), box-shadow 0.2s ease;
+}
+
+.scrubber-slider-aapesh:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 .scrubber-slider-aapesh:active::-webkit-slider-thumb {
@@ -371,6 +383,10 @@ html, body, #root {
   cursor: pointer;
   border: none;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.scrubber-slider-aapesh:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 /* AAPESH Circular Avatar Ring */
@@ -583,6 +599,16 @@ html, body, #root {
   line-height: 1.75 !important;
 }
 
+.font-hebrew {
+  font-family: 'Noto Sans Hebrew', 'Arial Hebrew', 'Segoe UI Hebrew', sans-serif;
+  line-height: 1.75 !important;
+}
+
+.font-sinhala {
+  font-family: 'Noto Sans Sinhala', 'Iskoola Pota', 'Segoe UI', sans-serif;
+  line-height: 1.75 !important;
+}
+
 /* Tabular Numerals for Durations and Timestamps */
 .tabular-nums,
 .font-tabular {
@@ -609,6 +635,7 @@ html, body, #root {
 .lyrics-latin { font-family: var(--font-sans); }
 .lyrics-urdu { font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, sans-serif; line-height: 2.2 !important; }
 .lyrics-arabic { font-family: 'Noto Sans Arabic', 'Segoe UI Arabic', Tahoma, sans-serif; line-height: 1.85 !important; }
+.lyrics-hebrew { font-family: 'Noto Sans Hebrew', 'Arial Hebrew', 'Segoe UI Hebrew', sans-serif; line-height: 1.75 !important; }
 .lyrics-devanagari { font-family: 'Noto Sans Devanagari', 'Mangal', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
 .lyrics-bengali { font-family: 'Noto Sans Bengali', 'Vrinda', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
 .lyrics-gurmukhi { font-family: 'Noto Sans Gurmukhi', 'Raavi', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
@@ -617,6 +644,8 @@ html, body, #root {
 .lyrics-telugu { font-family: 'Noto Sans Telugu', 'Gautami', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
 .lyrics-kannada { font-family: 'Noto Sans Kannada', 'Tunga', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
 .lyrics-malayalam { font-family: 'Noto Sans Malayalam', 'Kartika', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-sinhala { font-family: 'Noto Sans Sinhala', 'Iskoola Pota', 'Segoe UI', sans-serif; line-height: 1.75 !important; }
+.lyrics-thai { font-family: 'Noto Sans Thai', 'Leelawadee UI', sans-serif; line-height: 1.75 !important; }
 .lyrics-japanese { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif; line-height: 1.65 !important; }
 .lyrics-korean { font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.65 !important; }
 .lyrics-cjk { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.65 !important; }
@@ -627,32 +656,26 @@ html, body, #root {
 
 .lyric-word {
   display: inline-block;
-  transform-origin: center bottom;
-  will-change: transform, opacity;
-  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  vertical-align: baseline;
+  text-shadow: none !important;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
 
 .lyric-word-active {
-  color: #ffffff;
-  font-weight: 800;
   opacity: 1;
-  transform: scale(1.02) translateY(-0.5px);
+  text-shadow: none !important;
 }
 
 .lyric-word-sung {
   color: #ffffff;
   opacity: 1;
-  font-weight: 800;
-  transform: scale(1) translateY(0);
+  text-shadow: none !important;
 }
 
 .lyric-word-upcoming {
   color: rgba(255, 255, 255, 0.40);
-  opacity: 0.50;
-  font-weight: 500;
-  transform: scale(1) translateY(0);
+  opacity: 0.60;
+  text-shadow: none !important;
 }
 
 /* ==========================================================================

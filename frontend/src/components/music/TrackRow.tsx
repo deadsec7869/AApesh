@@ -6,6 +6,7 @@ import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
+import { getArtworkUrl } from '@/utils/artwork';
 import { controlButtonTap } from '@/lib/motion';
 import { ContextMenu } from './ContextMenu';
 
@@ -53,8 +54,16 @@ export const TrackRow: React.FC<TrackRowProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleRowClick();
+        }
+      }}
       onContextMenu={handleContextMenu}
-      className={`group relative flex items-center gap-3 md:gap-4 px-3 py-2.5 rounded-2xl transition-all duration-150 ease-out-expo cursor-pointer ${
+      className={`group relative flex items-center gap-3 md:gap-4 px-3 py-2.5 rounded-2xl transition-all duration-150 ease-out-expo cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:bg-white/[0.08] ${
         isCurrent
           ? 'bg-white/[0.08] text-white border border-white/10 shadow-sm'
           : 'hover:bg-white/[0.04] text-neutral-300'
@@ -97,7 +106,8 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-charcoal-800 shadow-sm border border-white/5"
         >
           <ArtworkImage
-            src={track.thumbnail}
+            item={track}
+            src={getArtworkUrl(track)}
             alt={track.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             fallbackIconClassName="w-4 h-4 text-neutral-400"
@@ -168,7 +178,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           toggleLike(track);
         }}
         aria-label={liked ? 'Unlike track' : 'Like track'}
-        className={`p-1.5 rounded-full transition-colors duration-150 ${
+        className={`p-1.5 rounded-full transition-colors duration-150 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/50 ${
           liked
             ? 'text-rose-500 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)]'
             : 'text-neutral-500 hover:text-neutral-200 opacity-0 group-hover:opacity-100'
@@ -178,7 +188,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       </motion.button>
 
       {/* Duration */}
-      <div className="text-caption-1 text-neutral-500 font-mono tabular-nums w-10 text-right shrink-0">
+      <div className="text-caption-1 text-neutral-500 font-mono tabular-nums w-10 text-right shrink-0 select-none">
         {track.duration || '0:00'}
       </div>
 
@@ -191,7 +201,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
             setMenuOpen(!menuOpen);
           }}
           aria-label="More options"
-          className="p-1.5 rounded-full text-neutral-500 hover:text-neutral-200 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
+          className="p-1.5 rounded-full text-neutral-500 hover:text-neutral-200 hover:bg-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/50 transition-all"
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>

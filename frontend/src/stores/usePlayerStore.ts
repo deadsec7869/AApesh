@@ -3,6 +3,7 @@ import { Track, RepeatMode } from '@/types/music';
 import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
 import { PlaybackProvider } from '@/services/player/PlaybackProvider';
 import { extractArtworkPalette, ArtworkPalette } from '@/lib/colorExtractor';
+import { getArtworkUrl } from '@/utils/artwork';
 import { ShuffleMode, smartShuffleQueue, standardShuffle } from '@/utils/smartShuffle';
 import {
   StreamingQualityTier,
@@ -362,8 +363,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   playTrack: async (track: Track, newQueue?: Track[]) => {
-    await get().initEngine();
-
     let queue = newQueue ? [...newQueue] : [...get().queue];
     let originalQueue = newQueue ? [...newQueue] : [...get().originalQueue];
 
@@ -394,6 +393,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     prefetchedNextTrackId = null;
 
+    // Immediately update player state and currentTrack so UI responds instantly
     set({
       currentTrack: track,
       queue,
@@ -407,8 +407,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       error: null,
     });
 
+    const trackArtwork = getArtworkUrl(track) || track.thumbnail;
+
     // Extract dynamic artwork palette asynchronously
-    extractArtworkPalette(track.thumbnail, track.title).then((palette) => {
+    extractArtworkPalette(trackArtwork, track.title).then((palette) => {
       set({ atmospherePalette: palette });
       if (typeof document !== 'undefined') {
         document.documentElement.style.setProperty('--ambient-glow', palette.glow);
@@ -432,12 +434,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         title: track.title,
         artist: artistName,
         album: track.album || '',
-        artwork: track.thumbnail
-          ? [{ src: track.thumbnail, sizes: '512x512', type: 'image/jpeg' }]
+        artwork: trackArtwork
+          ? [{ src: trackArtwork, sizes: '512x512', type: 'image/jpeg' }]
           : [],
       });
     }
 
+    await get().initEngine();
     await playbackEngine.load(track);
     await playbackEngine.play();
 
@@ -489,7 +492,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   pause: () => {
-    set({ isPlaying: false });
+    set({ isPlaying: false, playbackStatus: 'paused' });
     playbackEngine.pause();
   },
 

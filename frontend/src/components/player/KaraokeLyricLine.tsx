@@ -30,6 +30,12 @@ export const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = React.memo(
     const showTranslatedOnly = translationMode === 'translation' && hasTranslation;
     const showDual = translationMode === 'dual' && hasTranslation;
 
+    // Compute normalized word tokens with hook at top level
+    const words = useMemo(() => {
+      if (!isActive) return [];
+      return getLineWords(line, nextLineStartTime);
+    }, [isActive, line, nextLineStartTime]);
+
     // Translation only mode
     if (showTranslatedOnly) {
       return (
@@ -54,11 +60,6 @@ export const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = React.memo(
         </div>
       );
     }
-
-    // Active line: Memoize normalized word tokens
-    const words = useMemo(() => {
-      return getLineWords(line, nextLineStartTime);
-    }, [line, nextLineStartTime]);
 
     if (words.length === 0) {
       return (

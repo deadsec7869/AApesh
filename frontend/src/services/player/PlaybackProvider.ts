@@ -15,6 +15,25 @@ export interface PlaybackCallbacks {
   onBufferHealth?: (health: BufferHealth) => void;
 }
 
+export interface AudioCapabilities {
+  providerName: string;
+  volume: 'supported' | 'unsupported' | 'limited';
+  playbackRate: 'supported' | 'unsupported' | 'limited';
+  availablePlaybackRates: number[];
+  eq: 'supported' | 'unsupported' | 'limited';
+  eqReason?: string;
+  balance: 'supported' | 'unsupported' | 'limited';
+  balanceReason?: string;
+  spatialDsp: 'supported' | 'unsupported' | 'limited';
+  spatialDspReason?: string;
+  spatialVisualization: 'supported' | 'unsupported' | 'limited';
+  analyser: 'supported' | 'unsupported' | 'limited';
+  analyserReason?: string;
+  maxBitrateKbps: number;
+  codec: string;
+  qualityDescription: string;
+}
+
 export interface PlaybackProvider {
   name: string;
   init(callbacks: PlaybackCallbacks): Promise<void>;
@@ -26,6 +45,11 @@ export interface PlaybackProvider {
   destroy(): void;
   getCurrentTime(): number;
   getDuration(): number;
+
+  // Audio Lab 2.0 extension
+  setPlaybackRate?(rate: number): void;
+  getPlaybackRate?(): number;
+  getAudioCapabilities?(): AudioCapabilities;
 
   // Smart Pre-buffering extension
   getBufferHealth?(): BufferHealth;

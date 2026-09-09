@@ -133,24 +133,30 @@ describe('KaraokeWord & Progressive Illumination', () => {
     expect(span?.textContent).toBe('Tonight');
   });
 
-  it('renders active word with layered progressive sweep clip-path', () => {
+  it('renders active word with single canonical text geometry and LTR gradient fill', () => {
     const { container } = render(
       <KaraokeWord word={mockWord} currentTimeMs={1500} dir="ltr" />
     );
-    const activeSpan = container.querySelector('.lyric-word-active');
+    const activeSpan = container.querySelector('.lyric-word-active') as HTMLElement;
     expect(activeSpan).toBeInTheDocument();
+    expect(activeSpan?.textContent).toBe('Tonight');
 
-    const highlightLayer = activeSpan?.querySelector('[aria-hidden="true"]') as HTMLElement;
-    expect(highlightLayer).toBeInTheDocument();
-    expect(highlightLayer.style.clipPath).toBe('inset(0 50.00% 0 0)');
+    // Exactly one text element, zero duplicate overlay spans
+    expect(activeSpan.querySelectorAll('span').length).toBe(0);
+    expect(activeSpan.style.backgroundImage).toContain('linear-gradient(to right');
   });
 
-  it('sets right-to-left clip-path for RTL active words', () => {
+  it('sets right-to-left linear gradient sweep for RTL active words without breaking geometry', () => {
     const { container } = render(
       <KaraokeWord word={mockWord} currentTimeMs={1500} dir="rtl" />
     );
-    const highlightLayer = container.querySelector('[aria-hidden="true"]') as HTMLElement;
-    expect(highlightLayer.style.clipPath).toBe('inset(0 0 0 50.00%)');
+    const activeSpan = container.querySelector('.lyric-word-active') as HTMLElement;
+    expect(activeSpan).toBeInTheDocument();
+    expect(activeSpan?.textContent).toBe('Tonight');
+
+    // Exactly one text element, zero duplicate overlay spans
+    expect(activeSpan.querySelectorAll('span').length).toBe(0);
+    expect(activeSpan.style.backgroundImage).toContain('linear-gradient(to left');
   });
 
   it('supports click-to-seek', () => {

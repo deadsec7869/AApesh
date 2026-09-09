@@ -30,6 +30,7 @@ import { formatTime } from '@/lib/utils';
 import { AddToPlaylistModal } from '@/components/common/AddToPlaylistModal';
 import { SleepTimerModal } from '@/components/common/SleepTimerModal';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
+import { getArtworkUrl } from '@/utils/artwork';
 import { api } from '@/api/client';
 import {
   iconCrossfadeVariants,
@@ -38,6 +39,7 @@ import {
   playButtonHover,
   playButtonTap,
 } from '@/lib/motion';
+import { Magnet } from '@/components/react-bits';
 
 export const BottomPlayer: React.FC = () => {
   const {
@@ -170,149 +172,63 @@ export const BottomPlayer: React.FC = () => {
       <footer
         ref={footerRef}
         aria-label="Floating Audio Player"
-        className="fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[76%] max-w-5xl h-20 md:h-[76px] z-40 bg-[#0d1016]/90 backdrop-blur-2xl rounded-[24px] border border-white/[0.09] shadow-[0_24px_64px_rgba(0,0,0,0.85)] px-3 md:px-5 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-2 md:gap-4"
+        className="fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[88%] max-w-5xl h-16 md:h-[68px] z-40 bg-[#14151a]/85 backdrop-blur-3xl rounded-full border border-white/[0.09] shadow-[0_24px_64px_rgba(0,0,0,0.85)] px-4 md:px-6 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-3 md:gap-5"
       >
         {/* Subtle Ambient Artwork Glow */}
         {atmospherePalette && (
           <div
-            className="absolute -inset-1 rounded-[24px] opacity-25 blur-2xl pointer-events-none -z-10 transition-all duration-700"
+            className="absolute -inset-1 rounded-full opacity-25 blur-2xl pointer-events-none -z-10 transition-all duration-700"
             style={{
               background: `radial-gradient(circle at 50% 100%, ${atmospherePalette.glow} 0%, transparent 70%)`,
             }}
           />
         )}
 
-        {/* Ambient Top Glow Progress Accent */}
-        <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full bg-white/[0.05] overflow-hidden pointer-events-none">
-          <div
-            className="h-full bg-white/40 transition-all duration-150"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
         {/* ====================================================================
-            LEFT: Artwork Thumbnail + Track Title + Artist + Like Button
+            LEFT: Transport Controls (Shuffle, Prev, Play/Pause, Next, Repeat)
             ==================================================================== */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 max-w-[180px] sm:max-w-[220px] lg:max-w-[260px] shrink-0">
-          <motion.div
-            onClick={togglePlayerExpanded}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="group relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden bg-charcoal-800 shadow-md shrink-0 cursor-pointer border border-white/10"
-            title="Expand player view"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentTrack.videoId}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="w-full h-full"
-              >
-                <ArtworkImage
-                  src={currentTrack.thumbnail}
-                  alt={currentTrack.title}
-                  className="w-full h-full object-cover"
-                  fallbackIconClassName="w-4 h-4 text-neutral-400"
-                />
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          <div className="min-w-0 flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentTrack.videoId}
-                initial={{ opacity: 0, y: 3 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -3 }}
-                transition={{ duration: 0.18 }}
-              >
-                <div
-                  onClick={togglePlayerExpanded}
-                  className="font-bold text-xs sm:text-sm text-white truncate cursor-pointer hover:underline"
-                  title={currentTrack.title}
-                >
-                  {currentTrack.title}
-                </div>
-                <div
-                  className="text-[11px] text-neutral-400 truncate mt-0.5 flex items-center gap-1.5"
-                  title={currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
-                >
-                  <span className="truncate">{currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}</span>
-                  {playbackStatus === 'prebuffering' && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-mono shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      Preparing audio…
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Shuffle */}
           <motion.button
             whileHover={controlButtonHover}
             whileTap={controlButtonTap}
-            onClick={() => toggleLike(currentTrack)}
-            aria-label={liked ? 'Unlike track' : 'Like track'}
-            className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+            onClick={cycleShuffleMode}
+            aria-label={`Shuffle: ${shuffleMode}`}
+            title={
+              shuffleMode === 'smart'
+                ? 'Smart Shuffle: Active'
+                : shuffleMode === 'standard'
+                ? 'Standard Shuffle'
+                : 'Shuffle Off'
+            }
+            className={`p-1.5 rounded-full transition-all ${
+              shuffleMode === 'smart'
+                ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm'
+                : shuffleMode === 'standard'
+                ? 'text-white bg-white/15'
+                : 'text-neutral-400 hover:text-white'
+            }`}
           >
-            <Heart
-              className={`w-4 h-4 transition-transform active:scale-125 ${
-                liked ? 'text-rose-500 fill-current' : 'text-neutral-400'
-              }`}
-            />
+            {shuffleMode === 'smart' ? (
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            ) : (
+              <Shuffle className="w-3.5 h-3.5" />
+            )}
           </motion.button>
-        </div>
 
-        {/* ====================================================================
-            CENTER: Transport Controls + Integrated Scrubber
-            ==================================================================== */}
-        <div className="flex flex-col items-center justify-center flex-1 max-w-md px-1 sm:px-3 min-w-0">
-          {/* Top transport buttons row */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Shuffle */}
-            <motion.button
-              whileHover={controlButtonHover}
-              whileTap={controlButtonTap}
-              onClick={cycleShuffleMode}
-              aria-label={`Shuffle: ${shuffleMode}`}
-              title={
-                shuffleMode === 'smart'
-                  ? 'Smart Shuffle: Active'
-                  : shuffleMode === 'standard'
-                  ? 'Standard Shuffle'
-                  : 'Shuffle Off'
-              }
-              className={`p-1.5 rounded-full transition-all ${
-                shuffleMode === 'smart'
-                  ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm'
-                  : shuffleMode === 'standard'
-                  ? 'text-white bg-white/15'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              {shuffleMode === 'smart' ? (
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <Shuffle className="w-3.5 h-3.5" />
-              )}
-            </motion.button>
+          {/* Previous Track */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={previous}
+            aria-label="Previous Track"
+            className="p-1.5 text-neutral-300 hover:text-white transition-colors"
+          >
+            <SkipBack className="w-4 h-4 fill-current" />
+          </motion.button>
 
-            {/* Previous Track */}
-            <motion.button
-              whileHover={controlButtonHover}
-              whileTap={controlButtonTap}
-              onClick={previous}
-              aria-label="Previous Track"
-              className="p-1.5 text-neutral-300 hover:text-white transition-colors"
-            >
-              <SkipBack className="w-4 h-4 fill-current" />
-            </motion.button>
-
-            {/* Focal Play/Pause Button */}
+          {/* Focal Play/Pause Button (Solid White Circle with Black Icon) */}
+          <Magnet padding={25} magnetStrength={0.25}>
             <motion.button
               whileHover={playButtonHover}
               whileTap={playButtonTap}
@@ -354,41 +270,70 @@ export const BottomPlayer: React.FC = () => {
                 )}
               </AnimatePresence>
             </motion.button>
+          </Magnet>
 
-            {/* Next Track */}
-            <motion.button
-              whileHover={controlButtonHover}
-              whileTap={controlButtonTap}
-              onClick={next}
-              aria-label="Next Track"
-              className="p-1.5 text-neutral-300 hover:text-white transition-colors"
-            >
-              <SkipForward className="w-4 h-4 fill-current" />
-            </motion.button>
+          {/* Next Track */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={next}
+            aria-label="Next Track"
+            className="p-1.5 text-neutral-300 hover:text-white transition-colors"
+          >
+            <SkipForward className="w-4 h-4 fill-current" />
+          </motion.button>
 
-            {/* Repeat */}
-            <motion.button
-              whileHover={controlButtonHover}
-              whileTap={controlButtonTap}
-              onClick={toggleRepeat}
-              aria-label={`Repeat: ${repeatMode}`}
-              title={`Repeat: ${repeatMode}`}
-              className={`p-1.5 rounded-full transition-all ${
-                repeatMode !== 'off'
-                  ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              {repeatMode === 'track' ? (
-                <Repeat1 className="w-3.5 h-3.5" />
-              ) : (
-                <Repeat className="w-3.5 h-3.5" />
-              )}
-            </motion.button>
+          {/* Repeat */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={toggleRepeat}
+            aria-label={`Repeat: ${repeatMode}`}
+            title={`Repeat: ${repeatMode}`}
+            className={`p-1.5 rounded-full transition-all ${
+              repeatMode !== 'off'
+                ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            {repeatMode === 'track' ? (
+              <Repeat1 className="w-3.5 h-3.5" />
+            ) : (
+              <Repeat className="w-3.5 h-3.5" />
+            )}
+          </motion.button>
+        </div>
+
+        {/* ====================================================================
+            CENTER: Track Info Pill + Precision Scrubber Bar
+            ==================================================================== */}
+        <div className="flex items-center gap-3 flex-1 max-w-md min-w-0 px-1">
+          {/* Current Artwork Thumbnail + Title + Artist */}
+          <div
+            onClick={togglePlayerExpanded}
+            className="flex items-center gap-2.5 p-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-all cursor-pointer min-w-0 max-w-[160px] sm:max-w-[180px] shrink-0"
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-charcoal-800 shrink-0 shadow-sm">
+              <ArtworkImage
+                item={currentTrack}
+                src={getArtworkUrl(currentTrack)}
+                alt={currentTrack.title}
+                className="w-full h-full object-cover"
+                fallbackIconClassName="w-3.5 h-3.5 text-neutral-400"
+              />
+            </div>
+            <div className="min-w-0 flex-1 pr-2">
+              <div className="font-semibold text-xs text-white truncate" title={currentTrack.title}>
+                {currentTrack.title}
+              </div>
+              <div className="text-[10px] text-neutral-400 truncate mt-0.5" title={currentTrack.artists?.map((a) => a.name).join(', ')}>
+                {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
+              </div>
+            </div>
           </div>
 
-          {/* Integrated Scrubber Bar with Time Stamps */}
-          <div className="flex items-center gap-2 w-full mt-1">
+          {/* Precision Scrubber Bar with Time Stamps */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="text-[10px] tabular-nums font-mono text-neutral-400 w-7 text-right select-none shrink-0">
               {formatTime(displayedTime)}
             </span>
@@ -398,6 +343,10 @@ export const BottomPlayer: React.FC = () => {
                 min="0"
                 max={duration || 100}
                 value={displayedTime}
+                aria-valuemin={0}
+                aria-valuemax={duration || 100}
+                aria-valuenow={Math.round(displayedTime)}
+                aria-valuetext={`${formatTime(displayedTime)} of ${formatTime(duration)}`}
                 onPointerDown={() => setScrubValue(currentTime)}
                 onChange={(e) => setScrubValue(Number(e.target.value))}
                 onPointerUp={(e) => {
@@ -426,39 +375,23 @@ export const BottomPlayer: React.FC = () => {
         </div>
 
         {/* ====================================================================
-            RIGHT: Utilities (Spatial Audio, Synced Lyrics, Queue, VideoDock, EQ, Volume, Fullscreen)
+            RIGHT: Utilities (Spatial Audio, Lyrics, Queue, EQ, Volume, Fullscreen)
             ==================================================================== */}
         <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
-          {/* Streaming Quality Badge */}
-          {qualityInfo && (
-            <motion.button
-              whileHover={controlButtonHover}
-              whileTap={controlButtonTap}
-              onClick={toggleQualityModal}
-              aria-label="Streaming Quality"
-              title={`Streaming Quality: ${qualityInfo.statusLabel} (${qualityInfo.providerName})`}
-              className="hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-white/[0.04] hover:bg-white/10 text-neutral-400 hover:text-white border border-white/[0.08] transition-all cursor-pointer"
-            >
-              <Activity className="w-3 h-3 text-neutral-400" />
-              <span>{qualityInfo.shortBadge}</span>
-            </motion.button>
-          )}
-
-          {/* Spatial Audio Pill */}
+          {/* Spatial Audio Icon */}
           <motion.button
             whileHover={controlButtonHover}
             whileTap={controlButtonTap}
             onClick={toggleSpatialAudio}
             aria-label="Spatial Audio"
             title="Spatial Sound DSP"
-            className={`hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-all ${
+            className={`p-1.5 rounded-full transition-all ${
               spatialAudio
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 font-bold'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'
+                ? 'bg-white/20 text-white ring-1 ring-white/30'
+                : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Headphones className="w-3.5 h-3.5" />
-            <span className="w-1 h-1 rounded-full bg-rose-500" />
+            <Headphones className="w-4 h-4" />
           </motion.button>
 
           {/* Lyrics Button */}
@@ -493,23 +426,7 @@ export const BottomPlayer: React.FC = () => {
             <ListMusic className="w-4 h-4" />
           </motion.button>
 
-          {/* VideoDock Toggle */}
-          <motion.button
-            whileHover={controlButtonHover}
-            whileTap={controlButtonTap}
-            onClick={toggleVideoDock}
-            aria-label="Video Dock"
-            title="Toggle Video Dock"
-            className={`p-1.5 rounded-full transition-colors ${
-              isVideoDockOpen
-                ? 'text-white bg-white/20 ring-1 ring-white/25'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Tv className="w-4 h-4" />
-          </motion.button>
-
-          {/* Equalizer Modal Trigger */}
+          {/* Equalizer Trigger */}
           <motion.button
             whileHover={controlButtonHover}
             whileTap={controlButtonTap}
@@ -518,17 +435,33 @@ export const BottomPlayer: React.FC = () => {
             title="10-Band Graphic Equalizer"
             className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-flex"
           >
-            <SlidersHorizontal className="w-4 h-4 text-rose-500" />
+            <SlidersHorizontal className="w-4 h-4" />
+          </motion.button>
+
+          {/* Video Mode Dock Button */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={toggleVideoDock}
+            aria-label="Video Player Dock"
+            title="Toggle Official Video"
+            className={`p-1.5 rounded-full transition-colors hidden sm:inline-flex ${
+              isVideoDockOpen
+                ? 'text-white bg-white/20 ring-1 ring-white/25'
+                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Tv className="w-4 h-4" />
           </motion.button>
 
           {/* Volume Control */}
-          <div className="hidden lg:flex items-center gap-1.5 ml-1">
+          <div className="hidden lg:flex items-center gap-1.5 ml-0.5">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleMute}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
-              className="text-neutral-400 hover:text-white transition-colors"
+              className="text-neutral-400 hover:text-white transition-colors p-1"
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-4 h-4 text-neutral-500" />
@@ -543,9 +476,13 @@ export const BottomPlayer: React.FC = () => {
               min="0"
               max="100"
               value={currentVolume}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={currentVolume}
+              aria-valuetext={`${currentVolume}% volume`}
               onChange={(e) => setVolume(Number(e.target.value))}
               aria-label="Volume Slider"
-              className="scrubber-slider-aapesh w-16"
+              className="scrubber-slider-aapesh w-14"
               style={{
                 background: `linear-gradient(to right, #ffffff ${currentVolume}%, rgba(255, 255, 255, 0.12) ${currentVolume}%)`,
               }}

@@ -57,7 +57,8 @@ export const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps>
     <div
       role="listbox"
       aria-label="Search suggestions and history"
-      className="absolute top-full left-0 right-0 mt-2.5 rounded-[24px] bg-[#10131b]/95 backdrop-blur-3xl border border-white/[0.12] p-4 shadow-[0_24px_64px_rgba(0,0,0,0.9)] z-50 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150 select-none max-h-[75vh] overflow-y-auto"
+      onMouseDown={(e) => e.preventDefault()}
+      className="absolute top-full left-0 right-0 mt-2.5 rounded-[22px] bg-[#0c0e14]/95 backdrop-blur-3xl border border-white/[0.12] p-4 shadow-[0_24px_64px_rgba(0,0,0,0.85)] z-50 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150 select-none max-h-[75vh] overflow-y-auto"
     >
       {/* ====================================================================
           CASE A: EMPTY QUERY -> RECENT SEARCHES

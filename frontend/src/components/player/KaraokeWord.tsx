@@ -1,6 +1,6 @@
 import React from 'react';
 import { LyricWord } from '@/types/music';
-import { getWordStatus, getWordProgress } from '@/utils/wordSync';
+import { getWordStatus, getWordProgress, isUnspacedScript } from '@/utils/wordSync';
 
 export interface KaraokeWordProps {
   word: LyricWord;
@@ -15,11 +15,17 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
   ({ word, currentTimeMs, dir = 'auto', size = 'md', isLastWord = false, onClick }) => {
     const status = getWordStatus(word, currentTimeMs);
     const isRtl = dir === 'rtl';
+    const isUnspaced = isUnspacedScript(word.text);
+    const shouldHaveSpacing = !isLastWord && !isUnspaced;
 
     const sizeSpacing =
       size === 'lg' ? 'me-2 sm:me-3' : size === 'sm' ? 'me-1' : 'me-1.5 sm:me-2';
 
-    // Upcoming word: muted white/gray
+    const baseClasses = `lyric-word inline-block cursor-pointer select-text ${
+      shouldHaveSpacing ? sizeSpacing : ''
+    }`;
+
+    // Upcoming word: muted white/gray (single text geometry)
     if (status === 'upcoming') {
       return (
         <span
@@ -29,16 +35,14 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
               ? `Jump to ${Math.floor(word.startTime / 1000)}s`
               : undefined
           }
-          className={`lyric-word lyric-word-upcoming inline-block cursor-pointer select-text text-white/40 font-medium transition-colors duration-150 hover:text-white/70 ${
-            !isLastWord ? sizeSpacing : ''
-          }`}
+          className={`${baseClasses} lyric-word-upcoming text-white/40 transition-colors duration-150 hover:text-white/70`}
         >
           {word.text}
         </span>
       );
     }
 
-    // Sung word: fully illuminated bright white
+    // Sung word: fully illuminated bright white (single text geometry)
     if (status === 'sung') {
       return (
         <span
@@ -48,23 +52,22 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
               ? `Jump to ${Math.floor(word.startTime / 1000)}s`
               : undefined
           }
-          className={`lyric-word lyric-word-sung inline-block cursor-pointer select-text text-white font-extrabold ${
-            !isLastWord ? sizeSpacing : ''
-          }`}
+          className={`${baseClasses} lyric-word-sung text-white`}
         >
           {word.text}
         </span>
       );
     }
 
-    // Active word: progressive letter-by-letter / continuous sweep illumination
+    // Active word: single canonical text geometry with direction-aware linear gradient fill
+    // Zero duplicate text layers, zero font-weight mismatch, zero subpixel blur
     const progress = getWordProgress(word, currentTimeMs);
-    const unrevealedPct = Math.max(0, Math.min(100, (1 - progress) * 100)).toFixed(2);
+    const progressPct = Math.max(0, Math.min(100, progress * 100)).toFixed(1);
 
-    // RTL sweeps right-to-left (inset left side), LTR sweeps left-to-right (inset right side)
-    const clipPath = isRtl
-      ? `inset(0 0 0 ${unrevealedPct}%)`
-      : `inset(0 ${unrevealedPct}% 0 0)`;
+    // RTL sweeps right-to-left ('to left'), LTR sweeps left-to-right ('to right')
+    const bgGradient = isRtl
+      ? `linear-gradient(to left, #ffffff ${progressPct}%, rgba(255, 255, 255, 0.40) ${progressPct}%)`
+      : `linear-gradient(to right, #ffffff ${progressPct}%, rgba(255, 255, 255, 0.40) ${progressPct}%)`;
 
     return (
       <span
@@ -74,25 +77,16 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
             ? `Jump to ${Math.floor(word.startTime / 1000)}s`
             : undefined
         }
-        className={`lyric-word lyric-word-active relative inline-block cursor-pointer select-text ${
-          !isLastWord ? sizeSpacing : ''
-        }`}
+        className={`${baseClasses} lyric-word-active`}
+        style={{
+          backgroundImage: bgGradient,
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          color: 'transparent',
+        }}
       >
-        {/* Base Layer: Muted base text */}
-        <span className="text-white/40 font-medium select-text">{word.text}</span>
-
-        {/* Highlight Layer: Progressive bright white illumination */}
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 top-0 text-white font-extrabold select-none pointer-events-none"
-          style={{
-            clipPath,
-            WebkitClipPath: clipPath,
-            willChange: 'clip-path',
-          }}
-        >
-          {word.text}
-        </span>
+        {word.text}
       </span>
     );
   }

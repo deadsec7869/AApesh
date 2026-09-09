@@ -16,10 +16,60 @@ from backend.app.services.lyrics_engine.script_detector import (
 logger = logging.getLogger("aurora.lyrics_engine")
 
 
+# Regex for unspaced language scripts (CJK ideographs, Hiragana, Katakana, Thai, Lao, Myanmar, Khmer)
+UNSPACED_SCRIPT_REGEX = re.compile(
+    r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u0e00-\u0e7f\u0e80-\u0eff\u1000-\u109f\u1780-\u17ff]"
+)
+
+
+def clean_track_title_and_artist(raw_title: str, raw_artist: str) -> Tuple[str, str, str]:
+    """
+    Cleans track title and artist from video metadata noise (OST tags, movie names, quality tags).
+    Returns (clean_title, clean_artist, core_search_query).
+    """
+    t = raw_title or ""
+    # Strip video quality, official tags, visualizer, audio, lyric video
+    t = re.sub(
+        r"\s*(\(|\[)(official\s*(music\s*)?video|hd|hq|4k|audio|lyric\s*video|visualizer|mv|full\s*song|video\s*song|video|lyrical|full\s*video|original\s*mix)(\)|\])",
+        "",
+        t,
+        flags=re.IGNORECASE,
+    )
+    # Strip (From "Movie") / [From "Movie"] / soundtrack / ost
+    t = re.sub(
+        r"\s*(\(|\[)(from\s*[\"'].*?[\"']|from\s+[^)\]]+|soundtrack|ost)(\)|\])",
+        "",
+        t,
+        flags=re.IGNORECASE,
+    )
+    # Strip language tags like [Telugu], [Hindi], [Tamil], (Japanese Ver.)
+    t = re.sub(
+        r"\s*(\(|\[)(telugu|hindi|tamil|punjabi|kannada|malayalam|bengali|japanese|korean|spanish|urdu|french|arabic)(\)|\])",
+        "",
+        t,
+        flags=re.IGNORECASE,
+    )
+    # Strip pipe suffixes like | Arijit Singh | Movie
+    t = re.sub(r"\s*\|.*$", "", t)
+    # Strip hyphen suffixes like - Official Video
+    t = re.sub(r"\s*-\s*(official|lyrical|video|audio|full).*$", "", t, flags=re.IGNORECASE)
+    clean_title = re.sub(r"\s+", " ", t).strip()
+
+    a = raw_artist or ""
+    a = re.sub(r"\s*-\s*Topic$", "", a, flags=re.IGNORECASE)
+    # Extract primary artist before feat / ft / comma / & / with
+    primary_artist = re.sub(r"\s*(,|&|feat\.|ft\.|vs\.|with|x)\s+.*$", "", a, flags=re.IGNORECASE).strip()
+    clean_artist = primary_artist or a.strip()
+
+    search_query = f"{clean_title} {clean_artist}".strip()
+    return clean_title, clean_artist, search_query
+
+
 def extract_word_timings(raw_line_text: str, start_time_ms: int, end_time_ms: int) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Extract word-level timings from enhanced LRC tags (e.g. <00:12.34>word) if present,
     or generate naturalistic phonetic word timings distributed across the line duration.
+    Supports spaced languages as well as unspaced CJK and Thai scripts.
     Returns (clean_text, words).
     """
     if not raw_line_text:
@@ -63,6 +113,7 @@ def extract_word_timings(raw_line_text: str, start_time_ms: int, end_time_ms: in
                     "text": chunk,
                     "startTime": w_start,
                     "endTime": max(w_start + 100, w_end),
+                    "isEstimated": False,
                 })
 
         clean_text = inline_ts_pattern.sub("", raw_line_text).strip()
@@ -73,7 +124,13 @@ def extract_word_timings(raw_line_text: str, start_time_ms: int, end_time_ms: in
     # If no inline timestamps, distribute across words proportionally
     clean_text = inline_ts_pattern.sub("", raw_line_text).strip()
     clean_text = re.sub(r"\s+", " ", clean_text)
-    word_tokens = clean_text.split()
+
+    # Check for unspaced script (CJK, Thai, etc.) without spaces
+    if not re.search(r"\s+", clean_text) and UNSPACED_SCRIPT_REGEX.search(clean_text):
+        word_tokens = list(clean_text)
+    else:
+        word_tokens = clean_text.split()
+
     if not word_tokens:
         return clean_text, []
 
@@ -81,7 +138,7 @@ def extract_word_timings(raw_line_text: str, start_time_ms: int, end_time_ms: in
     weights = []
     for w in word_tokens:
         w_len = max(1, len(w))
-        if w.endswith((",", ".", "!", "?", ";", "—", "-")):
+        if w.endswith((",", ".", "!", "?", ";", "—", "-", "。", "、", "！", "？", "।", "۔")):
             w_len += 2
         weights.append(w_len)
 
@@ -95,6 +152,7 @@ def extract_word_timings(raw_line_text: str, start_time_ms: int, end_time_ms: in
             "text": w,
             "startTime": curr,
             "endTime": max(curr + 80, w_end),
+            "isEstimated": True,
         })
         curr = w_end
 
@@ -305,7 +363,94 @@ class YouTubeMusicLyricsProvider(LyricsProvider):
 
 
 class LRCLIBProvider(LyricsProvider):
-    """Fetches open community synced lyrics via LRCLIB."""
+    """Fetches open community synced lyrics via LRCLIB with multi-step fallback."""
+
+    def _fetch_data(self, url: str) -> Optional[Any]:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "AAPESHMusic/1.0 (https://github.com/aapesh)"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                if resp.status == 200:
+                    return json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return None
+        return None
+
+    def _format_result(
+        self,
+        data: Dict[str, Any],
+        video_id: str,
+        media_dur: Optional[float],
+    ) -> Optional[Dict[str, Any]]:
+        is_instrumental = data.get("instrumental", False)
+        synced_raw = data.get("syncedLyrics")
+        plain_raw = data.get("plainLyrics")
+        lyrics_dur = float(data["duration"]) if data.get("duration") else None
+
+        duration_diff = None
+        sync_confidence = "good"
+
+        if media_dur and lyrics_dur:
+            duration_diff = round(abs(media_dur - lyrics_dur), 2)
+            if duration_diff < 1.5:
+                sync_confidence = "excellent"
+            elif duration_diff <= 3.0:
+                sync_confidence = "good"
+            elif duration_diff <= 5.0:
+                sync_confidence = "uncertain"
+            else:
+                sync_confidence = "poor"
+
+        if synced_raw:
+            parsed = parse_lrc_lines(synced_raw)
+            if parsed:
+                annotated_lines, primary_script, direction, language = annotate_lyric_lines(parsed)
+                return {
+                    "videoId": video_id,
+                    "synced": True,
+                    "hasLyrics": True,
+                    "lines": annotated_lines,
+                    "lyrics": plain_raw or synced_raw,
+                    "source": "Source: LRCLIB (Open Synchronized Lyrics)",
+                    "provider": "open_synced_lrclib",
+                    "syncConfidence": sync_confidence,
+                    "lyricsDuration": lyrics_dur,
+                    "mediaDuration": media_dur,
+                    "durationDifference": duration_diff,
+                    "primaryScript": primary_script,
+                    "direction": direction,
+                    "language": language,
+                    "instrumental": is_instrumental,
+                }
+
+        if plain_raw:
+            static_lines = [
+                {"id": str(i), "text": line.strip()}
+                for i, line in enumerate(plain_raw.splitlines())
+                if line.strip()
+            ]
+            annotated_lines, primary_script, direction, language = annotate_lyric_lines(static_lines)
+            return {
+                "videoId": video_id,
+                "synced": False,
+                "hasLyrics": True,
+                "lines": annotated_lines,
+                "lyrics": plain_raw,
+                "source": "Source: LRCLIB",
+                "provider": "open_synced_lrclib",
+                "syncConfidence": "uncertain",
+                "lyricsDuration": lyrics_dur,
+                "mediaDuration": media_dur,
+                "durationDifference": duration_diff,
+                "primaryScript": primary_script,
+                "direction": direction,
+                "language": language,
+                "instrumental": is_instrumental,
+            }
+
+        return None
 
     def get_lyrics(self, track_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         video_id = track_info.get("videoId")
@@ -317,100 +462,54 @@ class LRCLIBProvider(LyricsProvider):
         if not title:
             return None
 
-        # Clean noise words while preserving specific version keywords
-        clean_title = re.sub(
-            r"\s*(\(|\[)(official\s*(music\s*)?video|hd|hq|4k|audio|lyric\s*video|visualizer|mv)(\)|\])",
-            "",
-            title,
-            flags=re.IGNORECASE,
-        ).strip()
-        clean_title = re.sub(r"\s+", " ", clean_title)
+        clean_title, clean_artist, search_query = clean_track_title_and_artist(title, artist)
 
-        params = {
+        # Step 1: Exact lookup with clean title & artist
+        exact_params = {
             "track_name": clean_title,
-            "artist_name": artist or "",
+            "artist_name": clean_artist,
         }
         if album:
-            params["album_name"] = album
+            exact_params["album_name"] = album
         if media_dur and media_dur > 0:
-            params["duration"] = int(media_dur)
+            exact_params["duration"] = int(media_dur)
 
-        url = f"https://lrclib.net/api/get?{urllib.parse.urlencode(params)}"
-        req = urllib.request.Request(url, headers={"User-Agent": "AuroraMusic/1.0 (https://github.com/aurora)"})
+        url = f"https://lrclib.net/api/get?{urllib.parse.urlencode(exact_params)}"
+        data = self._fetch_data(url)
+        if data:
+            formatted = self._format_result(data, video_id, media_dur)
+            if formatted and (formatted.get("synced") or not media_dur):
+                return formatted
 
-        try:
-            with urllib.request.urlopen(req, timeout=4) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    is_instrumental = data.get("instrumental", False)
-                    synced_raw = data.get("syncedLyrics")
-                    plain_raw = data.get("plainLyrics")
-                    lyrics_dur = float(data["duration"]) if data.get("duration") else None
+        # Step 2: Smart Search fallback (1 optimized query)
+        q = search_query if len(clean_artist) > 2 else clean_title
+        s_url = f"https://lrclib.net/api/search?q={urllib.parse.quote(q)}"
+        results = self._fetch_data(s_url)
+        if not results and q != clean_title:
+            s_url = f"https://lrclib.net/api/search?q={urllib.parse.quote(clean_title)}"
+            results = self._fetch_data(s_url)
 
-                    # Compute duration correlation and sync confidence
-                    duration_diff = None
-                    sync_confidence = "good"
+        if results and isinstance(results, list):
+            synced_results = [r for r in results if r.get("syncedLyrics")]
+            if synced_results:
+                if media_dur and media_dur > 0:
+                    synced_results.sort(
+                        key=lambda r: abs(float(r.get("duration", 0)) - media_dur)
+                    )
+                best_match = synced_results[0]
+                formatted = self._format_result(best_match, video_id, media_dur)
+                if formatted:
+                    return formatted
+            else:
+                plain_results = [r for r in results if r.get("plainLyrics")]
+                if plain_results:
+                    if media_dur and media_dur > 0:
+                        plain_results.sort(
+                            key=lambda r: abs(float(r.get("duration", 0)) - media_dur)
+                        )
+                    return self._format_result(plain_results[0], video_id, media_dur)
 
-                    if media_dur and lyrics_dur:
-                        duration_diff = round(abs(media_dur - lyrics_dur), 2)
-                        if duration_diff < 1.5:
-                            sync_confidence = "excellent"
-                        elif duration_diff <= 3.0:
-                            sync_confidence = "good"
-                        elif duration_diff <= 5.0:
-                            sync_confidence = "uncertain"
-                        else:
-                            sync_confidence = "poor"
-
-                    if synced_raw:
-                        parsed = parse_lrc_lines(synced_raw)
-                        if parsed:
-                            annotated_lines, primary_script, direction, language = annotate_lyric_lines(parsed)
-                            return {
-                                "videoId": video_id,
-                                "synced": True,
-                                "hasLyrics": True,
-                                "lines": annotated_lines,
-                                "lyrics": plain_raw or synced_raw,
-                                "source": "Source: LRCLIB (Open Synchronized Lyrics)",
-                                "provider": "open_synced_lrclib",
-                                "syncConfidence": sync_confidence,
-                                "lyricsDuration": lyrics_dur,
-                                "mediaDuration": media_dur,
-                                "durationDifference": duration_diff,
-                                "primaryScript": primary_script,
-                                "direction": direction,
-                                "language": language,
-                                "instrumental": is_instrumental,
-                            }
-
-                    if plain_raw:
-                        static_lines = [
-                            {"id": str(i), "text": line.strip()}
-                            for i, line in enumerate(plain_raw.splitlines())
-                            if line.strip()
-                        ]
-                        annotated_lines, primary_script, direction, language = annotate_lyric_lines(static_lines)
-                        return {
-                            "videoId": video_id,
-                            "synced": False,
-                            "hasLyrics": True,
-                            "lines": annotated_lines,
-                            "lyrics": plain_raw,
-                            "source": "Source: LRCLIB",
-                            "provider": "open_synced_lrclib",
-                            "syncConfidence": "uncertain",
-                            "lyricsDuration": lyrics_dur,
-                            "mediaDuration": media_dur,
-                            "durationDifference": duration_diff,
-                            "primaryScript": primary_script,
-                            "direction": direction,
-                            "language": language,
-                            "instrumental": is_instrumental,
-                        }
-        except Exception as e:
-            logger.debug("LRCLIB lookup failed for %s (%s): %s", title, video_id, e)
-            return None
+        return None
 
 
 class CompositeLyricsService:

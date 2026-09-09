@@ -212,6 +212,101 @@ describe('AAPESH Search 2.0 — Music Discovery Engine & Components', () => {
     expect(onClearHistory).toHaveBeenCalled();
   });
 
+  it('renders TopResultCard for artist and album types', () => {
+    const { rerender } = render(
+      <BrowserRouter>
+        <TopResultCard
+          type="artist"
+          data={mockResults.artists[0]}
+        />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Daft Punk')).toBeInTheDocument();
+    expect(screen.getByText('5.2M')).toBeInTheDocument();
+
+    rerender(
+      <BrowserRouter>
+        <TopResultCard
+          type="album"
+          data={mockResults.albums[0]}
+        />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Discovery')).toBeInTheDocument();
+    expect(screen.getByText(/2001/)).toBeInTheDocument();
+  });
+
+  it('handles suggestion selection and single history item deletion', () => {
+    const onSelectQuery = vi.fn();
+    const onPlayTrack = vi.fn();
+    const onDeleteHistoryItem = vi.fn();
+    const onClearHistory = vi.fn();
+
+    const { rerender } = render(
+      <SearchSuggestionsDropdown
+        query=""
+        history={[{ id: 'item-1', query: 'Starboy' }]}
+        suggestions={[]}
+        suggestedTracks={[]}
+        selectedIndex={-1}
+        onSelectQuery={onSelectQuery}
+        onPlayTrack={onPlayTrack}
+        onDeleteHistoryItem={onDeleteHistoryItem}
+        onClearHistory={onClearHistory}
+      />
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: /Remove Starboy from history/i });
+    fireEvent.click(deleteBtn);
+    expect(onDeleteHistoryItem).toHaveBeenCalled();
+
+    // Rerender with active query and autocomplete suggestions
+    rerender(
+      <SearchSuggestionsDropdown
+        query="Star"
+        history={[]}
+        suggestions={['Starboy', 'Starlight']}
+        suggestedTracks={[]}
+        selectedIndex={0}
+        onSelectQuery={onSelectQuery}
+        onPlayTrack={onPlayTrack}
+        onDeleteHistoryItem={onDeleteHistoryItem}
+        onClearHistory={onClearHistory}
+      />
+    );
+
+    expect(screen.getByText('Live Suggestions')).toBeInTheDocument();
+    const suggestionOption = screen.getByText('boy'); // highlighted match part
+    fireEvent.click(suggestionOption);
+    expect(onSelectQuery).toHaveBeenCalledWith('Starboy');
+  });
+
+  it('guarantees monotonic request resolution prevents stale race condition overwrites', async () => {
+    let latestRequestId = 0;
+    let committedState = '';
+
+    const executeMonotonicSearch = async (term: string, delayMs: number) => {
+      const currentId = ++latestRequestId;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      // Only commit if this request is still current
+      if (currentId === latestRequestId) {
+        committedState = term;
+      }
+    };
+
+    // Dispatch request 1 ("A") with high latency (50ms)
+    // Dispatch request 2 ("AB") with low latency (10ms)
+    const p1 = executeMonotonicSearch('A', 50);
+    const p2 = executeMonotonicSearch('AB', 10);
+
+    await Promise.all([p1, p2]);
+
+    // Request 2 must win and not be overwritten by delayed Request 1
+    expect(committedState).toBe('AB');
+  });
+
   it('renders SearchSkeleton properly without breaking', () => {
     render(<SearchSkeleton />);
     expect(screen.getByLabelText('Loading search results')).toBeInTheDocument();

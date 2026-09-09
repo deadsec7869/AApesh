@@ -19,6 +19,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { TrackRow } from '@/components/music/TrackRow';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
+import { getArtworkUrl } from '@/utils/artwork';
 
 const DEFAULT_TOP_TRACKS: Track[] = [
   {
@@ -68,8 +69,61 @@ export const HomePage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [artistPhotos, setArtistPhotos] = useState<Record<string, string>>({});
 
   const displayedRecs = recommendations.length > 0 ? recommendations : DEFAULT_TOP_TRACKS;
+
+  // Derive dynamic real artists from library or live API data (No hardcoded mock data)
+  const displayedArtists = React.useMemo(() => {
+    if (followedArtists.length > 0) return followedArtists;
+    const list: any[] = [];
+    homeData?.shelves?.forEach((shelf) => {
+      shelf.contents?.forEach((item) => {
+        if (item.type === 'artist' && !list.find((a) => a.name === item.title)) {
+          list.push({
+            id: item.id || item.browseId || item.title,
+            name: item.title,
+            thumbnail: getArtworkUrl(item),
+            browseId: item.browseId,
+          });
+        }
+      });
+    });
+    if (list.length === 0 && recommendations.length > 0) {
+      recommendations.forEach((rec) => {
+        rec.artists?.forEach((a) => {
+          if (a.name && !list.find((x) => x.name === a.name)) {
+            list.push({
+              id: a.id || a.name,
+              name: a.name,
+              browseId: a.id?.startsWith('UC') ? a.id : undefined,
+              thumbnail: undefined,
+            });
+          }
+        });
+      });
+    }
+    return list.slice(0, 12);
+  }, [followedArtists, homeData, recommendations]);
+
+  // Asynchronously resolve authentic artist portraits for artists with genuine channel IDs
+  useEffect(() => {
+    displayedArtists.forEach((artist: any) => {
+      const channelId = artist.browseId || (artist.id?.startsWith('UC') ? artist.id : null);
+      if (!channelId || artistPhotos[channelId]) return;
+
+      api.getArtist(channelId)
+        .then((artistData) => {
+          const photo = getArtworkUrl(artistData);
+          if (photo) {
+            setArtistPhotos((prev) => ({ ...prev, [channelId]: photo }));
+          }
+        })
+        .catch(() => {});
+    });
+  }, [displayedArtists, artistPhotos]);
+
+  const continueTrack = recentlyPlayed.length > 0 ? recentlyPlayed[0] : recommendations[0] || null;
 
   const topMixesRef = useRef<HTMLDivElement>(null);
   const recentlyPlayedRef = useRef<HTMLDivElement>(null);
@@ -219,308 +273,74 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 md:p-10 flex flex-col gap-9 animate-in fade-in duration-300 max-w-full overflow-x-hidden">
+    <div className="flex flex-col gap-8 animate-in fade-in duration-300 max-w-full overflow-x-hidden select-none">
       {/* ====================================================================
-          1. HEADER: Dynamic Time-Based Greeting + Category Pills
-          ==================================================================== */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">
-              Guest Mode • Unlimited Spatial Streaming
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm">
-            {getGreeting()}
-          </h1>
-          <p className="text-xs sm:text-sm text-neutral-400 max-w-xl">
-            Stream millions of tracks ad-free with high-fidelity clarity in open guest mode.
-          </p>
-        </div>
-
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 text-xs rounded-full transition-all duration-200 ${
-                selectedCategory === cat
-                  ? 'glass-ios28-pill-active'
-                  : 'glass-ios28-pill text-neutral-300'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ====================================================================
-          2. QUICK RECOMMENDATION / CONTENT AREA (Quick-Jump Grid)
-          ==================================================================== */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        {quickJumpCards.map((card) => (
-          <div
-            key={card.title}
-            onClick={() => handleQuickJump(card)}
-            className="group relative flex items-center gap-3.5 pr-4 rounded-2xl glass-ios28-surface-interactive overflow-hidden cursor-pointer"
-          >
-            {/* Left Image Container */}
-            <div className="relative w-16 h-16 sm:w-18 sm:h-18 shrink-0 bg-charcoal-800 flex items-center justify-center overflow-hidden">
-              {card.type === 'liked' ? (
-                <div className="w-full h-full bg-charcoal-800 border-r border-white/10 flex items-center justify-center">
-                  <Heart className="w-7 h-7 text-rose-500 fill-current drop-shadow-md" />
-                </div>
-              ) : (
-                <ArtworkImage
-                  src={card.thumbnail}
-                  alt={card.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
-                />
-              )}
-            </div>
-
-            {/* Middle Title & Subtitle */}
-            <div className="min-w-0 flex-1 py-2">
-              <div className="font-bold text-sm text-white truncate group-hover:text-white transition-colors">
-                {card.title}
-              </div>
-              <div className="text-[11px] text-neutral-400 truncate mt-0.5">
-                {card.subtitle}
-              </div>
-            </div>
-
-            {/* Right Play Button (Reveals on Hover) */}
-            <div className="opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-200 ease-out-expo shrink-0">
-              <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg">
-                <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* ====================================================================
-          3. RECENTLY PLAYED SECTION (Real History, Denser Layout & Error Fallback)
+          1. TOP RECOMMENDATION SHELF (Screenshots 3 & 4)
           ==================================================================== */}
       <section className="flex flex-col gap-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-300" />
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Recently Played
-            </h2>
-          </div>
-          {recentlyPlayed.length > 5 && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => scrollContainer(recentlyPlayedRef, 'left')}
-                aria-label="Previous recently played"
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => scrollContainer(recentlyPlayedRef, 'right')}
-                aria-label="Next recently played"
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {recentlyPlayed.length > 0 ? (
-          <div
-            ref={recentlyPlayedRef}
-            className="flex gap-3.5 overflow-x-auto pb-3 pt-1 pr-4 scroll-smooth no-scrollbar w-full"
-          >
-            {recentlyPlayed.map((track) => (
-              <div
-                key={track.videoId}
-                onClick={() => playTrack(track, recentlyPlayed)}
-                className="group relative flex flex-col p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/15 transition-all duration-200 cursor-pointer w-32 sm:w-36 md:w-40 shrink-0 min-w-0"
-              >
-                {/* Artwork Container */}
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-md mb-2">
-                  <ArtworkImage
-                    src={track.thumbnail}
-                    alt={track.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
-                    fallbackIconClassName="w-5 h-5 text-neutral-400"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform">
-                      <Play className="w-3.5 h-3.5 fill-current translate-x-0.5 text-black" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="flex flex-col min-w-0 px-0.5">
-                  <div className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-white">
-                    {track.title}
-                  </div>
-                  <div className="text-[10px] sm:text-[11px] text-neutral-400 truncate mt-0.5">
-                    {track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-neutral-400 shrink-0">
-              <Clock className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm text-white">Nothing played yet</span>
-              <span className="text-xs text-neutral-400 mt-0.5">
-                Start listening and your recent tracks will appear here.
-              </span>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ====================================================================
-          4. FOLLOWING ARTISTS SECTION (Real Followed Artists & Compact Rail)
-          ==================================================================== */}
-      <section className="flex flex-col gap-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Headphones className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-300" />
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Following Artists
-            </h2>
-          </div>
-          {followedArtists.length > 5 && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => scrollContainer(followedArtistsRef, 'left')}
-                aria-label="Previous following artists"
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => scrollContainer(followedArtistsRef, 'right')}
-                aria-label="Next following artists"
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {followedArtists.length > 0 ? (
-          <div
-            ref={followedArtistsRef}
-            className="flex gap-4 overflow-x-auto pb-3 pt-1 pr-4 scroll-smooth no-scrollbar w-full"
-          >
-            {followedArtists.map((artist) => (
-              <div
-                key={artist.id}
-                onClick={() => navigate(`/artist/${artist.id}`)}
-                className="group flex flex-col items-center text-center gap-2 p-2 rounded-2xl hover:bg-white/[0.04] transition-all cursor-pointer w-24 sm:w-28 shrink-0 min-w-0"
-              >
-                {/* Circular Artwork */}
-                <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 border border-white/15 group-hover:border-white/35 flex items-center justify-center overflow-hidden shrink-0 transition-colors shadow-md">
-                  <ArtworkImage
-                    src={artist.thumbnail}
-                    alt={artist.name}
-                    className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    fallbackIconClassName="w-5 h-5 text-neutral-400"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
-                    <Play className="w-4 h-4 text-white fill-current translate-x-0.5" />
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center min-w-0 w-full px-1">
-                  <span className="font-semibold text-xs text-white truncate w-full group-hover:underline">
-                    {artist.name}
-                  </span>
-                  <span className="text-[10px] text-neutral-400 truncate mt-0.5">
-                    {artist.songs || 'Artist'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-neutral-400 shrink-0">
-              <User className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm text-white">No followed artists</span>
-              <span className="text-xs text-neutral-400 mt-0.5">
-                Follow artists to build your artist rail.
-              </span>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ====================================================================
-          5. TOP RECOMMENDATION / DISCOVERY CONTENT
-          ==================================================================== */}
-      <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             Top Recommendation
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={() => {
-                setIsLoading(true);
-                api.getRecommendations(12).then(setRecommendations).finally(() => setIsLoading(false));
-              }}
-              aria-label="Refresh recommendations"
-              className="p-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors"
+              onClick={() => scrollContainer(topMixesRef, 'left')}
+              aria-label="Previous recommendations"
+              className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
             >
-              <RotateCw className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => scrollContainer(topMixesRef, 'right')}
+              aria-label="Next recommendations"
+              className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* 4 Compact Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-          {displayedRecs.slice(0, 4).map((item) => (
+        {/* Shelf of Compact Cards (6 visible at desktop) */}
+        <div
+          ref={topMixesRef}
+          className="flex items-stretch gap-3.5 overflow-x-auto pb-2 pr-6 scroll-smooth no-scrollbar w-full"
+        >
+          {displayedRecs.map((item, idx) => (
             <div
-              key={item.videoId || item.title}
+              key={item.videoId || item.title || idx}
               onClick={() => {
                 playTrack(item, displayedRecs);
               }}
-              className="group relative flex flex-col p-3 sm:p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/15 transition-all duration-200 overflow-hidden cursor-pointer"
+              className="group relative w-[170px] sm:w-[185px] md:w-[195px] shrink-0 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.07] hover:border-white/15 transition-all duration-200 cursor-pointer flex flex-col gap-2.5"
             >
-              {/* Artwork Container */}
-              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-lg mb-3">
+              {/* Artwork Container with Top-Left Play Badge */}
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-md">
                 <ArtworkImage
-                  src={item.thumbnail}
+                  item={item}
+                  src={getArtworkUrl(item)}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
                   fallbackIconClassName="w-6 h-6 text-neutral-400"
                 />
-                <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {/* Subtle top-left play icon badge */}
+                <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">
+                  <Play className="w-2.5 h-2.5 fill-current text-white translate-x-0.5" />
+                </div>
+                {/* Hover Play Button Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-xl scale-95 group-hover:scale-100 transition-transform">
                     <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
                   </div>
                 </div>
               </div>
 
-              {/* Title & Artist */}
-              <div className="flex flex-col min-w-0">
-                <h3 className="font-bold text-xs sm:text-sm text-white truncate group-hover:text-white transition-colors">
+              {/* Title & Subtitle */}
+              <div className="flex flex-col min-w-0 px-0.5">
+                <h3 className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-white transition-colors" title={item.title}>
                   {item.title}
                 </h3>
                 <p className="text-[11px] text-neutral-400 truncate mt-0.5">
-                  {item.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist'}
+                  {item.album || item.artists?.map((a: any) => a.name).join(', ') || 'Playlist'}
                 </p>
               </div>
             </div>
@@ -529,141 +349,203 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ====================================================================
-          6. CURATED HERO MIXES: Wide Hero Mix + Carousel Cards
+          2. FOLLOWING ARTISTS & CONTINUE PLAYING (Screenshots 3 & 4 Grid)
           ==================================================================== */}
-      <section className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT: Following Artists Horizontal Circular Rail (~60% width) */}
+        <section className="lg:col-span-7 flex flex-col gap-3.5 min-w-0">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Following Artists
+            </h2>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => scrollContainer(followedArtistsRef, 'left')}
+                aria-label="Previous artists"
+                className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => scrollContainer(followedArtistsRef, 'right')}
+                aria-label="Next artists"
+                className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={followedArtistsRef}
+            className="flex gap-4 overflow-x-auto pb-2 pr-6 scroll-smooth no-scrollbar w-full"
+          >
+            {displayedArtists.map((artist: any, artistIdx: number) => {
+              const artistPhoto =
+                artist.thumbnail ||
+                (artist.browseId ? artistPhotos[artist.browseId] : null) ||
+                (artist.id ? artistPhotos[artist.id] : null);
+
+              return (
+                <div
+                  key={`${artist.id || artist.name}-${artistIdx}`}
+                  onClick={() => navigate(artist.browseId ? `/artist/${artist.browseId}` : `/search/${encodeURIComponent(artist.name)}`)}
+                  className="group flex flex-col items-center text-center gap-2 p-1.5 rounded-2xl hover:bg-white/[0.04] transition-all cursor-pointer w-20 sm:w-24 shrink-0 min-w-0"
+                >
+                  {/* Circular Artwork Avatar */}
+                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 border border-white/15 group-hover:border-white/35 flex items-center justify-center overflow-hidden shrink-0 transition-colors shadow-md bg-charcoal-800">
+                    <ArtworkImage
+                      item={artist}
+                      src={artistPhoto}
+                      alt={artist.name}
+                      className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallbackIcon={<User className="w-6 h-6 text-neutral-400" />}
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-center min-w-0 w-full">
+                    <span className="font-semibold text-xs text-white truncate w-full group-hover:underline">
+                      {artist.name}
+                    </span>
+                    <span className="text-[10px] text-neutral-400 truncate mt-0.5">
+                      Artist
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* RIGHT: Continue Playing Compact Glass Row (~40% width) */}
+        <section className="lg:col-span-5 flex flex-col gap-3.5 min-w-0">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Continue Playing
+            </h2>
+          </div>
+
+          {/* Compact Glass Row (Screenshot 3 & 4 Match) */}
+          {continueTrack ? (
+            <div
+              onClick={() => {
+                playTrack(continueTrack, recentlyPlayed.length > 0 ? recentlyPlayed : displayedRecs);
+              }}
+              className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/15 backdrop-blur-xl shadow-lg transition-all duration-200 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-charcoal-800 shrink-0 shadow-md">
+                  <ArtworkImage
+                    item={continueTrack}
+                    src={getArtworkUrl(continueTrack)}
+                    alt={continueTrack.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fallbackIconClassName="w-5 h-5 text-neutral-400"
+                  />
+                </div>
+
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="font-semibold text-sm text-white truncate group-hover:text-white">
+                    {continueTrack.title}
+                  </div>
+                  <div className="text-xs text-neutral-400 truncate mt-0.5">
+                    {continueTrack.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Meta Pill: Play count + Like Heart */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] font-mono text-neutral-300">
+                  <Play className="w-2.5 h-2.5 fill-current" />
+                  <span>{continueTrack.duration || '3:30'}</span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useLibraryStore.getState().toggleLike(continueTrack);
+                  }}
+                  className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <Heart className={`w-4 h-4 ${useLibraryStore.getState().isLiked(continueTrack.videoId) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-neutral-400 flex items-center justify-between">
+              <span>Select any song to begin playback.</span>
+              <button onClick={() => navigate('/search')} className="text-white hover:underline font-semibold">Explore</button>
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* ====================================================================
+          3. TRENDING COMMUNITY PLAYLISTS (Screenshots 3 & 4)
+          ==================================================================== */}
+      <section className="flex flex-col gap-3.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            <span>Trending Community Playlists</span>
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Trending community playlists
           </h2>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => scrollContainer(topMixesRef, 'left')}
-              aria-label="Previous mixes"
-              className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              onClick={() => scrollContainer(recentlyPlayedRef, 'left')}
+              aria-label="Previous playlists"
+              className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => scrollContainer(topMixesRef, 'right')}
-              aria-label="Next mixes"
-              className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              onClick={() => scrollContainer(recentlyPlayedRef, 'right')}
+              aria-label="Next playlists"
+              className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06]"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Carousel Row */}
+        {/* Shelf of Trending Playlists */}
         <div
-          ref={topMixesRef}
-          className="flex items-stretch gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar w-full"
+          ref={recentlyPlayedRef}
+          className="flex items-stretch gap-3.5 overflow-x-auto pb-2 scroll-smooth no-scrollbar w-full"
         >
-          {/* A. Wide Hero Card */}
-          <div
-            onClick={() => handlePlayMix('Late Night Essentials', 'late night chill beats')}
-            className="group relative w-[300px] sm:w-[380px] md:w-[420px] aspect-[16/10] squircle-28 overflow-hidden shadow-2xl cursor-pointer shrink-0 border border-white/10 bg-charcoal-800"
-          >
-            <img
-              src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=700&h=420&q=80"
-              alt="Late Night Essentials"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="w-14 h-14 rounded-full btn-play-aapesh flex items-center justify-center shadow-xl scale-95 group-hover:scale-100 transition-transform duration-200">
-                <Play className="w-5 h-5 fill-current translate-x-0.5 text-black" />
-              </div>
-            </div>
-
-            <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col gap-1 z-10">
-              <h3 className="text-xl md:text-2xl font-extrabold text-white tracking-tight drop-shadow-md">
-                Late Night Essentials
-              </h3>
-              <p className="text-[10px] md:text-xs font-semibold tracking-wider text-neutral-300 uppercase">
-                Curated for you • 60 songs
-              </p>
-            </div>
-          </div>
-
-          {/* B. Daily Mix 1 */}
-          <div
-            onClick={() => handlePlayMix('Daily Mix 1', 'Bonobo Tycho Odesza')}
-            className="group relative w-44 md:w-52 squircle-24 p-3.5 glass-ios28-surface-interactive flex flex-col gap-3 cursor-pointer shrink-0"
-          >
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-charcoal-800 shadow-artwork">
-              <img
-                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=350&h=350&q=80"
-                alt="Daily Mix 1"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-bold text-white">
-                Daily Mix 1
-              </div>
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg">
-                  <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
+          {quickJumpCards.map((card, idx) => (
+            <div
+              key={card.title || idx}
+              onClick={() => handleQuickJump(card)}
+              className="group relative w-[170px] sm:w-[185px] md:w-[195px] shrink-0 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.07] hover:border-white/15 transition-all duration-200 cursor-pointer flex flex-col gap-2.5"
+            >
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-md">
+                {card.type === 'liked' ? (
+                  <div className="w-full h-full bg-charcoal-800 border-r border-white/10 flex items-center justify-center">
+                    <Heart className="w-8 h-8 text-rose-500 fill-current drop-shadow-md" />
+                  </div>
+                ) : (
+                  <ArtworkImage
+                    src={card.thumbnail}
+                    alt={card.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out-expo"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-xl scale-95 group-hover:scale-100 transition-transform">
+                    <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-white truncate">Daily Mix 1</span>
-              <span className="text-xs text-neutral-400 truncate mt-0.5">Bonobo, Tycho, ODESZA</span>
-            </div>
-          </div>
 
-          {/* C. Discover Weekly */}
-          <div
-            onClick={() => handlePlayMix('Discover Weekly', 'discover weekly mix')}
-            className="group relative w-44 md:w-52 squircle-24 p-3.5 glass-ios28-surface-interactive flex flex-col gap-3 cursor-pointer shrink-0"
-          >
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-charcoal-800 shadow-artwork">
-              <img
-                src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=350&h=350&q=80"
-                alt="Discover Weekly"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-bold text-white">
-                Discover Weekly
-              </div>
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg">
-                  <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
-                </div>
+              <div className="flex flex-col min-w-0 px-0.5">
+                <h3 className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-white" title={card.title}>
+                  {card.title}
+                </h3>
+                <p className="text-[11px] text-neutral-400 truncate mt-0.5">
+                  {card.subtitle}
+                </p>
               </div>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-white truncate">Discover Weekly</span>
-              <span className="text-xs text-neutral-400 truncate mt-0.5">Weekly fresh tracks</span>
-            </div>
-          </div>
-
-          {/* D. Aesthetic Beats */}
-          <div
-            onClick={() => handlePlayMix('Aesthetic Beats', 'aesthetic chill synthwave')}
-            className="group relative w-44 md:w-52 squircle-24 p-3.5 glass-ios28-surface-interactive flex flex-col gap-3 cursor-pointer shrink-0"
-          >
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-charcoal-800 shadow-artwork">
-              <img
-                src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=350&h=350&q=80"
-                alt="Aesthetic Beats"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-bold text-white">
-                Aesthetic Beats
-              </div>
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <div className="w-10 h-10 rounded-full btn-play-aapesh flex items-center justify-center shadow-lg">
-                  <Play className="w-4 h-4 fill-current translate-x-0.5 text-black" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-white truncate">Aesthetic Beats</span>
-              <span className="text-xs text-neutral-400 truncate mt-0.5">Lofi chill instrumentals</span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -723,7 +605,8 @@ export const HomePage: React.FC = () => {
                     }`}
                   >
                     <ArtworkImage
-                      src={item.thumbnail}
+                      item={item}
+                      src={getArtworkUrl(item)}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       fallbackIconClassName="w-5 h-5 text-neutral-400"

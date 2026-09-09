@@ -55,3 +55,5 @@ export function getBestThumbnail(
 
   return closest.url || fallbackUrl || thumbnails[thumbnails.length - 1].url || '';
 }
+
+export { getArtworkUrl, getHighResArtworkUrl, getThumbnailArtworkUrl } from '@/utils/artwork';

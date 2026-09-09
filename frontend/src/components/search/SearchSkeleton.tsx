@@ -3,7 +3,7 @@ import React from 'react';
 export const SearchSkeleton: React.FC = () => {
   return (
     <div
-      className="flex flex-col gap-8 w-full max-w-6xl animate-pulse"
+      className="flex flex-col gap-8 w-full max-w-6xl motion-safe:animate-pulse"
       aria-label="Loading search results"
       aria-busy="true"
     >

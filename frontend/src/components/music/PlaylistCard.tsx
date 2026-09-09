@@ -4,6 +4,8 @@ import { Play, ListMusic } from 'lucide-react';
 import { PlaylistSummary } from '@/types/music';
 import { api } from '@/api/client';
 import { usePlayerStore } from '@/stores/usePlayerStore';
+import { SpotlightCard } from '@/components/react-bits';
+import { ArtworkImage } from '@/components/common/ArtworkImage';
 
 interface PlaylistCardProps {
   playlist: PlaylistSummary;
@@ -30,23 +32,20 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
   };
 
   return (
-    <div
+    <SpotlightCard
       onClick={handleCardClick}
-      className="group relative flex flex-col gap-2.5 p-2.5 rounded-xl transition-all duration-200 ease-out-expo cursor-pointer hover:bg-white/[0.04]"
+      spotlightColor="rgba(255, 255, 255, 0.08)"
+      spotlightRadius={240}
+      className="group relative flex flex-col gap-2.5 p-2.5 rounded-xl transition-all duration-200 ease-out-expo cursor-pointer hover:bg-white/[0.04] bg-white/[0.02] border border-white/[0.04] hover:border-white/10"
     >
       <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-charcoal-800 shadow-artwork">
-        {playlist.thumbnail ? (
-          <img
-            src={playlist.thumbnail}
-            alt={playlist.title}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-charcoal-800 text-neutral-600">
-            <ListMusic className="w-12 h-12" />
-          </div>
-        )}
+        <ArtworkImage
+          item={playlist}
+          alt={playlist.title}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fallbackIcon={<ListMusic className="w-12 h-12 text-neutral-600" />}
+        />
 
         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <button
@@ -67,6 +66,6 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
           {playlist.author || (playlist.itemCount ? `${playlist.itemCount} tracks` : 'Playlist')}
         </p>
       </div>
-    </div>
+    </SpotlightCard>
   );
 };

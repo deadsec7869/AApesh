@@ -166,10 +166,20 @@ export const useSyncedLyrics = ({
     setLyricsOffsetMs(0);
   }, [setLyricsOffsetMs]);
 
-  // High-Resolution Playback Clock via requestAnimationFrame
+  const currentTimeRef = useRef<number>(currentTime);
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+    if (!isPlaying) {
+      const engineTime = defaultPlaybackEngine.getCurrentTime();
+      const currentSeconds = engineTime > 0 ? engineTime : currentTime;
+      setHighResTimeMs(Math.max(0, Math.round(currentSeconds * 1000)));
+    }
+  }, [currentTime, isPlaying]);
+
+  // High-Resolution Playback Clock via requestAnimationFrame (runs smoothly without restarting on store tick)
   useEffect(() => {
     if (!isActive) {
-      setHighResTimeMs(Math.round(currentTime * 1000));
+      setHighResTimeMs(Math.max(0, Math.round(currentTimeRef.current * 1000)));
       return;
     }
 
@@ -178,7 +188,7 @@ export const useSyncedLyrics = ({
 
     const queryPlayerTime = () => {
       const engineTime = defaultPlaybackEngine.getCurrentTime();
-      const currentSeconds = engineTime > 0 ? engineTime : currentTime;
+      const currentSeconds = engineTime > 0 ? engineTime : currentTimeRef.current;
       return Math.max(0, Math.round(currentSeconds * 1000));
     };
 
@@ -203,7 +213,7 @@ export const useSyncedLyrics = ({
       isCancelled = true;
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isPlaying, currentTime, isActive]);
+  }, [isPlaying, isActive]);
 
   // Sign convention: effectiveTimeMs = highResTimeMs + lyricsOffsetMs
   const effectiveTimeMs = Math.max(0, highResTimeMs + lyricsOffsetMs);

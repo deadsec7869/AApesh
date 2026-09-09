@@ -114,32 +114,35 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-[#050505] text-neutral-100 font-sans p-0 md:p-3.5 gap-0 md:gap-3.5 selection:bg-white/20 selection:text-white">
+    <div className="relative flex h-screen w-screen overflow-hidden bg-[#050505] text-neutral-100 font-sans selection:bg-white/20 selection:text-white">
       {/* Dynamic Current-Song Artwork Background (Crossfading full-viewport atmospheric canvas) */}
       <DynamicArtworkBackground />
 
       {/* 3D Spatial Immersive WebGL Layer */}
       <SpatialArtworkEnvironment />
 
-      {/* Floating Sidebar / Navigation Rail */}
+      {/* Floating Left Navigation Rail */}
       <Sidebar />
 
-      {/* Main Floating Glass Canvas */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden md:rounded-[28px] glass-floating md:border md:border-white/[0.08] shadow-2xl relative">
-        {/* Top Header */}
+      {/* Central Floating Workstation Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden px-2 md:px-0 pl-2 md:pl-20 lg:pl-24 pr-2 md:pr-5 lg:pr-8 py-2 md:py-3.5 relative z-10">
+        {/* Floating Top Header */}
         <TopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
-        {/* Scrollable Page Body - dynamic safe space for floating dock */}
-        <main
-          className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 scroll-smooth"
-          style={{
-            paddingBottom: `${bottomPlayerClearance || (currentTrack ? 136 : 96)}px`,
-          }}
-        >
-          <div className="w-full max-w-[1500px] mx-auto min-w-0">
-            <Outlet />
-          </div>
-        </main>
+        {/* Main Floating Glass Canvas Workspace */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden rounded-[24px] md:rounded-[32px] bg-[#14151a]/65 backdrop-blur-3xl border border-white/[0.08] shadow-[0_24px_64px_rgba(0,0,0,0.75)] relative mt-1">
+          {/* Scrollable Page Body - dynamic safe space for floating bottom player */}
+          <main
+            className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 scroll-smooth px-4 md:px-8 py-6"
+            style={{
+              paddingBottom: `${bottomPlayerClearance || (currentTrack ? 120 : 80)}px`,
+            }}
+          >
+            <div className="w-full max-w-[1440px] mx-auto min-w-0">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
 
       {/* Persistent Bottom Player */}

@@ -1,14 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Pause, Heart, User, Disc, ListMusic } from 'lucide-react';
-import { Track, AlbumBasic, PlaylistSummary } from '@/types/music';
+import { Track, AlbumBasic, PlaylistSummary, ArtistSearchResult, TopResultData } from '@/types/music';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
+import { getArtworkUrl } from '@/utils/artwork';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { SpotlightCard } from '@/components/react-bits';
 
 interface TopResultProps {
-  type: 'song' | 'artist' | 'album' | 'playlist';
-  data: any;
+  type: 'song' | 'artist' | 'album' | 'playlist' | string;
+  data: TopResultData | null;
   contextSongs?: Track[];
 }
 
@@ -34,7 +36,7 @@ export const TopResultCard: React.FC<TopResultProps> = ({
         <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 px-1">
           Top Result
         </span>
-        <div
+        <SpotlightCard
           onClick={() => {
             if (isCurrent) {
               togglePlay();
@@ -42,12 +44,15 @@ export const TopResultCard: React.FC<TopResultProps> = ({
               playTrack(track, contextSongs);
             }
           }}
+          spotlightColor="rgba(255, 255, 255, 0.08)"
+          spotlightRadius={260}
           className="flex items-center justify-between gap-5 p-4 rounded-2xl bg-[#0f1118]/80 hover:bg-[#141722]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-white/20 transition-all duration-200 group max-w-xl cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
         >
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-charcoal-800 shadow-md border border-white/5">
               <ArtworkImage
-                src={track.thumbnail}
+                item={track}
+                src={getArtworkUrl(track)}
                 alt={track.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 fallbackIconClassName="w-8 h-8 text-neutral-500"
@@ -104,36 +109,34 @@ export const TopResultCard: React.FC<TopResultProps> = ({
               )}
             </button>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
     );
   }
 
   if (type === 'artist') {
-    const artist = data as { channelId: string; name: string; thumbnail?: string; subscribers?: string };
+    const artist = data as ArtistSearchResult;
 
     return (
       <div className="flex flex-col gap-2.5 w-full">
         <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 px-1">
           Top Result
         </span>
-        <div
+        <SpotlightCard
           onClick={() => navigate(`/artist/${artist.channelId}`)}
+          spotlightColor="rgba(255, 255, 255, 0.08)"
+          spotlightRadius={260}
           className="flex items-center justify-between gap-5 p-4 rounded-2xl bg-[#0f1118]/80 hover:bg-[#141722]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-white/20 transition-all duration-200 group max-w-xl cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
         >
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 bg-charcoal-800 shadow-md border border-white/5">
-              {artist.thumbnail ? (
-                <img
-                  src={artist.thumbnail}
-                  alt={artist.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-charcoal-700 text-neutral-500">
-                  <User className="w-8 h-8" />
-                </div>
-              )}
+              <ArtworkImage
+                item={artist}
+                src={getArtworkUrl(artist)}
+                alt={artist.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fallbackIcon={<User className="w-8 h-8 text-neutral-500" />}
+              />
             </div>
             <div className="min-w-0">
               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-neutral-300 uppercase tracking-wider mb-1">
@@ -149,7 +152,7 @@ export const TopResultCard: React.FC<TopResultProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
     );
   }
@@ -162,23 +165,21 @@ export const TopResultCard: React.FC<TopResultProps> = ({
         <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 px-1">
           Top Result
         </span>
-        <div
+        <SpotlightCard
           onClick={() => navigate(`/album/${album.browseId}`)}
+          spotlightColor="rgba(255, 255, 255, 0.08)"
+          spotlightRadius={260}
           className="flex items-center justify-between gap-5 p-4 rounded-2xl bg-[#0f1118]/80 hover:bg-[#141722]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-white/20 transition-all duration-200 group max-w-xl cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
         >
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-charcoal-800 shadow-md border border-white/5">
-              {album.thumbnail ? (
-                <img
-                  src={album.thumbnail}
-                  alt={album.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-charcoal-700 text-neutral-500">
-                  <Disc className="w-8 h-8" />
-                </div>
-              )}
+              <ArtworkImage
+                item={album}
+                src={getArtworkUrl(album)}
+                alt={album.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fallbackIcon={<Disc className="w-8 h-8 text-neutral-500" />}
+              />
             </div>
             <div className="min-w-0">
               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-neutral-300 uppercase tracking-wider mb-1">
@@ -193,7 +194,7 @@ export const TopResultCard: React.FC<TopResultProps> = ({
               </p>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
     );
   }
@@ -206,23 +207,21 @@ export const TopResultCard: React.FC<TopResultProps> = ({
         <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 px-1">
           Top Result
         </span>
-        <div
+        <SpotlightCard
           onClick={() => navigate(`/playlist/${playlist.id}`)}
+          spotlightColor="rgba(255, 255, 255, 0.08)"
+          spotlightRadius={260}
           className="flex items-center justify-between gap-5 p-4 rounded-2xl bg-[#0f1118]/80 hover:bg-[#141722]/90 backdrop-blur-2xl border border-white/[0.08] hover:border-white/20 transition-all duration-200 group max-w-xl cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
         >
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-charcoal-800 shadow-md border border-white/5">
-              {playlist.thumbnail ? (
-                <img
-                  src={playlist.thumbnail}
-                  alt={playlist.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-charcoal-700 text-neutral-500">
-                  <ListMusic className="w-8 h-8" />
-                </div>
-              )}
+              <ArtworkImage
+                item={playlist}
+                src={getArtworkUrl(playlist)}
+                alt={playlist.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fallbackIcon={<ListMusic className="w-8 h-8 text-neutral-500" />}
+              />
             </div>
             <div className="min-w-0">
               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-neutral-300 uppercase tracking-wider mb-1">
@@ -236,7 +235,7 @@ export const TopResultCard: React.FC<TopResultProps> = ({
               </p>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { Track } from '@/types/music';
+import { getArtworkUrl } from '@/utils/artwork';
 
 // Cache preloaded image URLs to prevent redundant network fetches
 const imagePreloadCache = new Set<string>();
@@ -11,11 +12,7 @@ const imagePreloadCache = new Set<string>();
  */
 export function getHighestResArtworkUrl(track: Track | null): string | undefined {
   if (!track) return undefined;
-  if (track.thumbnails && track.thumbnails.length > 0) {
-    const highest = track.thumbnails[track.thumbnails.length - 1];
-    if (highest?.url) return highest.url;
-  }
-  return track.thumbnail || undefined;
+  return getArtworkUrl(track, 1200) || undefined;
 }
 
 interface BackgroundLayer {

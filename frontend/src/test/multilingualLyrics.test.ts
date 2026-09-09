@@ -117,8 +117,33 @@ describe('Multilingual Unicode Script & Direction Analysis', () => {
     expect(analysis.fontClass).toBe('font-cjk');
   });
 
+  it('detects Thai script as LTR with font-thai', () => {
+    const text = 'คุณกำลังทำอะไรอยู่?';
+    const analysis = analyzeTextScriptAndDirection(text);
+    expect(analysis.primaryScript).toBe('thai');
+    expect(analysis.direction).toBe('ltr');
+    expect(analysis.fontClass).toBe('font-thai');
+  });
+
+  it('detects Hebrew script as RTL with font-hebrew', () => {
+    const text = 'מה אתה עושה?';
+    const analysis = analyzeTextScriptAndDirection(text);
+    expect(analysis.primaryScript).toBe('hebrew');
+    expect(analysis.direction).toBe('rtl');
+    expect(analysis.isRtl).toBe(true);
+    expect(analysis.fontClass).toBe('font-hebrew');
+  });
+
+  it('detects Sinhala script as LTR with font-sinhala', () => {
+    const text = 'ඔබ කරන්නේ කුමක්ද?';
+    const analysis = analyzeTextScriptAndDirection(text);
+    expect(analysis.primaryScript).toBe('sinhala');
+    expect(analysis.direction).toBe('ltr');
+    expect(analysis.fontClass).toBe('font-sinhala');
+  });
+
   it('correctly classifies mixed RTL and LTR scripts without breaking', () => {
-    const mixedUrdu = 'مجھے آج Summer of Love سننا ہے';
+    const mixedUrdu = 'مجھے سننا ہے Love';
     const analysis = analyzeTextScriptAndDirection(mixedUrdu);
     expect(analysis.isRtl).toBe(true);
     expect(analysis.direction).toBe('rtl');

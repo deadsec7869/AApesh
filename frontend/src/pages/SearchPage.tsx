@@ -47,6 +47,36 @@ export const SearchPage: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const suggestionsAbortRef = useRef<AbortController | null>(null);
 
+  const searchRequestIdRef = useRef<number>(0);
+  const suggestionsRequestIdRef = useRef<number>(0);
+
+  // Global keyboard shortcuts (/ and Ctrl+K / Cmd+K to focus search)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInputFocused =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+
+      if (e.key === '/' && !isInputFocused) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        setIsFocused(true);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !isInputFocused) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        setIsFocused(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   // Load search history from backend API
   const loadSearchHistory = useCallback(() => {
     fetch('/api/search/history')
@@ -72,7 +102,7 @@ export const SearchPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch live autocomplete suggestions and preview tracks
+  // Fetch live autocomplete suggestions and preview tracks with monotonic generation tracking
   useEffect(() => {
     const trimmed = inputQuery.trim();
     if (!trimmed) {
@@ -82,6 +112,7 @@ export const SearchPage: React.FC = () => {
       return;
     }
 
+    const suggestionId = ++suggestionsRequestIdRef.current;
     if (suggestionsAbortRef.current) {
       suggestionsAbortRef.current.abort();
     }
@@ -93,7 +124,8 @@ export const SearchPage: React.FC = () => {
         api.getSuggestions(trimmed).catch(() => []),
         api.search(trimmed, 'songs', 3, controller.signal).catch(() => null),
       ]).then(([rawSuggestions, songResults]) => {
-        if (!controller.signal.aborted) {
+        // Guarantee that only the latest active suggestion request commits state
+        if (suggestionId === suggestionsRequestIdRef.current && !controller.signal.aborted) {
           setSuggestions((rawSuggestions || []).slice(0, 5));
           setSuggestedTracks(songResults?.songs || []);
           setSelectedSuggestionIdx(-1);
@@ -107,7 +139,7 @@ export const SearchPage: React.FC = () => {
     };
   }, [inputQuery]);
 
-  // Execute primary search
+  // Execute primary search with strict monotonic request generation ID protection
   const performSearch = useCallback(
     async (term: string, currentFilter?: SearchFilterType) => {
       const trimmed = term.trim();
@@ -117,6 +149,8 @@ export const SearchPage: React.FC = () => {
         setIsLoading(false);
         return;
       }
+
+      const requestId = ++searchRequestIdRef.current;
 
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -134,18 +168,18 @@ export const SearchPage: React.FC = () => {
           24,
           controller.signal
         );
-        if (!controller.signal.aborted) {
+        // Guarantee that only the latest active search request commits results
+        if (requestId === searchRequestIdRef.current && !controller.signal.aborted) {
           setSearchResults(results);
           loadSearchHistory();
         }
       } catch (e: any) {
-        if (e.name === 'AbortError') {
-          return;
-        }
+        if (requestId !== searchRequestIdRef.current) return;
+        if (e.name === 'AbortError') return;
         console.error('Search error:', e);
         setError(e.message || 'Search unavailable. We could not reach the music service.');
       } finally {
-        if (!controller.signal.aborted) {
+        if (requestId === searchRequestIdRef.current) {
           setIsLoading(false);
         }
       }
@@ -280,7 +314,7 @@ export const SearchPage: React.FC = () => {
       searchResults.playlists.length > 0);
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full select-none animate-in fade-in duration-300 font-sans">
+    <div className="p-4 sm:p-6 md:p-10 pb-36 flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full select-none animate-in fade-in duration-300 font-sans">
       {/* ====================================================================
           SEARCH BAR 2.0: Floating Command Center & Suggestions
           ==================================================================== */}

@@ -125,20 +125,26 @@ export interface HomeResponse {
   shelves: Shelf[];
 }
 
+export interface ArtistSearchResult {
+  channelId: string;
+  name: string;
+  subscribers?: string;
+  thumbnail?: string;
+}
+
+export type TopResultData = Track | ArtistSearchResult | AlbumBasic | PlaylistSummary;
+
+export interface TopResultItem {
+  type: 'song' | 'artist' | 'album' | 'playlist' | string;
+  data: TopResultData;
+}
+
 export interface SearchResults {
   query: string;
-  topResult?: {
-    type: string;
-    data: any;
-  } | null;
+  topResult?: TopResultItem | null;
   songs: Track[];
   albums: AlbumBasic[];
-  artists: {
-    channelId: string;
-    name: string;
-    subscribers?: string;
-    thumbnail?: string;
-  }[];
+  artists: ArtistSearchResult[];
   playlists: PlaylistSummary[];
   videos: Track[];
 }

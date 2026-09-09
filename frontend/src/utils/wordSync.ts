@@ -1,9 +1,14 @@
 import { LyricLine, LyricWord, CharacterTiming, LyricTimingLevel } from '@/types/music';
 
 /**
- * Checks if a string contains CJK ideographs or kana without typical space separators.
+ * Checks if a string contains CJK ideographs, kana, Thai, Lao, Myanmar, or Khmer scripts.
  */
-const CJK_REGEX = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
+export const UNSPACED_SCRIPT_REGEX =
+  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u0e00-\u0e7f\u0e80-\u0eff\u1000-\u109f\u1780-\u17ff]/;
+
+export function isUnspacedScript(text: string): boolean {
+  return UNSPACED_SCRIPT_REGEX.test(text);
+}
 
 /**
  * Unicode-aware grapheme cluster segmentation.
@@ -26,7 +31,7 @@ export function getGraphemeClusters(text: string): string[] {
 
 /**
  * Tokenizes line text into words/syllables, respecting both spaced languages
- * and unspaced CJK scripts without breaking graphemes.
+ * and unspaced CJK/Thai/Lao/Myanmar/Khmer scripts without breaking graphemes.
  */
 export function tokenizeLyricLine(text: string): string[] {
   const cleaned = text.replace(/<[^>]+>/g, '').trim();
@@ -37,8 +42,8 @@ export function tokenizeLyricLine(text: string): string[] {
     return cleaned.split(/\s+/).filter(Boolean);
   }
 
-  // If text is CJK without spaces, segment into words or characters
-  if (CJK_REGEX.test(cleaned)) {
+  // If text is CJK or unspaced Southeast Asian script, segment into words or graphemes
+  if (UNSPACED_SCRIPT_REGEX.test(cleaned)) {
     if (typeof Intl !== 'undefined' && (Intl as any).Segmenter) {
       try {
         const segmenter = new (Intl as any).Segmenter(undefined, { granularity: 'word' });
@@ -156,21 +161,30 @@ export function computeWordCharacters(
  * sync is available across all synced songs, marked explicitly as estimated.
  */
 export function getLineWords(line: LyricLine, nextLineStartTime?: number): LyricWord[] {
-  const lineStart = line.startTime ?? 0;
-  const lineEnd = line.endTime ?? (nextLineStartTime !== undefined ? nextLineStartTime : lineStart + 3500);
+  const lineStart = Math.max(0, line.startTime ?? 0);
+  const lineEnd = Math.max(
+    lineStart + 100,
+    line.endTime !== undefined
+      ? line.endTime
+      : nextLineStartTime !== undefined
+      ? Math.max(lineStart + 100, nextLineStartTime)
+      : lineStart + 3500
+  );
 
   // If explicit words already exist
   if (line.words && line.words.length > 0) {
     return line.words.map((w) => {
-      const wEnd = w.endTime !== undefined ? w.endTime : w.startTime + 350;
+      const wStart = Math.max(0, w.startTime);
+      const wEnd = Math.max(wStart + 50, w.endTime !== undefined ? w.endTime : wStart + 350);
       const isEst = w.isEstimated ?? false;
       return {
         ...w,
+        startTime: wStart,
         endTime: wEnd,
         isEstimated: isEst,
         characters: w.characters && w.characters.length > 0
           ? w.characters
-          : computeWordCharacters(w.text, w.startTime, wEnd, true),
+          : computeWordCharacters(w.text, wStart, wEnd, true),
       };
     });
   }

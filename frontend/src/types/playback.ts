@@ -4,7 +4,10 @@ export type PlaybackStatus =
   | 'prebuffering'
   | 'ready'
   | 'playing'
+  | 'paused'
   | 'buffering'
+  | 'seeking'
+  | 'ended'
   | 'error';
 
 export type NetworkTier = 'fast' | 'normal' | 'slow' | 'unknown';

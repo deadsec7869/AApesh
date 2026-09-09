@@ -288,15 +288,14 @@ export const LyricsPanel: React.FC = () => {
                     dir={lineDir}
                     aria-current={isActive ? 'true' : undefined}
                     animate={{
-                      opacity: isActive ? 1 : isNearby ? 0.75 : 0.42,
-                      scale: isActive ? 1.015 : 1,
+                      opacity: isActive ? 1 : isNearby ? 0.65 : 0.35,
                     }}
                     transition={transitionSmooth}
                     className={`group cursor-pointer rounded-xl py-2 px-3 transition-colors duration-200 ${fontClass} ${
                       lineDir === 'rtl' ? 'lyric-line-rtl text-right' : 'lyric-line-ltr text-left'
                     } ${
                       isActive
-                        ? 'lyric-line-active text-lg sm:text-xl font-extrabold'
+                        ? 'lyric-line-active text-lg sm:text-xl font-bold'
                         : isNearby
                         ? 'lyric-line-nearby text-sm font-medium hover:opacity-90'
                         : 'lyric-line-distant text-xs sm:text-sm font-normal hover:opacity-75'

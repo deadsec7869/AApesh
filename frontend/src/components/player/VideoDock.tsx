@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Minimize2, Maximize2, X, Film, Volume2 } from 'lucide-react';
+import { Minimize2, Maximize2, X, Film } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 
 interface VideoDockProps {
@@ -13,28 +13,36 @@ export const VideoDock: React.FC<VideoDockProps> = () => {
     isVideoDockOpen,
     toggleVideoDock,
     togglePlayerExpanded,
+    isPlayerExpanded,
+    fullscreenTab,
   } = usePlayerStore();
 
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const isVisible = Boolean(currentTrack && isVideoDockOpen);
+  const isFullscreenVideo = Boolean(currentTrack && isPlayerExpanded && fullscreenTab === 'video');
+  const isDockVisible = Boolean(currentTrack && isVideoDockOpen && !isPlayerExpanded);
+  const isVisible = isFullscreenVideo || isDockVisible;
+
+  let containerClasses = 'fixed -left-[9999px] -top-[9999px] w-[360px] h-[225px] opacity-[0.001] pointer-events-none -z-50 overflow-hidden';
+
+  if (isFullscreenVideo) {
+    containerClasses = 'fixed inset-x-4 top-20 bottom-24 sm:inset-x-12 sm:top-24 sm:bottom-28 md:inset-x-20 lg:inset-x-36 z-40 rounded-[28px] overflow-hidden bg-black border border-white/15 shadow-2xl flex flex-col transition-all duration-300';
+  } else if (isDockVisible) {
+    containerClasses = `fixed bottom-24 right-4 sm:right-6 z-30 rounded-2xl overflow-hidden glass-elevated border border-white/15 shadow-2xl transition-all duration-300 flex flex-col ${
+      isMinimized
+        ? 'w-[200px] h-[120px]'
+        : 'w-[280px] sm:w-[360px] md:w-[420px] aspect-[16/10]'
+    }`;
+  }
 
   return (
     <div
       id="aurora-youtube-container"
       aria-hidden={!isVisible}
-      className={
-        isVisible
-          ? `fixed bottom-24 right-4 sm:right-6 z-30 rounded-2xl overflow-hidden glass-elevated border border-white/15 shadow-2xl transition-all duration-300 flex flex-col ${
-              isMinimized
-                ? 'w-[200px] h-[120px]'
-                : 'w-[280px] sm:w-[360px] md:w-[420px] aspect-[16/10]'
-            }`
-          : 'fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none -z-50 overflow-hidden'
-      }
+      className={containerClasses}
     >
-      {/* Video Window Header - only rendered when dock is visibly open */}
-      {isVisible && (
+      {/* Video Window Header - rendered only in floating dock mode */}
+      {isDockVisible && (
         <div className="flex items-center justify-between px-3 py-2 bg-charcoal-900/90 border-b border-white/10 shrink-0 select-none">
           <div className="flex items-center gap-2 min-w-0 pr-2">
             <Film className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
@@ -75,7 +83,7 @@ export const VideoDock: React.FC<VideoDockProps> = () => {
         </div>
       )}
 
-      {/* Official YouTube Player Viewport (Always preserved in DOM for YT API) */}
+      {/* Official YouTube Player Viewport (Single canonical instance) */}
       <div className={`relative flex-1 w-full ${isVisible ? 'bg-black' : ''}`}>
         <div id="aurora-youtube-player" className="w-full h-full" />
       </div>
