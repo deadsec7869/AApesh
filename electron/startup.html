@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AAPESH</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, "Segoe UI", sans-serif; background: #070708; color: #f5f5f5; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 35%, #242329 0%, #0c0c0e 45%, #070708 78%); }
+      main { width: min(420px, calc(100vw - 40px)); text-align: center; padding: 44px 36px; border: 1px solid #ffffff18; border-radius: 28px; background: #ffffff08; box-shadow: 0 28px 90px #0009; }
+      .mark { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 24px; border-radius: 22px; background: linear-gradient(145deg, #29292f, #111114); border: 1px solid #ffffff20; color: #fff; font-size: 32px; font-weight: 800; letter-spacing: -4px; }
+      h1 { margin: 0; font-size: 24px; letter-spacing: -.04em; }
+      p { min-height: 44px; margin: 12px 0 26px; color: #a1a1aa; font-size: 14px; line-height: 1.6; }
+      .spinner { width: 22px; height: 22px; margin: 0 auto; border: 2px solid #ffffff26; border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+      .actions { display: none; gap: 10px; justify-content: center; }
+      button { border: 1px solid #ffffff20; border-radius: 12px; padding: 10px 16px; color: white; background: #ffffff12; font: inherit; cursor: pointer; }
+      button:hover { background: #ffffff20; }
+      #error { display: none; margin: -10px 0 20px; color: #fca5a5; font-size: 12px; overflow-wrap: anywhere; }
+      body.failed .spinner { display: none; }
+      body.failed .actions { display: flex; }
+      body.failed #error { display: block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">A.</div>
+      <h1>AAPESH</h1>
+      <p id="status" role="status">Preparing your listening space…</p>
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="error"></div>
+      <div class="actions">
+        <button id="retry" type="button">Try again</button>
+        <button id="quit" type="button">Quit</button>
+      </div>
+    </main>
+    <script src="./startup.js"></script>
+  </body>
+</html>
