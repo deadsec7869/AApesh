@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -12,14 +12,27 @@ import { CommandPalette } from '../common/CommandPalette';
 import { EqualizerModal } from '../common/EqualizerModal';
 import { StreamingQualityModal } from '../common/StreamingQualityModal';
 import { DynamicArtworkBackground } from './DynamicArtworkBackground';
-import { SpatialArtworkEnvironment } from '../spatial/SpatialArtworkEnvironment';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useThemeStore } from '@/stores/useThemeStore';
+import { shouldLoadSpatialArtwork } from '../spatial/spatialLoading';
+
+// Keep Three.js and its post-processing dependencies out of the initial app
+// bundle. React.lazy does not invoke this import until the enabled branch below
+// actually renders the spatial environment.
+const SpatialArtworkEnvironment = lazy(() =>
+  import('../spatial/SpatialArtworkEnvironment').then((module) => ({
+    default: module.SpatialArtworkEnvironment,
+  })),
+);
 
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const { fetchLibrary } = useLibraryStore();
   const { currentTrack, bottomPlayerClearance } = usePlayerStore();
+  const ambientGlow = useThemeStore((state) => state.ambientGlow);
+  const visualQuality = useThemeStore((state) => state.visualQuality);
+  const spatialArtworkEnabled = shouldLoadSpatialArtwork(ambientGlow, visualQuality);
 
   // Load library on start
   useEffect(() => {
@@ -119,7 +132,11 @@ export const AppLayout: React.FC = () => {
       <DynamicArtworkBackground />
 
       {/* 3D Spatial Immersive WebGL Layer */}
-      <SpatialArtworkEnvironment />
+      {spatialArtworkEnabled && (
+        <Suspense fallback={null}>
+          <SpatialArtworkEnvironment />
+        </Suspense>
+      )}
 
       {/* Floating Left Navigation Rail */}
       <Sidebar />

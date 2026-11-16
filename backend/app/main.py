@@ -29,9 +29,6 @@ logging.basicConfig(
 logger = logging.getLogger("aurora.api")
 
 
-# Ensure database tables exist
-init_db()
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Aurora Music database...")
