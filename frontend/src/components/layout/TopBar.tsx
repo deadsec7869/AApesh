@@ -18,6 +18,7 @@ import { useEqualizerStore } from '@/stores/useEqualizerStore';
 import { api } from '@/api/client';
 import { Track } from '@/types/music';
 import { SpotlightCard } from '@/components/react-bits';
+import { OfflineStatusBadge } from '@/components/common/OfflineStatusBadge';
 
 interface TopBarProps {
   onOpenCommandPalette: () => void;
@@ -134,7 +135,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
       <SpotlightCard
         spotlightColor="rgba(255, 255, 255, 0.08)"
         spotlightRadius={240}
-        className="flex items-center gap-2 p-1.5 rounded-full bg-[#15161b]/85 backdrop-blur-2xl border border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.7)] max-w-2xl w-full justify-between"
+        className="edition-topbar flex items-center gap-2 p-1.5 rounded-full bg-[#15161b]/85 backdrop-blur-2xl border border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.7)] max-w-2xl w-full justify-between"
       >
         {/* Navigation Back/Forward Buttons */}
         <div className="flex items-center gap-1 pl-1">
@@ -271,26 +272,40 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
           )}
         </div>
 
-        {/* Right: Refresh & Red Sign In Pill Button */}
+        {/* Right: Offline Indicator, Desktop.fm Link, Refresh & Red Sign In Pill Button */}
         <div className="flex items-center gap-1.5 pr-1">
+          {/* Offline Mode Indicator */}
+          <OfflineStatusBadge />
+
+          {/* Desktop.fm Teaser Button */}
+          <button
+            onClick={() => navigate('/desktop-fm')}
+            aria-label="Desktop.fm Experience"
+            title="Desktop.fm Teaser & Design System"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-neutral-200 hover:text-white text-[11px] font-bold tracking-tight border border-white/[0.08] transition-all"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff66] shadow-[0_0_6px_#00ff66]" />
+            <span>Desktop.fm</span>
+          </button>
+
           {/* Refresh Button */}
           <button
-            onClick={() => window.location.reload()}
-            aria-label="Refresh Workspace"
-            title="Refresh"
+            onClick={onOpenCommandPalette}
+            aria-label="Open command menu"
+            title="Command menu"
             className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06] focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
           </button>
 
           {/* Red Sign In Button (Reference Visual Match) */}
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-md transition-all active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 focus-visible:ring-offset-black"
-            title="Sign In / Account Settings"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs shadow-md transition-all active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 focus-visible:ring-offset-black"
+            title="Settings"
           >
             <User className="w-3.5 h-3.5 fill-current" />
-            <span>Sign In</span>
+            <span>Settings</span>
           </button>
         </div>
       </SpotlightCard>

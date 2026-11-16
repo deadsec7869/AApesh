@@ -45,6 +45,7 @@ export interface PlaybackProvider {
   destroy(): void;
   getCurrentTime(): number;
   getDuration(): number;
+  getCurrentTrackId?(): string | null;
 
   // Audio Lab 2.0 extension
   setPlaybackRate?(rate: number): void;
@@ -54,6 +55,8 @@ export interface PlaybackProvider {
   // Smart Pre-buffering extension
   getBufferHealth?(): BufferHealth;
   getPlaybackStatus?(): PlaybackStatus;
+  prebufferTrack?(track: Track): Promise<void>;
+  getPrebufferedTrackId?(): string | null;
 
   // Streaming Quality 2.0 extension
   getQualityCapabilities?(): StreamingQualityCapability[];

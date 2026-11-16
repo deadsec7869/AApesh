@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   Headphones,
   Activity,
+  Info,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -47,7 +48,7 @@ export const BottomPlayer: React.FC = () => {
     atmospherePalette,
     isPlaying,
     isBuffering,
-    playbackStatus,
+    playbackStatus, error,
     currentTime,
     duration,
     volume,
@@ -57,6 +58,7 @@ export const BottomPlayer: React.FC = () => {
     isQueueOpen,
     isLyricsOpen,
     isVideoDockOpen,
+    isAboutOpen,
     togglePlay,
     playTrack,
     next,
@@ -68,7 +70,9 @@ export const BottomPlayer: React.FC = () => {
     toggleRepeat,
     toggleQueue,
     toggleLyrics,
+    toggleAbout,
     toggleVideoDock,
+    isPlayerExpanded,
     togglePlayerExpanded,
     toggleQualityModal,
     getEffectiveQualityInfo,
@@ -123,40 +127,34 @@ export const BottomPlayer: React.FC = () => {
     };
   }, [currentTrack, setBottomPlayerDimensions]);
 
-  // Minimal Empty State when no track is active
+  // Never render BottomPlayer when Fullscreen Player is active to prevent duplicate controls
+  if (isPlayerExpanded) {
+    return null;
+  }
+
+  // Deliberate Empty State when nothing is playing
   if (!currentTrack) {
     return (
       <footer
         ref={footerRef}
         aria-label="Audio Player Standby"
-        className="fixed bottom-4 md:bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[68%] max-w-5xl h-14 md:h-16 z-40 bg-[#0e1117]/85 backdrop-blur-2xl rounded-[22px] border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.75)] px-4 md:px-6 flex items-center justify-between pointer-events-auto transition-all duration-300"
+        className="edition-dock fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[60%] max-w-2xl h-12 md:h-14 z-40 bg-[#0e1117]/85 backdrop-blur-2xl rounded-full border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.75)] px-4 md:px-6 flex items-center justify-between pointer-events-auto transition-all duration-300 select-none"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-neutral-300 shadow-sm">
-            <Music className="w-4 h-4" />
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-neutral-400 shadow-sm">
+            <Music className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs sm:text-sm font-semibold tracking-wide text-white">AAPESH Workstation</div>
-            <div className="text-[10px] sm:text-[11px] text-neutral-400">Spatial sound engine ready • Select any track to start</div>
+            <div className="text-xs sm:text-sm font-semibold tracking-wide text-neutral-200">Nothing playing</div>
+            <div className="text-[10px] sm:text-[11px] text-neutral-400">Select any track to begin playback</div>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            api
-              .getRecommendations(8)
-              .then((recs) => {
-                if (recs && recs.length > 0) {
-                  playTrack(recs[0], recs);
-                }
-              })
-              .catch(() => {});
-          }}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full btn-play-aapesh font-bold text-xs transition-all duration-200 ease-out-expo shadow-md hover:scale-105 active:scale-95 text-black"
-        >
-          <Play className="w-3.5 h-3.5 fill-current translate-x-0.5 text-black" />
-          <span>Quick Play</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono tracking-wider text-neutral-400 uppercase px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
+            Standby
+          </span>
+        </div>
       </footer>
     );
   }
@@ -172,7 +170,7 @@ export const BottomPlayer: React.FC = () => {
       <footer
         ref={footerRef}
         aria-label="Floating Audio Player"
-        className="fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[88%] max-w-5xl h-16 md:h-[68px] z-40 bg-[#14151a]/85 backdrop-blur-3xl rounded-full border border-white/[0.09] shadow-[0_24px_64px_rgba(0,0,0,0.85)] px-4 md:px-6 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-3 md:gap-5"
+        className="edition-dock fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[88%] max-w-5xl h-16 md:h-[68px] z-40 bg-[#14151a]/85 backdrop-blur-3xl rounded-full border border-white/[0.09] shadow-[0_24px_64px_rgba(0,0,0,0.85)] px-4 md:px-6 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-3 md:gap-5"
       >
         {/* Subtle Ambient Artwork Glow */}
         {atmospherePalette && (
@@ -378,13 +376,14 @@ export const BottomPlayer: React.FC = () => {
             RIGHT: Utilities (Spatial Audio, Lyrics, Queue, EQ, Volume, Fullscreen)
             ==================================================================== */}
         <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
+          {error && <span role="alert" title={error} className="absolute bottom-full left-3 mb-1 px-3 py-2 rounded-lg bg-neutral-900 text-xs">{error}</span>}
           {/* Spatial Audio Icon */}
           <motion.button
             whileHover={controlButtonHover}
             whileTap={controlButtonTap}
             onClick={toggleSpatialAudio}
             aria-label="Spatial Audio"
-            title="Spatial Sound DSP"
+            title="Saved spatial preference · unavailable for YouTube streams"
             className={`p-1.5 rounded-full transition-all ${
               spatialAudio
                 ? 'bg-white/20 text-white ring-1 ring-white/30'
@@ -424,6 +423,22 @@ export const BottomPlayer: React.FC = () => {
             }`}
           >
             <ListMusic className="w-4 h-4" />
+          </motion.button>
+
+          {/* About This Song Button */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={toggleAbout}
+            aria-label="About This Song"
+            title="About This Song (Credits & Metadata)"
+            className={`p-1.5 rounded-full transition-colors ${
+              isAboutOpen
+                ? 'text-white bg-white/20 ring-1 ring-white/25'
+                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Info className="w-4 h-4" />
           </motion.button>
 
           {/* Equalizer Trigger */}

@@ -56,6 +56,14 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   return (
     <div
       ref={divRef}
+      tabIndex={props.onClick && !disabled ? 0 : undefined}
+      role={props.onClick ? 'button' : undefined}
+      onKeyDown={event => {
+        if (!disabled && props.onClick && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          event.currentTarget.click();
+        }
+      }}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

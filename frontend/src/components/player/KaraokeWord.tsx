@@ -4,7 +4,7 @@ import { getWordStatus, getWordProgress, isUnspacedScript } from '@/utils/wordSy
 
 export interface KaraokeWordProps {
   word: LyricWord;
-  currentTimeMs: number;
+  currentTimeMs?: number;
   dir?: 'ltr' | 'rtl' | 'auto';
   size?: 'sm' | 'md' | 'lg';
   isLastWord?: boolean;
@@ -13,7 +13,8 @@ export interface KaraokeWordProps {
 
 export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
   ({ word, currentTimeMs, dir = 'auto', size = 'md', isLastWord = false, onClick }) => {
-    const status = getWordStatus(word, currentTimeMs);
+    const effectiveTime = currentTimeMs !== undefined ? currentTimeMs : (word.startTime ?? 0);
+    const status = getWordStatus(word, effectiveTime);
     const isRtl = dir === 'rtl';
     const isUnspaced = isUnspacedScript(word.text);
     const shouldHaveSpacing = !isLastWord && !isUnspaced;
@@ -35,6 +36,8 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
               ? `Jump to ${Math.floor(word.startTime / 1000)}s`
               : undefined
           }
+          data-start-time={word.startTime}
+          data-end-time={word.endTime}
           className={`${baseClasses} lyric-word-upcoming text-white/40 transition-colors duration-150 hover:text-white/70`}
         >
           {word.text}
@@ -52,6 +55,8 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
               ? `Jump to ${Math.floor(word.startTime / 1000)}s`
               : undefined
           }
+          data-start-time={word.startTime}
+          data-end-time={word.endTime}
           className={`${baseClasses} lyric-word-sung text-white`}
         >
           {word.text}
@@ -61,7 +66,7 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
 
     // Active word: single canonical text geometry with direction-aware linear gradient fill
     // Zero duplicate text layers, zero font-weight mismatch, zero subpixel blur
-    const progress = getWordProgress(word, currentTimeMs);
+    const progress = getWordProgress(word, effectiveTime);
     const progressPct = Math.max(0, Math.min(100, progress * 100)).toFixed(1);
 
     // RTL sweeps right-to-left ('to left'), LTR sweeps left-to-right ('to right')
@@ -77,6 +82,8 @@ export const KaraokeWord: React.FC<KaraokeWordProps> = React.memo(
             ? `Jump to ${Math.floor(word.startTime / 1000)}s`
             : undefined
         }
+        data-start-time={word.startTime}
+        data-end-time={word.endTime}
         className={`${baseClasses} lyric-word-active`}
         style={{
           backgroundImage: bgGradient,

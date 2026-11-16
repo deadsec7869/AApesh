@@ -1,5 +1,6 @@
+import logging
 from typing import Optional, List
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
@@ -7,6 +8,8 @@ from backend.app.services.ytmusic_service import ytmusic_service
 from backend.app.schemas.music import SearchResults
 from backend.app.db.database import get_db
 from backend.app.models.search_history import SearchHistory
+
+logger = logging.getLogger("aurora.search")
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -19,9 +22,12 @@ def search_music(
     db: Session = Depends(get_db)
 ):
     """Search for songs, albums, artists, playlists, and videos with caching."""
+    clean_q = q.strip()
+    if not clean_q:
+        return SearchResults(query=q)
+
     # Record to search history
     try:
-        clean_q = q.strip()
         existing = db.query(SearchHistory).filter(SearchHistory.query == clean_q).first()
         if existing:
             existing.searched_at = datetime.now(timezone.utc)
@@ -31,13 +37,32 @@ def search_music(
     except Exception:
         db.rollback()
 
-    return ytmusic_service.search(query=q, filter_type=filter, limit=limit)
+    # Sanitize filter parameter
+    clean_filter = filter.lower().strip() if filter else None
+    if clean_filter == "all" or clean_filter not in {"songs", "albums", "artists", "playlists", "videos"}:
+        clean_filter = None
+
+    try:
+        return ytmusic_service.search(query=clean_q, filter_type=clean_filter, limit=limit)
+    except Exception as e:
+        logger.error("Search failed for query %r (filter=%r): %s", clean_q, clean_filter, e)
+        raise HTTPException(
+            status_code=503,
+            detail=f"Music search service unavailable: {str(e)}"
+        )
 
 
 @router.get("/suggestions", response_model=List[str])
 def search_suggestions(q: str = Query(..., min_length=1)):
     """Fetch instant auto-complete suggestions."""
-    return ytmusic_service.get_search_suggestions(query=q)
+    clean_q = q.strip()
+    if not clean_q:
+        return []
+    try:
+        return ytmusic_service.get_search_suggestions(query=clean_q)
+    except Exception as e:
+        logger.warning("Error fetching suggestions for %r: %s", clean_q, e)
+        return []
 
 
 @router.get("/history")

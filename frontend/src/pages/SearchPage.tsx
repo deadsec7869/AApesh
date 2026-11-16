@@ -126,8 +126,8 @@ export const SearchPage: React.FC = () => {
       ]).then(([rawSuggestions, songResults]) => {
         // Guarantee that only the latest active suggestion request commits state
         if (suggestionId === suggestionsRequestIdRef.current && !controller.signal.aborted) {
-          setSuggestions((rawSuggestions || []).slice(0, 5));
-          setSuggestedTracks(songResults?.songs || []);
+          setSuggestions(Array.isArray(rawSuggestions) ? rawSuggestions.slice(0, 5) : []);
+          setSuggestedTracks(Array.isArray(songResults?.songs) ? songResults.songs : []);
           setSelectedSuggestionIdx(-1);
         }
       });
@@ -318,6 +318,7 @@ export const SearchPage: React.FC = () => {
       {/* ====================================================================
           SEARCH BAR 2.0: Floating Command Center & Suggestions
           ==================================================================== */}
+      <header className="search-masthead"><span className="edition-label">AAPESH / Catalogue</span><h1>Search the catalogue</h1></header>
       <div ref={searchContainerRef} className="relative flex flex-col gap-4 w-full max-w-3xl">
         <SearchBar
           ref={inputRef}

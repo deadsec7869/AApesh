@@ -65,7 +65,7 @@ class YTMusicService:
 
     # Normalization Helpers
     def _extract_thumbnails(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
-        raw = item.get("thumbnails", [])
+        raw = item.get("thumbnails") or []
         if not raw and "thumbnail" in item:
             thumb = item.get("thumbnail")
             if isinstance(thumb, str):
@@ -74,7 +74,7 @@ class YTMusicService:
                 raw = thumb
         results = []
         for t in raw:
-            if isinstance(t, dict) and "url" in t:
+            if isinstance(t, dict) and t.get("url"):
                 results.append({
                     "url": t.get("url", ""),
                     "width": t.get("width"),
@@ -89,6 +89,39 @@ class YTMusicService:
         # Return largest available
         return thumbs[-1]["url"]
 
+    def _normalize_author(self, raw_author: Any) -> str:
+        if not raw_author:
+            return ""
+        if isinstance(raw_author, str):
+            return raw_author
+        if isinstance(raw_author, list):
+            names = []
+            for a in raw_author:
+                if isinstance(a, dict):
+                    n = a.get("name")
+                    if n:
+                        names.append(str(n))
+                elif isinstance(a, str):
+                    names.append(a)
+            return ", ".join(names)
+        if isinstance(raw_author, dict):
+            return str(raw_author.get("name") or "")
+        return str(raw_author)
+
+    def _normalize_item_count(self, raw_count: Any) -> Optional[int]:
+        if raw_count is None:
+            return None
+        if isinstance(raw_count, int):
+            return raw_count
+        if isinstance(raw_count, str):
+            m = re.search(r'\d+', raw_count.replace(',', ''))
+            if m:
+                try:
+                    return int(m.group(0))
+                except ValueError:
+                    return None
+        return None
+
     def _normalize_artists(self, raw_artists: Any) -> List[Dict[str, Any]]:
         if not raw_artists:
             return []
@@ -96,7 +129,8 @@ class YTMusicService:
             artists = []
             for a in raw_artists:
                 if isinstance(a, dict):
-                    artists.append({"id": a.get("id"), "name": a.get("name", "Unknown Artist")})
+                    name = str(a.get("name") or "Unknown Artist")
+                    artists.append({"id": a.get("id"), "name": name})
                 elif isinstance(a, str):
                     artists.append({"id": None, "name": a})
             return artists
@@ -168,7 +202,7 @@ class YTMusicService:
             raw_contents = shelf.get("contents", [])
             items = []
             for c in raw_contents:
-                content_type = c.get("type", "").lower()
+                content_type = (c.get("type") or "").lower()
                 c_id = c.get("videoId") or c.get("browseId") or c.get("playlistId") or ""
                 c_title = c.get("title", "")
                 if not c_title:
@@ -185,9 +219,9 @@ class YTMusicService:
                 inferred_type = "song"
                 if "playlist" in content_type or "playlistId" in c:
                     inferred_type = "playlist"
-                elif "album" in content_type or (c.get("browseId", "").startswith("MPRE")):
+                elif "album" in content_type or ((c.get("browseId") or "").startswith("MPRE")):
                     inferred_type = "album"
-                elif "artist" in content_type or (c.get("browseId", "").startswith("UC")):
+                elif "artist" in content_type or ((c.get("browseId") or "").startswith("UC")):
                     inferred_type = "artist"
                 elif c.get("videoId"):
                     inferred_type = "song"
@@ -216,7 +250,25 @@ class YTMusicService:
         return result
 
     def search(self, query: str, filter_type: Optional[str] = None, limit: int = 20) -> Dict[str, Any]:
-        cache_key = f"search_{query}_{filter_type}_{limit}"
+        clean_query = query.strip() if query else ""
+        if not clean_query:
+            return {
+                "query": query,
+                "topResult": None,
+                "songs": [],
+                "albums": [],
+                "artists": [],
+                "playlists": [],
+                "videos": [],
+            }
+
+        # Validate filter type against supported ytmusicapi filters
+        allowed_filters = {"songs", "albums", "artists", "playlists", "videos"}
+        effective_filter = filter_type.lower().strip() if filter_type else None
+        if effective_filter not in allowed_filters:
+            effective_filter = None
+
+        cache_key = f"search_{clean_query}_{effective_filter}_{limit}"
         cached = cache_service.get(cache_key)
         if cached:
             return cached
@@ -232,56 +284,90 @@ class YTMusicService:
         }
 
         try:
-            if filter_type:
-                # e.g. songs, albums, artists, playlists, videos
-                raw_results = self.client.search(query, filter=filter_type, limit=limit)
+            if effective_filter:
+                raw_results = self.client.search(clean_query, filter=effective_filter, limit=limit)
             else:
-                raw_results = self.client.search(query, limit=limit)
+                raw_results = self.client.search(clean_query, limit=limit)
         except Exception as e:
-            logger.error("Error executing search: %s", e)
-            raw_results = []
+            logger.error("Error executing search for %r: %s", clean_query, e)
+            raise e
+
+        top_result_candidate = None
 
         for item in raw_results:
-            category = (item.get("category") or item.get("resultType") or "").lower()
-            
-            if "song" in category:
-                norm_song = self._normalize_track(item)
-                results["songs"].append(norm_song)
-            elif "album" in category:
-                results["albums"].append({
-                    "browseId": item.get("browseId") or "",
-                    "title": item.get("title", ""),
-                    "type": item.get("type", "Album"),
-                    "year": item.get("year"),
-                    "artists": self._normalize_artists(item.get("artists")),
-                    "thumbnails": self._extract_thumbnails(item),
-                    "thumbnail": self._best_thumbnail(item),
-                    "trackCount": item.get("trackCount"),
-                })
-            elif "artist" in category:
-                results["artists"].append({
-                    "channelId": item.get("browseId") or "",
-                    "name": item.get("artist") or item.get("title", ""),
-                    "subscribers": item.get("subscribers"),
-                    "thumbnails": self._extract_thumbnails(item),
-                    "thumbnail": self._best_thumbnail(item),
-                })
-            elif "playlist" in category:
-                results["playlists"].append({
-                    "id": item.get("browseId") or item.get("id") or "",
-                    "title": item.get("title", ""),
-                    "description": item.get("description", ""),
-                    "author": item.get("author", ""),
-                    "itemCount": item.get("itemCount"),
-                    "thumbnails": self._extract_thumbnails(item),
-                    "thumbnail": self._best_thumbnail(item),
-                })
-            elif "video" in category:
-                norm_video = self._normalize_track(item)
-                results["videos"].append(norm_video)
+            try:
+                result_type = (item.get("resultType") or item.get("type") or item.get("category") or "").lower()
+                is_provider_top = (item.get("category") or "").lower() == "top result"
 
-        # If general search has results, establish topResult
-        if results["songs"]:
+                if "song" in result_type:
+                    norm_song = self._normalize_track(item)
+                    results["songs"].append(norm_song)
+                    if is_provider_top and not top_result_candidate:
+                        top_result_candidate = {"type": "song", "data": norm_song}
+                elif "album" in result_type:
+                    norm_album = {
+                        "browseId": item.get("browseId") or "",
+                        "title": str(item.get("title") or "Unknown Album"),
+                        "type": item.get("type", "Album"),
+                        "year": str(item.get("year")) if item.get("year") is not None else None,
+                        "artists": self._normalize_artists(item.get("artists")),
+                        "thumbnails": self._extract_thumbnails(item),
+                        "thumbnail": self._best_thumbnail(item),
+                        "trackCount": self._normalize_item_count(item.get("trackCount")),
+                    }
+                    results["albums"].append(norm_album)
+                    if is_provider_top and not top_result_candidate:
+                        top_result_candidate = {"type": "album", "data": norm_album}
+                elif "artist" in result_type:
+                    channel_id = item.get("browseId") or item.get("channelId") or ""
+                    artist_name = item.get("artist") or item.get("title") or ""
+                    if not artist_name and item.get("artists"):
+                        first_artist = item["artists"][0]
+                        if isinstance(first_artist, dict):
+                            artist_name = first_artist.get("name", "")
+                            if not channel_id:
+                                channel_id = first_artist.get("id") or ""
+                        elif isinstance(first_artist, str):
+                            artist_name = first_artist
+                    if not artist_name:
+                        artist_name = "Unknown Artist"
+
+                    norm_artist = {
+                        "channelId": channel_id,
+                        "name": artist_name,
+                        "subscribers": str(item.get("subscribers")) if item.get("subscribers") else None,
+                        "thumbnails": self._extract_thumbnails(item),
+                        "thumbnail": self._best_thumbnail(item),
+                    }
+                    results["artists"].append(norm_artist)
+                    if is_provider_top and not top_result_candidate:
+                        top_result_candidate = {"type": "artist", "data": norm_artist}
+                elif "playlist" in result_type:
+                    norm_playlist = {
+                        "id": item.get("browseId") or item.get("id") or item.get("playlistId") or "",
+                        "title": str(item.get("title") or "Untitled Playlist"),
+                        "description": str(item.get("description") or ""),
+                        "author": self._normalize_author(item.get("author")),
+                        "itemCount": self._normalize_item_count(item.get("itemCount")) or 0,
+                        "thumbnails": self._extract_thumbnails(item),
+                        "thumbnail": self._best_thumbnail(item),
+                    }
+                    results["playlists"].append(norm_playlist)
+                    if is_provider_top and not top_result_candidate:
+                        top_result_candidate = {"type": "playlist", "data": norm_playlist}
+                elif "video" in result_type:
+                    norm_video = self._normalize_track(item)
+                    results["videos"].append(norm_video)
+                    if is_provider_top and not top_result_candidate:
+                        top_result_candidate = {"type": "song", "data": norm_video}
+            except Exception as item_err:
+                logger.warning("Error normalizing search item: %s, raw item: %s", item_err, item)
+                continue
+
+        # Establish topResult: provider top result candidate, or fallback to first song/artist/album
+        if top_result_candidate:
+            results["topResult"] = top_result_candidate
+        elif results["songs"]:
             results["topResult"] = {"type": "song", "data": results["songs"][0]}
         elif results["artists"]:
             results["topResult"] = {"type": "artist", "data": results["artists"][0]}
@@ -419,12 +505,25 @@ class YTMusicService:
                     "thumbnail": self._best_thumbnail(s),
                 })
 
+            videos = []
+            for v in raw.get("videos", {}).get("results", []):
+                videos.append(self._normalize_track(v))
+
             related = []
             for r in raw.get("related", {}).get("results", []):
                 related.append({
                     "id": r.get("browseId"),
                     "name": r.get("title", ""),
+                    "thumbnails": self._extract_thumbnails(r),
+                    "thumbnail": self._best_thumbnail(r),
+                    "subscribers": r.get("subscribers"),
                 })
+
+            featured_release = None
+            if albums and len(albums) > 0:
+                featured_release = albums[0]
+            elif singles and len(singles) > 0:
+                featured_release = singles[0]
 
             result = {
                 "channelId": channel_id,
@@ -437,6 +536,8 @@ class YTMusicService:
                 "topSongs": top_songs,
                 "albums": albums,
                 "singles": singles,
+                "videos": videos,
+                "featuredRelease": featured_release,
                 "relatedArtists": related,
             }
             cache_service.set(cache_key, result, ttl=3600)
@@ -592,12 +693,19 @@ class YTMusicService:
         try:
             raw = self.client.get_charts(country=country)
             
-            top_videos = []
-            for v in raw.get("videos", {}).get("items", []):
-                top_videos.append(self._normalize_track(v))
+            def chart_items(section):
+                return section.get("items", []) if isinstance(section, dict) else section or []
+
+            videos = chart_items(raw.get("videos"))
+            top_videos = [self._normalize_track(v) for v in videos if v.get("videoId")]
+            if not top_videos:
+                # Some regions expose the chart as a playlist instead of inline tracks.
+                playlist_id = next((v["playlistId"] for v in videos if v.get("playlistId")), None)
+                if playlist_id:
+                    top_videos = self.get_playlist(playlist_id).get("tracks", [])[:50]
 
             top_artists = []
-            for a in raw.get("artists", {}).get("items", []):
+            for a in chart_items(raw.get("artists")):
                 top_artists.append({
                     "channelId": a.get("browseId", ""),
                     "name": a.get("title", ""),
@@ -632,29 +740,248 @@ class YTMusicService:
             logger.error("Error fetching mood categories: %s", e)
             return {}
 
-    def get_mood_playlists(self, params: str) -> List[Dict[str, Any]]:
-        cache_key = f"mood_playlists_{params}"
+    def get_song_context(self, video_id: str) -> Dict[str, Any]:
+        """
+        Retrieves authentic music context, credits, artist background, album details,
+        and related tracks for About This Song 2.0 without data fabrication.
+        """
+        cache_key = f"song-context:{video_id}"
         cached = cache_service.get(cache_key)
         if cached:
             return cached
 
+        # 1. Base track details
         try:
-            raw = self.client.get_mood_playlists(params)
-            playlists = []
-            for p in raw:
-                playlists.append({
-                    "id": p.get("playlistId", ""),
-                    "title": p.get("title", ""),
-                    "description": p.get("description", ""),
-                    "author": p.get("author", ""),
-                    "thumbnails": self._extract_thumbnails(p),
-                    "thumbnail": self._best_thumbnail(p),
-                })
-            cache_service.set(cache_key, playlists, ttl=7200)
-            return playlists
+            base_track = self.get_song(video_id)
         except Exception as e:
-            logger.error("Error fetching mood playlists: %s", e)
-            return []
+            logger.debug("Error fetching base song for context %s: %s", video_id, e)
+            base_track = {}
+
+        title = base_track.get("title") or "Unknown Title"
+        artists = base_track.get("artists") or []
+        primary_artist_name = artists[0]["name"] if artists else ""
+        primary_artist_id = artists[0].get("id") if artists else None
+        album_name = base_track.get("album")
+        album_id = base_track.get("albumId")
+        duration = base_track.get("duration") or "0:00"
+        duration_seconds = base_track.get("duration_seconds") or 0
+        thumbnails = base_track.get("thumbnails") or []
+        thumbnail = base_track.get("thumbnail") or ""
+        is_explicit = base_track.get("isExplicit", False)
+
+        year: Optional[str] = None
+        release_date: Optional[str] = None
+        genre: Optional[str] = None
+        album_type: Optional[str] = None
+        language: Optional[str] = None
+
+        artist_details: Optional[Dict[str, Any]] = {
+            "id": primary_artist_id,
+            "name": primary_artist_name or "Unknown Artist",
+            "subscribers": None,
+            "thumbnail": None,
+            "description": None,
+        }
+
+        album_details: Optional[Dict[str, Any]] = None
+        credits_data: Optional[Dict[str, Any]] = None
+        from_album_tracks: List[Dict[str, Any]] = []
+        more_artist_tracks: List[Dict[str, Any]] = []
+        you_might_like_tracks: List[Dict[str, Any]] = []
+
+        lyrics_info: Dict[str, Any] = {
+            "hasLyrics": False,
+            "synced": False,
+            "provider": None,
+            "language": None,
+        }
+
+        credits_browse_id: Optional[str] = None
+
+        # 2. Watch playlist & related recommendations
+        try:
+            watch_data = self.client.get_watch_playlist(videoId=video_id)
+            if watch_data:
+                watch_tracks = watch_data.get("tracks", [])
+                if watch_tracks and isinstance(watch_tracks[0], dict):
+                    t0 = watch_tracks[0]
+                    if not title or title == "Song":
+                        title = t0.get("title") or title
+                    if not artists or (len(artists) == 1 and artists[0]["name"] == "Artist"):
+                        artists = self._normalize_artists(t0.get("artists"))
+                        if artists:
+                            primary_artist_name = artists[0]["name"]
+                            primary_artist_id = artists[0].get("id")
+                            artist_details["id"] = primary_artist_id
+                            artist_details["name"] = primary_artist_name
+                    if not thumbnail and t0.get("thumbnail"):
+                        thumbnails = self._extract_thumbnails(t0)
+                        thumbnail = self._best_thumbnail(t0)
+                    if t0.get("length") and duration == "0:00":
+                        duration = t0.get("length")
+                    if t0.get("isExplicit"):
+                        is_explicit = True
+
+                if watch_data.get("lyrics"):
+                    lyrics_info["hasLyrics"] = True
+
+                rel_browse_id = watch_data.get("related")
+                if rel_browse_id:
+                    try:
+                        rel_sections = self.client.get_song_related(rel_browse_id)
+                        for sec in rel_sections:
+                            if not isinstance(sec, dict):
+                                continue
+                            sec_title = (sec.get("title") or "").lower()
+                            contents = sec.get("contents")
+
+                            if "about the artist" in sec_title and isinstance(contents, str):
+                                artist_details["description"] = contents.strip()
+                            elif ("you might also like" in sec_title or "similar" in sec_title) and isinstance(contents, list):
+                                for item in contents[:10]:
+                                    if isinstance(item, dict) and item.get("videoId") != video_id:
+                                        you_might_like_tracks.append(self._normalize_track(item))
+                            elif primary_artist_name and primary_artist_name.lower() in sec_title and isinstance(contents, list):
+                                for item in contents[:10]:
+                                    if isinstance(item, dict) and item.get("videoId") != video_id:
+                                        more_artist_tracks.append(self._normalize_track(item))
+                            elif "from the album" in sec_title and isinstance(contents, list):
+                                for item in contents:
+                                    if isinstance(item, dict) and item.get("videoId") != video_id:
+                                        from_album_tracks.append(self._normalize_track(item))
+                    except Exception as e:
+                        logger.debug("Error retrieving related song data for %s: %s", video_id, e)
+        except Exception as e:
+            logger.debug("Error fetching watch playlist in context for %s: %s", video_id, e)
+
+        # 3. Discover Album & Credits Browse ID
+        try:
+            target_album_id = album_id
+            if not target_album_id and title and primary_artist_name:
+                search_query = f"{title} {primary_artist_name}"
+                album_search = self.client.search(search_query, filter="albums", limit=3)
+                if album_search and isinstance(album_search, list):
+                    target_album_id = album_search[0].get("browseId")
+
+            if target_album_id:
+                album_raw = self.client.get_album(target_album_id)
+                if album_raw and not album_raw.get("error"):
+                    album_details = {
+                        "browseId": target_album_id,
+                        "title": album_raw.get("title", "Unknown Album"),
+                        "year": str(album_raw.get("year")) if album_raw.get("year") else None,
+                        "trackCount": album_raw.get("trackCount") or len(album_raw.get("tracks", [])),
+                        "thumbnail": self._best_thumbnail(album_raw),
+                        "artists": self._normalize_artists(album_raw.get("artists")),
+                    }
+                    if not album_name:
+                        album_name = album_details["title"]
+                    if not album_id:
+                        album_id = target_album_id
+                    if album_raw.get("year"):
+                        year = str(album_raw.get("year"))
+                    if album_raw.get("type"):
+                        album_type = album_raw.get("type")
+
+                    # Scan album tracks for creditsBrowseId and populate fromAlbum
+                    album_tracks = album_raw.get("tracks", [])
+                    for trk in album_tracks:
+                        trk_norm = self._normalize_track(trk)
+                        if trk.get("videoId") != video_id and not any(t["videoId"] == trk_norm["videoId"] for t in from_album_tracks):
+                            from_album_tracks.append(trk_norm)
+
+                        if trk.get("videoId") == video_id or (title.lower() in trk.get("title", "").lower()):
+                            if trk.get("creditsBrowseId"):
+                                credits_browse_id = trk.get("creditsBrowseId")
+        except Exception as e:
+            logger.debug("Error resolving album/credits for %s: %s", video_id, e)
+
+        # 4. Fetch Real Song Credits if credits_browse_id is available
+        if credits_browse_id and credits_browse_id.startswith("MPTC"):
+            try:
+                raw_credits = self.client.get_song_credits(credits_browse_id)
+                if raw_credits and isinstance(raw_credits, dict):
+                    other_secs = []
+                    for other in raw_credits.get("other_sections", []):
+                        if isinstance(other, dict) and other.get("localized_title") and other.get("data"):
+                            other_secs.append({
+                                "localized_title": other.get("localized_title"),
+                                "data": [str(d) for d in other.get("data", [])],
+                            })
+
+                    def extract_sec(key: str) -> Optional[Dict[str, Any]]:
+                        sec = raw_credits.get(key)
+                        if sec and isinstance(sec, dict) and sec.get("data"):
+                            return {
+                                "localized_title": sec.get("localized_title") or key.replace("_", " ").title(),
+                                "data": [str(d) for d in sec.get("data", [])],
+                            }
+                        return None
+
+                    credits_data = {
+                        "performed_by": extract_sec("performed_by"),
+                        "written_by": extract_sec("written_by"),
+                        "produced_by": extract_sec("produced_by"),
+                        "composed_by": extract_sec("composed_by"),
+                        "music_metadata_provided_by": extract_sec("music_metadata_provided_by"),
+                        "other_sections": other_secs,
+                    }
+            except Exception as e:
+                logger.debug("Error fetching credits for %s: %s", credits_browse_id, e)
+
+        # 5. Enrich Artist Details if missing bio/thumbnail and artist id exists
+        if primary_artist_id and (not artist_details.get("description") or not artist_details.get("thumbnail")):
+            try:
+                artist_raw = self.client.get_artist(primary_artist_id)
+                if artist_raw and not artist_raw.get("error"):
+                    if not artist_details.get("description") and artist_raw.get("description"):
+                        artist_details["description"] = artist_raw.get("description")
+                    if not artist_details.get("thumbnail") and artist_raw.get("thumbnails"):
+                        artist_details["thumbnail"] = self._best_thumbnail(artist_raw)
+                    if not artist_details.get("subscribers") and artist_raw.get("subscribers"):
+                        artist_details["subscribers"] = artist_raw.get("subscribers")
+            except Exception as e:
+                logger.debug("Error fetching artist details for %s: %s", primary_artist_id, e)
+
+        # 6. Check Lyrics status from cache if exists
+        lyrics_cached = cache_service.get(f"lyrics_v5_unicode_{video_id}")
+        if lyrics_cached:
+            lyrics_info["hasLyrics"] = bool(lyrics_cached.get("hasLyrics"))
+            lyrics_info["synced"] = bool(lyrics_cached.get("synced"))
+            lyrics_info["provider"] = lyrics_cached.get("provider")
+            lyrics_info["language"] = lyrics_cached.get("language")
+
+        result = {
+            "videoId": video_id,
+            "title": title,
+            "artists": artists,
+            "album": album_name,
+            "albumId": album_id,
+            "duration": duration,
+            "duration_seconds": duration_seconds,
+            "thumbnails": thumbnails,
+            "thumbnail": thumbnail,
+            "isExplicit": is_explicit,
+            "year": year,
+            "releaseDate": release_date or year,
+            "genre": genre,
+            "albumType": album_type,
+            "language": language,
+            "artistDetails": artist_details if (artist_details.get("name") and artist_details.get("name") != "Unknown Artist") else None,
+            "albumDetails": album_details,
+            "credits": credits_data,
+            "related": {
+                "fromAlbum": from_album_tracks[:12],
+                "moreFromArtist": more_artist_tracks[:12],
+                "youMightLike": you_might_like_tracks[:12],
+            },
+            "lyricsInfo": lyrics_info,
+            "dataSource": "YouTube Music",
+        }
+
+        cache_service.set(cache_key, result, ttl=3600)  # 1 hour
+        return result
 
 
 ytmusic_service = YTMusicService()
+

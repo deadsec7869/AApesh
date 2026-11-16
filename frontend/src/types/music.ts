@@ -7,6 +7,9 @@ export interface Thumbnail {
 export interface ArtistBasic {
   id?: string | null;
   name: string;
+  thumbnails?: Thumbnail[];
+  thumbnail?: string;
+  subscribers?: string | null;
 }
 
 export interface Track {
@@ -57,6 +60,8 @@ export interface Artist {
   topSongs: Track[];
   albums: AlbumBasic[];
   singles: AlbumBasic[];
+  videos?: Track[];
+  featuredRelease?: AlbumBasic | null;
   relatedArtists: ArtistBasic[];
 }
 
@@ -212,3 +217,72 @@ export interface PlaybackHistoryItem {
   played_at?: string;
   play_count: number;
 }
+
+export interface SongCreditSection {
+  localized_title: string;
+  data: string[];
+}
+
+export interface SongCredits {
+  performed_by?: SongCreditSection | null;
+  written_by?: SongCreditSection | null;
+  produced_by?: SongCreditSection | null;
+  composed_by?: SongCreditSection | null;
+  music_metadata_provided_by?: SongCreditSection | null;
+  other_sections?: SongCreditSection[];
+}
+
+export interface ArtistSummary {
+  id?: string | null;
+  name: string;
+  subscribers?: string | null;
+  thumbnail?: string | null;
+  description?: string | null;
+}
+
+export interface AlbumSummary {
+  browseId: string;
+  title: string;
+  year?: string | null;
+  trackCount?: number | null;
+  thumbnail?: string | null;
+  artists?: ArtistBasic[];
+}
+
+export interface SongRelatedContext {
+  fromAlbum?: Track[];
+  moreFromArtist?: Track[];
+  youMightLike?: Track[];
+}
+
+export interface LyricsContextInfo {
+  hasLyrics: boolean;
+  synced: boolean;
+  provider?: string | null;
+  language?: string | null;
+}
+
+export interface SongContextResponse {
+  videoId: string;
+  title: string;
+  artists: ArtistBasic[];
+  album?: string | null;
+  albumId?: string | null;
+  duration?: string;
+  duration_seconds?: number;
+  thumbnails?: Thumbnail[];
+  thumbnail?: string;
+  isExplicit?: boolean;
+  year?: string | null;
+  releaseDate?: string | null;
+  genre?: string | null;
+  albumType?: string | null;
+  language?: string | null;
+  artistDetails?: ArtistSummary | null;
+  albumDetails?: AlbumSummary | null;
+  credits?: SongCredits | null;
+  related?: SongRelatedContext | null;
+  lyricsInfo?: LyricsContextInfo | null;
+  dataSource?: string | null;
+}
+

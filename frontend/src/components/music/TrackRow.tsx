@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Pause, Heart, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, Heart, MoreHorizontal, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useOfflineStore } from '@/stores/useOfflineStore';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
 import { getArtworkUrl } from '@/utils/artwork';
 import { controlButtonTap } from '@/lib/motion';
@@ -31,6 +32,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({
 }) => {
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
   const { isLiked, toggleLike } = useLibraryStore();
+  const isDownloaded = useOfflineStore((s) => s.isDownloaded(track.videoId));
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | undefined>();
@@ -126,6 +128,11 @@ export const TrackRow: React.FC<TrackRowProps> = ({
           {track.title}
         </div>
         <div className="flex items-center gap-1.5 text-footnote text-neutral-400 truncate mt-0.5">
+          {isDownloaded && (
+            <span title="Downloaded for Offline Listening">
+              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 inline shrink-0" />
+            </span>
+          )}
           {track.isExplicit && (
             <span className="px-1 py-0.2 text-[9px] font-bold bg-neutral-700 text-neutral-300 rounded">
               E

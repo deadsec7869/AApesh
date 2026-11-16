@@ -41,7 +41,7 @@ const getInitialAmbient = (): boolean => {
 
 const getInitialQuality = (): VisualQuality => {
   const saved = safeGetItem('aapesh_visual_quality');
-  if (saved === 'low' || saved === 'medium' || saved === 'high' || saved === 'ultra') {
+  if (saved === 'off' || saved === 'low' || saved === 'medium' || saved === 'high' || saved === 'ultra') {
     return saved as VisualQuality;
   }
   return 'high';

@@ -33,6 +33,14 @@ export default {
           600: '#343d52',
           500: '#525e7a',
         },
+        /* Desktop.fm Tokens */
+        'canvas-mist': '#f1f2f3',
+        'carbon-black': '#111111',
+        'pure-white': '#ffffff',
+        'graphite': '#2d2d2d',
+        'pale-stone': '#dddddd',
+        'silver-mist': '#b4b4b4',
+        'laser-green': '#00ff66',
       },
       fontFamily: {
         sans: [
@@ -82,7 +90,17 @@ export default {
         cjk: ['"Noto Sans SC"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
         thai: ['"Noto Sans Thai"', 'Leelawadee UI', 'sans-serif'],
       },
+      borderRadius: {
+        'card-dfm': '25px',
+        'button-dfm': '20px',
+        'sharp-dfm': '1.5px',
+        'chrome-dfm': '13px',
+      },
       fontSize: {
+        'dfm-heading': ['28px', { lineHeight: '1.25', letterSpacing: '-0.036em', fontWeight: '800' }],
+        'dfm-body': ['18px', { lineHeight: '1.25', letterSpacing: '-0.016em', fontWeight: '700' }],
+        'dfm-body-sm': ['16px', { lineHeight: '1.25', letterSpacing: '-0.016em', fontWeight: '700' }],
+        'dfm-caption': ['12px', { lineHeight: '1.25', letterSpacing: '0px', fontWeight: '800' }],
         'large-title': ['34px', { lineHeight: '41px', letterSpacing: '-0.025em', fontWeight: '700' }],
         'title-1': ['28px', { lineHeight: '34px', letterSpacing: '-0.02em', fontWeight: '700' }],
         'title-2': ['22px', { lineHeight: '28px', letterSpacing: '-0.015em', fontWeight: '600' }],
@@ -107,6 +125,8 @@ export default {
         },
       },
       boxShadow: {
+        'card-dfm': '0 1px 3px rgba(17, 17, 17, 0.08), 0 4px 12px rgba(17, 17, 17, 0.06)',
+        'laser-glow': '0 0 8px rgba(0, 255, 102, 0.6), 0 0 16px rgba(0, 255, 102, 0.35)',
         'glow-sm': '0 2px 12px -2px rgba(255, 255, 255, 0.08)',
         'glow-md': '0 4px 20px -4px rgba(255, 255, 255, 0.12)',
         'glow-lg': '0 8px 32px -6px rgba(255, 255, 255, 0.15)',

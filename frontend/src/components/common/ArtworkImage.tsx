@@ -24,7 +24,9 @@ export const ArtworkImage: React.FC<ArtworkImageProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  const resolvedSrc = getArtworkUrl(item) ?? getArtworkUrl(src);
+  const id = item && typeof item === 'object' && 'videoId' in item ? item.videoId : null;
+  const videoArt = typeof id === 'string' && /^[A-Za-z0-9_-]{11}$/.test(id) ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : null;
+  const resolvedSrc = getArtworkUrl(item) || getArtworkUrl(src) || videoArt;
 
   useEffect(() => {
     setHasError(false);

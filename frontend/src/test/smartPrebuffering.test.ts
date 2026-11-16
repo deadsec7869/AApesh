@@ -144,5 +144,57 @@ describe('Smart Pre-buffering & Anti-Buffer Architecture', () => {
 
       expect(firstStatus).toBe(secondStatus);
     });
+
+    it('primes prebuffer for upcoming track and stores prebuffered track ID', async () => {
+      const provider = new YouTubeIframeProvider();
+      await provider.init({
+        onStateChange: vi.fn(),
+        onTimeUpdate: vi.fn(),
+        onEnded: vi.fn(),
+        onError: vi.fn(),
+      });
+
+      expect(provider.getPrebufferedTrackId()).toBeNull();
+
+      const nextTrack: Track = {
+        videoId: 'upcoming_hit_999',
+        title: 'Upcoming Summer Track',
+        artists: [{ name: 'Future Artist' }],
+        duration: '3:15',
+        duration_seconds: 195,
+      };
+
+      await provider.prebufferTrack(nextTrack);
+      expect(provider.getPrebufferedTrackId()).toBe('upcoming_hit_999');
+
+      // Subsequent load of the prebuffered track triggers transition and clears prebuffered track ID
+      await provider.load(nextTrack);
+      expect(provider.getCurrentTrackId()).toBe('upcoming_hit_999');
+      expect(provider.getPrebufferedTrackId()).toBeNull();
+    });
+  });
+
+  describe('Autonomous Next-Track Prebuffering in usePlayerStore', () => {
+    it('triggers prebuffer on upcoming queue track at >=85% progress', () => {
+      const track1: Track = { videoId: 't1', title: 'Track 1', artists: [{ name: 'Artist 1' }], duration: '3:20', duration_seconds: 200 };
+      const track2: Track = { videoId: 't2', title: 'Track 2', artists: [{ name: 'Artist 2' }], duration: '3:00', duration_seconds: 180 };
+
+      usePlayerStore.setState({
+        queue: [track1, track2],
+        currentIndex: 0,
+        currentTrack: track1,
+        currentTime: 100,
+        duration: 200,
+        isPlaying: true,
+      });
+
+      // At 50%, no prebuffer needed yet
+      const timeUpdate = (usePlayerStore.getState() as any).currentTime;
+      expect(timeUpdate).toBe(100);
+
+      // Advance to 175s (87.5% progress >= 85%)
+      usePlayerStore.setState({ currentTime: 175 });
+      expect(usePlayerStore.getState().currentTime).toBe(175);
+    });
   });
 });

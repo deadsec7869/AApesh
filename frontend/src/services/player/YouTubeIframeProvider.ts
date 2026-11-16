@@ -46,6 +46,8 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     isPrebuffering: false,
   };
   private intendedPlayState = true;
+  private prebufferedTrack: Track | null = null;
+  private prebufferedTrackId: string | null = null;
 
   async init(callbacks: PlaybackCallbacks): Promise<void> {
     this.callbacks = callbacks;
@@ -308,6 +310,15 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       return;
     }
 
+    const isPrebufferHit = this.prebufferedTrackId === track.videoId;
+    if (isPrebufferHit) {
+      console.info(
+        `[YT PREBUFFER HIT] time=${Date.now()} videoId=${track.videoId} reason=instant-prebuffered-transition`
+      );
+      this.prebufferedTrackId = null;
+      this.prebufferedTrack = null;
+    }
+
     this.currentTrackId = track.videoId;
     this.lastKnownTime = 0;
     this.lastKnownDuration = track.duration_seconds || 0;
@@ -330,7 +341,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
         const startTime = Date.now();
         const network = getNetworkTier();
         const targetSeconds = computeTargetBufferSeconds(network, track.duration_seconds || 200);
-        const maxPrebufferWaitMs = network === 'slow' ? 3500 : 1800;
+        const maxPrebufferWaitMs = isPrebufferHit ? 600 : (network === 'slow' ? 3500 : 1800);
 
         this.prebufferTimer = setInterval(() => {
           if (!this.player || !this.isReady) return;
@@ -363,6 +374,50 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       console.error('[YouTubeIframeProvider] loadVideoById error:', e);
       this.setStatus('error');
     }
+  }
+
+  async prebufferTrack(track: Track): Promise<void> {
+    if (!track?.videoId || this.currentTrackId === track.videoId || this.prebufferedTrackId === track.videoId) {
+      return;
+    }
+
+    this.prebufferedTrack = track;
+    this.prebufferedTrackId = track.videoId;
+
+    if (import.meta.env.DEV) {
+      console.info(
+        `[YT PREBUFFER PRIMED] time=${Date.now()} videoId=${track.videoId} title="${track.title}"`
+      );
+    }
+
+    // 1. Warm network connections via preconnect/prefetch hints
+    if (typeof document !== 'undefined') {
+      const preconnectDomains = ['https://googlevideo.com', 'https://www.youtube.com', 'https://i.ytimg.com'];
+      preconnectDomains.forEach((domain) => {
+        if (!document.querySelector(`link[rel="preconnect"][href="${domain}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'preconnect';
+          link.href = domain;
+          document.head.appendChild(link);
+        }
+      });
+    }
+
+    // 2. Pre-cache high-resolution artwork into browser memory cache
+    if (track.thumbnail && typeof Image !== 'undefined') {
+      const img = new Image();
+      img.src = track.thumbnail;
+    }
+
+    // 3. Pre-fetch song context and synchronized lyrics in background
+    if (typeof fetch !== 'undefined') {
+      fetch(`/api/lyrics/${track.videoId}`).catch(() => {});
+      fetch(`/api/songs/${track.videoId}/context`).catch(() => {});
+    }
+  }
+
+  getPrebufferedTrackId(): string | null {
+    return this.prebufferedTrackId;
   }
 
   async play(): Promise<void> {
@@ -460,6 +515,10 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       } catch {}
     }
     return this.lastKnownDuration;
+  }
+
+  getCurrentTrackId(): string | null {
+    return this.currentTrackId;
   }
 
   destroy(): void {

@@ -1,0 +1,880 @@
+
+> aurora-music@1.0.0 test
+> vitest run --maxWorkers=3 --minWorkers=1
+
+
+ RUN  v2.1.9 C:/Users/Admin/OneDrive/Desktop/aapesh/frontend
+
+stderr | src/test/aboutThisSong.test.tsx > AAPESH About This Song 2.0 (Context + Credits + Metadata) > does not render modal when isAboutOpen is false
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+[AboutThisSong] Context fetch fallback for mock_song_1: [TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal.]
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+
+stderr | src/test/aboutThisSong.test.tsx > AAPESH About This Song 2.0 (Context + Credits + Metadata) > renders modal with base track information when isAboutOpen is true
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+
+stderr | src/test/aboutThisSong.test.tsx > AAPESH About This Song 2.0 (Context + Credits + Metadata) > handles API failure gracefully with retained base track and restrained notice
+[AboutThisSong] Context fetch fallback for mock_song_1: Error: Network timeout
+    at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\test\aboutThisSong.test.tsx:237:55
+    at file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at processTimers (node:internal/timers:615:9)
+    at runSuite (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1262:5)
+
+stderr | src/test/aboutThisSong.test.tsx > AAPESH About This Song 2.0 (Context + Credits + Metadata) > supports closing via close button and Escape key
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+
+stderr | src/test/aboutThisSong.test.tsx > AAPESH About This Song 2.0 (Context + Credits + Metadata) > triggers play/pause and queue actions without mutating unexpected state
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+Warning: An update to AboutThisSongModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at AboutThisSongModal (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\AboutThisSongModal.tsx:22:42)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at BrowserRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router-dom\dist\umd\react-router-dom.development.js:688:7)
+
+stderr | src/test/search2.test.tsx > AAPESH Search 2.0 — Music Discovery Engine & Components > renders TopResultCard with track details and play affordance
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > loads and renders artist hero, name, real subscribers, and top tracks
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/test/aboutThisSong.test.tsx (10 tests) 288ms
+ ✓ src/test/search2.test.tsx (11 tests) 276ms
+stdout | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > triggers Play All action for the artist top tracks
+[YT RECREATE] time=1794805406545 reason=initialization
+
+stdout | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > toggles Follow / Following state and persists to library store
+[YT LOAD] time=1794805406590 videoId=art_song_1 reason=track-load
+[YT PLAY] time=1794805406592 videoId=art_song_1 currentTime=0 reason=user-play
+
+stdout | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > renders Music Videos shelf and triggers playback on click
+[YT PREBUFFER] Ready after 186ms (bufferAhead=50s, fraction=0.25)
+[YT LOAD] time=1794805406789 videoId=vid_blinding_lights reason=track-load
+[YT PLAY] time=1794805406791 videoId=vid_blinding_lights currentTime=0 reason=user-play
+
+stderr | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > renders Music Videos shelf and triggers playback on click
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at div
+    at div
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to TrackRow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at div
+    at div
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to TrackRow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at div
+    at div
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to TrackRow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at div
+    at div
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to TrackRow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at div
+    at section
+    at div
+    at ArtistPage (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\ArtistPage.tsx:30:40)
+    at RenderedRoute (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:535:7)
+    at Routes (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1269:7)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+stderr | src/test/artistPage2.test.tsx > AAPESH Artist Pages 2.0 (Cinematic Spatial Artist Experience) > renders error state with Retry button on API failure
+Failed to load artist: Error: Network error
+    at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\test\artistPage2.test.tsx:325:50
+    at file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runSuite (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1262:5)
+    at startTests (file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/@vitest/runner/dist/index.js:1271:3)
+    at file:///C:/Users/Admin/OneDrive/Desktop/aapesh/frontend/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11
+
+ ✓ src/test/artistPage2.test.tsx (10 tests) 610ms
+ ✓ src/test/wordSync.test.ts (21 tests) 16ms
+ ✓ src/test/multilingualLyrics.test.ts (18 tests) 3ms
+stderr | src/test/queue2.test.tsx > AAPESH Queue 2.0 (Workstation Queue + Drag & Drop + State Preserved) > renders Queue 2.0 panel with header, count, currently playing track, and upcoming tracks
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stdout | src/test/queue2.test.tsx > AAPESH Queue 2.0 (Workstation Queue + Drag & Drop + State Preserved) > plays an upcoming track when clicked
+[YT RECREATE] time=1794805408460 reason=initialization
+
+ ✓ src/test/queue2.test.tsx (14 tests) 227ms
+stdout | src/test/queue2.test.tsx
+[YT LOAD] time=1794805408499 videoId=q_song_2 reason=track-load
+[YT PLAY] time=1794805408500 videoId=q_song_2 currentTime=0 reason=user-play
+
+ ✓ src/test/streamingQuality.test.ts (10 tests) 5ms
+stderr | src/test/desktopFmDesign.test.tsx > Desktop.fm Design System Implementation > DesktopFmPage Full Assembly > renders full-bleed #f1f2f3 stage with 3D hero and app window card
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/test/desktopFmDesign.test.tsx (12 tests) 198ms
+ ✓ src/test/syncedLyrics.test.tsx (15 tests) 92ms
+ ✓ src/test/lyricsPerformance.test.ts (7 tests) 60ms
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > Playback Status State Machine & Store Synchronization > sets prebuffering status when playTrack is initiated
+[YT RECREATE] time=1794805411279 reason=initialization
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > Playback Status State Machine & Store Synchronization > sets prebuffering status when playTrack is initiated
+[YT LOAD] time=1794805411281 videoId=prebuffer_track_1 reason=track-load
+[YT PLAY] time=1794805411282 videoId=prebuffer_track_1 currentTime=0 reason=user-play
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > YouTubeIframeProvider Buffer Monitor > calculates buffer ahead accurately from loaded fraction and duration
+[YT RECREATE] time=1794805411285 reason=initialization
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > YouTubeIframeProvider Buffer Monitor > does not reload the same track if already loaded
+[YT RECREATE] time=1794805411289 reason=initialization
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > YouTubeIframeProvider Buffer Monitor > does not reload the same track if already loaded
+[YT LOAD] time=1794805411289 videoId=prebuffer_track_1 reason=track-load
+[YT LOAD] Skip redundant reload: prebuffer_track_1
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > YouTubeIframeProvider Buffer Monitor > primes prebuffer for upcoming track and stores prebuffered track ID
+[YT RECREATE] time=1794805411290 reason=initialization
+
+stdout | src/test/smartPrebuffering.test.ts > Smart Pre-buffering & Anti-Buffer Architecture > YouTubeIframeProvider Buffer Monitor > primes prebuffer for upcoming track and stores prebuffered track ID
+[YT PREBUFFER PRIMED] time=1794805411290 videoId=upcoming_hit_999 title="Upcoming Summer Track"
+[YT PREBUFFER HIT] time=1794805411301 videoId=upcoming_hit_999 reason=instant-prebuffered-transition
+[YT LOAD] time=1794805411302 videoId=upcoming_hit_999 reason=track-load
+
+ ✓ src/test/smartPrebuffering.test.ts (10 tests) 32ms
+ ✓ src/test/offlineStorage.test.ts (10 tests) 10ms
+ ✓ src/test/playerStore.test.ts (7 tests) 17ms
+ ✓ src/test/lyricsSync.test.ts (9 tests) 4ms
+stderr | src/test/offlinePlaybackIntegration.test.tsx > Offline UI & Playback Resilience Integration > renders OfflineStatusBadge when isOffline is true and hides when false
+Warning: An update to OfflineStatusBadge inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OfflineStatusBadge (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\common\OfflineStatusBadge.tsx:10:83)
+Warning: An update to OfflineStatusBadge inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OfflineStatusBadge (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\common\OfflineStatusBadge.tsx:10:83)
+
+stderr | src/test/offlinePlaybackIntegration.test.tsx > Offline UI & Playback Resilience Integration > renders Downloaded Music card on LibraryPage and navigates to /library/downloaded
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/test/offlinePlaybackIntegration.test.tsx > Offline UI & Playback Resilience Integration > toggles download in ContextMenu and updates useOfflineStore
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+stderr | src/test/offlinePlaybackIntegration.test.tsx > Offline UI & Playback Resilience Integration > renders cached indicator on TrackRow when track is downloaded
+Warning: An update to ContextMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ContextMenu (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\ContextMenu.tsx:18:3)
+    at div
+    at div
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to TrackRow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TrackRow (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\music\TrackRow.tsx:26:3)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+ ✓ src/test/offlinePlaybackIntegration.test.tsx (5 tests) 422ms
+stderr | src/test/fullScreenPlayerReference.test.tsx > FullScreenPlayer Reference Rebuild (Visual Target & Stacking Validation) > renders true two-column composition with Left Controls Column and Right Lyrics Column
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+Lyrics fetch failed: [TypeError: Failed to parse URL from /api/lyrics/ref_track_123] {
+  [cause]: TypeError: Invalid URL: /api/lyrics/ref_track_123
+      at new URLImpl (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL-impl.js:20:13)
+      at Object.exports.setup (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:54:12)
+      at new URL (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:115:22)
+      at new Request (node:internal/deps/undici/undici:13331:25)
+      at fetch (node:internal/deps/undici/undici:14262:25)
+      at fetch (node:internal/deps/undici/undici:19339:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:85:12)
+      at fetchJson (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:14:21)
+      at Object.getLyrics (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:57:35)
+      at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:414:8
+}
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+stderr | src/test/fullScreenPlayerReference.test.tsx > FullScreenPlayer Reference Rebuild (Visual Target & Stacking Validation) > eliminates clutter: no volume boost chips, no status badge, and hides BottomPlayer
+Lyrics fetch failed: [TypeError: Failed to parse URL from /api/lyrics/ref_track_123] {
+  [cause]: TypeError: Invalid URL: /api/lyrics/ref_track_123
+      at new URLImpl (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL-impl.js:20:13)
+      at Object.exports.setup (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:54:12)
+      at new URL (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:115:22)
+      at new Request (node:internal/deps/undici/undici:13331:25)
+      at fetch (node:internal/deps/undici/undici:14262:25)
+      at fetch (node:internal/deps/undici/undici:19339:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:85:12)
+      at fetchJson (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:14:21)
+      at Object.getLyrics (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:57:35)
+      at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:414:8
+}
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+stderr | src/test/fullScreenPlayerReference.test.tsx > FullScreenPlayer Reference Rebuild (Visual Target & Stacking Validation) > supports seamless switching between Cover, Lyrics, Queue, and Video modes
+Lyrics fetch failed: [TypeError: Failed to parse URL from /api/lyrics/ref_track_123] {
+  [cause]: TypeError: Invalid URL: /api/lyrics/ref_track_123
+      at new URLImpl (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL-impl.js:20:13)
+      at Object.exports.setup (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:54:12)
+      at new URL (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:115:22)
+      at new Request (node:internal/deps/undici/undici:13331:25)
+      at fetch (node:internal/deps/undici/undici:14262:25)
+      at fetch (node:internal/deps/undici/undici:19339:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:85:12)
+      at fetchJson (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:14:21)
+      at Object.getLyrics (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:57:35)
+      at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:414:8
+}
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+stderr | src/test/fullScreenPlayerReference.test.tsx > FullScreenPlayer Reference Rebuild (Visual Target & Stacking Validation) > renders collapse button and exits fullscreen on click or Escape
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Lyrics fetch failed: [TypeError: Failed to parse URL from /api/lyrics/ref_track_123] {
+  [cause]: TypeError: Invalid URL: /api/lyrics/ref_track_123
+      at new URLImpl (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL-impl.js:20:13)
+      at Object.exports.setup (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:54:12)
+      at new URL (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\whatwg-url\lib\URL.js:115:22)
+      at new Request (node:internal/deps/undici/undici:13331:25)
+      at fetch (node:internal/deps/undici/undici:14262:25)
+      at fetch (node:internal/deps/undici/undici:19339:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:85:12)
+      at fetchJson (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:14:21)
+      at Object.getLyrics (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:57:35)
+      at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:414:8
+}
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+Warning: An update to FullScreenPlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at FullScreenPlayer (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\components\player\FullScreenPlayer.tsx:137:29)
+    at Router (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1203:17)
+    at MemoryRouter (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\node_modules\react-router\dist\umd\react-router.development.js:1097:7)
+
+ ✓ src/test/fullScreenPlayerReference.test.tsx (4 tests) 539ms
+   ✓ FullScreenPlayer Reference Rebuild (Visual Target & Stacking Validation) > renders true two-column composition with Left Controls Column and Right Lyrics Column 359ms
+ ✓ src/test/audioReactiveEngine.test.ts (7 tests) 3ms
+stderr | src/test/playlistImporter.test.tsx > PlaylistImportModal Component > does not render when isOpen is false
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/test/playlistImporter.test.tsx (5 tests) 158ms
+stdout | src/test/bottomPlayerAndSearchError.test.tsx > AAPESH: Bottom Player & Search Error Verification > initiates playback through canonical store when selecting a track
+[YT RECREATE] time=1794805416860 reason=initialization
+
+stdout | src/test/bottomPlayerAndSearchError.test.tsx > AAPESH: Bottom Player & Search Error Verification > initiates playback through canonical store when selecting a track
+[YT LOAD] time=1794805416865 videoId=real-track-999 reason=track-load
+[YT PLAY] time=1794805416865 videoId=real-track-999 currentTime=0 reason=user-play
+
+stderr | src/test/bottomPlayerAndSearchError.test.tsx > AAPESH: Bottom Player & Search Error Verification > renders error state and working Retry button when search fails
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+Search error: Error: Music search service unavailable: timeout
+    at fetchJson (C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\api\client.ts:21:11)
+    at C:\Users\Admin\OneDrive\Desktop\aapesh\frontend\src\pages\SearchPage.tsx:165:25
+
+ ✓ src/test/bottomPlayerAndSearchError.test.tsx (4 tests) 233ms
+ ✓ src/test/beatReactiveVisuals.test.ts (7 tests) 3ms
+ ✓ src/test/audioLab2.test.ts (7 tests) 4ms
+ ✓ src/test/fullScreenArtworkScene.test.tsx (5 tests) 157ms
+ ✓ src/test/typographyTokens.test.ts (4 tests) 3ms
+ ✓ src/test/historyAndFollow.test.ts (3 tests) 4ms
+ ✓ src/test/reactBitsIntegration.test.tsx (7 tests) 136ms
+ ✓ src/test/spatialScene.test.ts (5 tests) 3ms
+ ✓ src/test/artworkImage.test.ts (6 tests) 60ms
+ ✓ src/test/smartPlayback.test.ts (4 tests) 3ms
+ ✓ src/test/nowPlaying2.test.ts (3 tests) 3ms
+ ✓ src/test/smartShuffle.test.ts (3 tests) 2ms
+ ✓ src/test/phase3Cinematic.test.ts (3 tests) 2ms
+ ✓ src/test/rapierPhysicsSafety.test.ts (3 tests) 1ms
+ ✓ src/test/spatialArtwork.test.ts (4 tests) 2ms
+
+ Test Files  33 passed (33)
+      Tests  253 passed (253)
+   Start at  10:33:23
+   Duration  19.28s (transform 840ms, setup 5.83s, collect 7.44s, tests 3.58s, environment 29.67s, prepare 3.14s)
+

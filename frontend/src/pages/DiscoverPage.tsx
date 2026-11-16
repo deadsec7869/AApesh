@@ -8,8 +8,17 @@ import { PlaylistCard } from '@/components/music/PlaylistCard';
 import { SkeletonList, SkeletonCard } from '@/components/common/Skeletons';
 
 export const DiscoverPage: React.FC = () => {
-  const [charts, setCharts] = useState<{ country: string; videos: Track[]; artists: any[] } | null>(null);
-  const [moodCategories, setMoodCategories] = useState<Record<string, any> | null>(null);
+  const [attempt, retry] = useState(0);
+  const moodRequest = React.useRef(0);
+  const [charts, setCharts] = useState<{
+    country: string;
+    videos: Track[];
+    artists: any[];
+  } | null>(null);
+  const [moodCategories, setMoodCategories] = useState<Record<
+    string,
+    any
+  > | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodPlaylists, setMoodPlaylists] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +29,9 @@ export const DiscoverPage: React.FC = () => {
     setIsLoading(true);
 
     Promise.all([
-      api.getCharts('ZZ').catch(() => ({ country: 'ZZ', videos: [], artists: [] })),
+      api
+        .getCharts('ZZ')
+        .catch(() => ({ country: 'ZZ', videos: [], artists: [] })),
       api.getMoods().catch(() => ({})),
     ])
       .then(([chartsRes, moodsRes]) => {
@@ -36,19 +47,20 @@ export const DiscoverPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [attempt]);
 
   const handleSelectMood = async (params: string, label: string) => {
+    const request = ++moodRequest.current;
     setSelectedMood(label);
     setLoadingMoodPlaylists(true);
     try {
       const playlists = await api.getMoodPlaylists(params);
-      setMoodPlaylists(playlists);
+      if (request === moodRequest.current) setMoodPlaylists(playlists);
     } catch (err) {
       console.warn('Failed to load mood playlists:', err);
-      setMoodPlaylists([]);
+      if (request === moodRequest.current) setMoodPlaylists([]);
     } finally {
-      setLoadingMoodPlaylists(false);
+      if (request === moodRequest.current) setLoadingMoodPlaylists(false);
     }
   };
 
@@ -79,10 +91,20 @@ export const DiscoverPage: React.FC = () => {
           Discover
         </h1>
         <p className="text-sm text-neutral-400 max-w-xl">
-          Explore what is trending worldwide, top artists breaking records, and playlists tuned to every mood.
+          Explore what is trending worldwide, top artists breaking records, and
+          playlists tuned to every mood.
         </p>
       </div>
 
+      {!charts?.videos?.length &&
+        !charts?.artists?.length &&
+        !genres.length &&
+        !moodsAndMoments.length && (
+          <div className="edition-status">
+            Charts and moods are unavailable.{' '}
+            <button onClick={() => retry((n) => n + 1)}>Try again</button>
+          </div>
+        )}
       {/* Moods & Moments Tag Cloud */}
       {(moodsAndMoments.length > 0 || genres.length > 0) && (
         <section className="flex flex-col gap-4">

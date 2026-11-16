@@ -1,21 +1,68 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Library, Heart, Plus, ListMusic, Play } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Library,
+  Heart,
+  Plus,
+  ListMusic,
+  Play,
+  HardDrive,
+  DownloadCloud,
+} from 'lucide-react';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { usePlayerStore } from '@/stores/usePlayerStore';
+import { useOfflineStore } from '@/stores/useOfflineStore';
 import { CreatePlaylistModal } from '@/components/common/CreatePlaylistModal';
+import { PlaylistImportModal } from '@/components/common/PlaylistImportModal';
 import { SpotlightCard } from '@/components/react-bits';
 
 export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { playlists, likedTracks } = useLibraryStore();
+  const { playlists, likedTracks, followedArtists } = useLibraryStore();
   const { playTrack } = usePlayerStore();
+  const { downloadedTracks, isInitialized, initialize } = useOfflineStore();
+  const albums = [
+    ...new Map(
+      likedTracks
+        .filter((t) => t.album)
+        .map((t) => [t.albumId || t.album + ' / ' + t.artists[0]?.name, t]),
+    ).values(),
+  ];
+  const [filter, setFilter] = useState('');
+  const [order, setOrder] = useState('recent');
+  const visibleLists = playlists
+    .filter((p) =>
+      (p.title + ' ' + (p.description || ''))
+        .toLowerCase()
+        .includes(filter.trim().toLowerCase()),
+    )
+    .sort((a, b) =>
+      order === 'name'
+        ? a.title.localeCompare(b.title)
+        : order === 'size'
+          ? b.track_count - a.track_count
+          : (b.updated_at || '').localeCompare(a.updated_at || ''),
+    );
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [isInitialized, initialize]);
 
   const handlePlayLiked = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (likedTracks.length > 0) {
       playTrack(likedTracks[0], likedTracks);
+    }
+  };
+
+  const handlePlayDownloaded = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (downloadedTracks.length > 0) {
+      playTrack(downloadedTracks[0], downloadedTracks);
     }
   };
 
@@ -33,15 +80,47 @@ export const LibraryPage: React.FC = () => {
           </h1>
         </div>
 
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-medium text-sm transition-all duration-200 ease-out-expo shadow-play-btn hover:scale-[1.03]"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Playlist</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setImportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white font-medium text-sm transition-all duration-200 ease-out-expo shadow-sm hover:scale-[1.02]"
+          >
+            <DownloadCloud className="w-4 h-4 text-cyan-400" />
+            <span>Import Playlist</span>
+          </button>
+
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-medium text-sm transition-all duration-200 ease-out-expo shadow-play-btn hover:scale-[1.03]"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Playlist</span>
+          </button>
+        </div>
       </div>
 
+      <div className="collection-tools">
+        <label>
+          Filter playlists
+          <input
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Name or description"
+          />
+        </label>
+        <label>
+          Sort by
+          <select value={order} onChange={(e) => setOrder(e.target.value)}>
+            <option value="recent">Recently edited</option>
+            <option value="name">Name</option>
+            <option value="size">Track count</option>
+          </select>
+        </label>
+      </div>
+      {filter && !visibleLists.length && (
+        <p role="status">No playlists match “{filter}”.</p>
+      )}
       {/* Grid of Playlists & Liked Songs Hero Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Liked Songs Special Banner Card */}
@@ -68,15 +147,52 @@ export const LibraryPage: React.FC = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-black text-white tracking-tight">Liked Songs</h2>
+            <h2 className="text-2xl font-black text-white tracking-tight">
+              Liked Songs
+            </h2>
             <p className="text-sm text-neutral-400 font-medium mt-1">
-              {likedTracks.length} {likedTracks.length === 1 ? 'song' : 'songs'} saved
+              {likedTracks.length} {likedTracks.length === 1 ? 'song' : 'songs'}{' '}
+              saved
+            </p>
+          </div>
+        </SpotlightCard>
+
+        {/* Downloaded Songs Special Banner Card */}
+        <SpotlightCard
+          onClick={() => navigate('/library/downloaded')}
+          spotlightColor="rgba(6, 182, 212, 0.15)"
+          spotlightRadius={280}
+          className="group relative flex flex-col justify-between p-6 rounded-3xl glass-dock border border-white/10 shadow-xl cursor-pointer hover:border-cyan-500/30 transition-all min-h-[220px]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="w-12 h-12 rounded-2xl bg-charcoal-900 border border-white/10 flex items-center justify-center text-white shadow-md">
+              <HardDrive className="w-6 h-6 text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.4)]" />
+            </div>
+
+            {downloadedTracks.length > 0 && (
+              <button
+                onClick={handlePlayDownloaded}
+                aria-label="Play Downloaded Songs"
+                className="w-12 h-12 rounded-full btn-play-aapesh text-black flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform"
+              >
+                <Play className="w-5 h-5 fill-current translate-x-0.5 text-black" />
+              </button>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">
+              Saved on this device
+            </h2>
+            <p className="text-sm text-neutral-400 font-medium mt-1">
+              {downloadedTracks.length}{' '}
+              {downloadedTracks.length === 1 ? 'song' : 'songs'} saved
             </p>
           </div>
         </SpotlightCard>
 
         {/* User Playlists */}
-        {playlists.map((pl) => (
+        {visibleLists.map((pl) => (
           <div
             key={pl.id}
             onClick={() => navigate(`/playlist/${pl.id}`)}
@@ -108,9 +224,49 @@ export const LibraryPage: React.FC = () => {
         ))}
       </div>
 
+      {followedArtists.length > 0 && (
+        <section>
+          <h2 className="collection-heading">Followed artists</h2>
+          <div className="collection-index">
+            {followedArtists.map((a) => (
+              <Link key={a.id} to={'/artist/' + encodeURIComponent(a.id)}>
+                {a.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+      {albums.length > 0 && (
+        <section>
+          <h2 className="collection-heading">Albums in your likes</h2>
+          <div className="collection-index">
+            {albums.map((t) => (
+              <Link
+                key={t.videoId}
+                to={
+                  t.albumId
+                    ? '/album/' + encodeURIComponent(t.albumId)
+                    : '/search/' +
+                      encodeURIComponent(
+                        t.album + ' ' + (t.artists[0]?.name || ''),
+                      )
+                }
+              >
+                {t.album}
+                <small>{t.artists[0]?.name}</small>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
       <CreatePlaylistModal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
+      />
+
+      <PlaylistImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
       />
     </div>
   );

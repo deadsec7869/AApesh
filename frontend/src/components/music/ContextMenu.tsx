@@ -9,11 +9,15 @@ import {
   Share2,
   FolderPlus,
   Trash2,
+  Info,
+  HardDrive,
+  CheckCircle2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Track } from '@/types/music';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
+import { useOfflineStore } from '@/stores/useOfflineStore';
 
 interface ContextMenuProps {
   track: Track;
@@ -36,8 +40,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const navigate = useNavigate();
   const { playTrack, playNext, addToQueue } = usePlayerStore();
   const { isLiked, toggleLike } = useLibraryStore();
+  const { isDownloaded, downloadTrack, removeDownloadedTrack } = useOfflineStore();
 
   const liked = isLiked(track.videoId);
+  const downloaded = isDownloaded(track.videoId);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -72,6 +78,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const handleToggleLike = () => {
     toggleLike(track);
+    onClose();
+  };
+
+  const handleToggleDownload = async () => {
+    if (downloaded) {
+      await removeDownloadedTrack(track.videoId);
+    } else {
+      await downloadTrack(track);
+    }
     onClose();
   };
 
@@ -196,6 +211,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <span>{liked ? 'Remove from Liked' : 'Save to Liked Songs'}</span>
           </button>
 
+          <button
+            onClick={handleToggleDownload}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            {downloaded ? (
+              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+            ) : (
+              <HardDrive className="w-4 h-4 text-neutral-400" />
+            )}
+            <span>{downloaded ? 'Remove from this device' : 'Save track details offline'}</span>
+          </button>
+
           {track.artists && track.artists[0]?.id && (
             <button
               onClick={handleGoToArtist}
@@ -215,6 +242,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <span>Go to Album</span>
             </button>
           )}
+
+          <button
+            onClick={() => {
+              usePlayerStore.getState().openAbout(track);
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <Info className="w-4 h-4 text-neutral-400" />
+            <span>About This Song</span>
+          </button>
 
           <div className="h-px bg-white/10 my-1" />
 

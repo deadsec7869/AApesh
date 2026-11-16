@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // Memory-safe LRU Texture Cache
 const textureCache = new Map<string, THREE.Texture>();
-const MAX_CACHE_SIZE = 20;
+const MAX_CACHE_SIZE = 24;
 
 // Create a fallback 1x1 neutral dark texture to prevent null errors
 function createFallbackTexture(): THREE.Texture {

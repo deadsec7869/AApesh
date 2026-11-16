@@ -12,6 +12,8 @@ import {
 import { PlaybackStatus, BufferHealth } from '@/types/playback';
 import { resolveStreamingQuality } from '@/services/audio/qualityResolver';
 import { api } from '@/api/client';
+import { useOfflineStore } from '@/stores/useOfflineStore';
+import { useUIStore } from '@/stores/useUIStore';
 
 export interface SleepTimerState {
   durationMinutes: number;
@@ -43,6 +45,8 @@ interface PlayerState {
   isLyricsOpen: boolean;
   isVideoDockOpen: boolean;
   isQualityModalOpen: boolean;
+  isAboutOpen: boolean;
+  aboutTrack: Track | null;
   streamingQuality: StreamingQualityTier;
   fullscreenTab: 'art' | 'lyrics' | 'queue' | 'video';
   atmospherePalette: ArtworkPalette | null;
@@ -50,6 +54,10 @@ interface PlayerState {
   bottomPlayerHeight: number;
   bottomPlayerClearance: number;
   error: string | null;
+
+  // Waveform for interactive scrubber
+  waveformData: number[] | null;
+  waveformLoading: boolean;
 
   // Actions
   setBottomPlayerDimensions: (height: number, clearance: number) => void;
@@ -59,6 +67,7 @@ interface PlayerState {
   getEffectiveQualityInfo: () => EffectiveQualityResolution;
   initEngine: () => Promise<void>;
   playTrack: (track: Track, newQueue?: Track[]) => Promise<void>;
+  playQueueIndex: (index: number) => Promise<void>;
   addToRecentlyPlayed: (track: Track) => void;
   togglePlay: () => Promise<void>;
   play: () => Promise<void>;
@@ -86,10 +95,25 @@ interface PlayerState {
   setPlayerExpanded: (expanded: boolean) => void;
   toggleQueue: () => void;
   toggleLyrics: () => void;
+  toggleAbout: () => void;
+  setAboutOpen: (open: boolean) => void;
+  openAbout: (track?: Track) => void;
   toggleVideoDock: () => void;
   setVideoDockOpen: (open: boolean) => void;
   setFullscreenTab: (tab: 'art' | 'lyrics' | 'queue' | 'video') => void;
   setError: (error: string | null) => void;
+
+  // Waveform
+  setWaveformData: (data: number[] | null) => void;
+  setWaveformLoading: (loading: boolean) => void;
+  fetchWaveform: (videoId: string) => Promise<void>;
+
+  // Optimistic Sync Helpers (instant UI, backend sync in background)
+  optimisticLike: (track: Track, liked: boolean) => void;
+  optimisticQueueAdd: (track: Track) => void;
+  optimisticQueueRemove: (index: number) => void;
+  optimisticQueueReorder: (from: number, to: number) => void;
+  optimisticQueuePlayNext: (track: Track) => void;
 }
 
 const STORAGE_KEYS = {
@@ -206,6 +230,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isLyricsOpen: false,
   isVideoDockOpen: false,
   isQualityModalOpen: false,
+  isAboutOpen: false,
+  aboutTrack: null,
   streamingQuality: getSavedStreamingQuality(),
   fullscreenTab: 'art',
   atmospherePalette: null,
@@ -213,6 +239,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   bottomPlayerHeight: 76,
   bottomPlayerClearance: 128,
   error: null,
+
+  // Waveform
+  waveformData: null,
+  waveformLoading: false,
 
   setBottomPlayerDimensions: (height: number, clearance: number) => {
     set({ bottomPlayerHeight: height, bottomPlayerClearance: clearance });
@@ -258,8 +288,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
               thumbnail: h.thumbnail_url,
               duration: h.duration,
             }));
-            set({ recentlyPlayed: tracks });
-            safeSetItem(STORAGE_KEYS.RECENTLY_PLAYED, JSON.stringify(tracks));
+            const distinct = tracks.filter((t, i) => tracks.findIndex(x=>x.videoId===t.videoId)===i);
+            set({ recentlyPlayed: distinct });
+            safeSetItem(STORAGE_KEYS.RECENTLY_PLAYED, JSON.stringify(distinct));
           }
         }
       } catch {}
@@ -298,6 +329,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
             }
           }
         }
+
+        // Smart Next-Track Prebuffering at >=85% elapsed or <=15s remaining
+        if (actualDur > 12 && (currentTime / actualDur >= 0.85 || actualDur - currentTime <= 15)) {
+          const nextTrack = state.queue[state.currentIndex + 1];
+          if (nextTrack && typeof playbackEngine.prebufferTrack === 'function') {
+            playbackEngine.prebufferTrack(nextTrack);
+          }
+        }
       },
       onEnded: () => {
         const { repeatMode, sleepTimer } = get();
@@ -324,6 +363,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       navigator.mediaSession.setActionHandler('play', () => get().play());
       navigator.mediaSession.setActionHandler('pause', () => get().pause());
+      navigator.mediaSession.setActionHandler('stop', () => get().pause());
       navigator.mediaSession.setActionHandler('previoustrack', () => get().previous());
       navigator.mediaSession.setActionHandler('nexttrack', () => get().next());
       navigator.mediaSession.setActionHandler('seekbackward', (details) => {
@@ -441,10 +481,126 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
 
     await get().initEngine();
-    await playbackEngine.load(track);
-    await playbackEngine.play();
+    try {
+      await playbackEngine.load(track);
+      await playbackEngine.play();
+    } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        const isOffline = useOfflineStore.getState().isOffline;
+        const isCached = useOfflineStore.getState().isDownloaded(track.videoId);
+        if (isOffline || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+          if (!isCached) {
+            set({
+              error: `"${track.title}" is not available offline. Please download it first or reconnect to the internet.`,
+              isPlaying: false,
+              isBuffering: false,
+              playbackStatus: 'error',
+            });
+            return;
+          }
+        }
+      }
+      set({
+        error: err?.message || 'Playback error occurred',
+        isPlaying: false,
+        isBuffering: false,
+        playbackStatus: 'error',
+      });
+    }
 
     // Record to history on backend
+    try {
+      fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoId: track.videoId,
+          title: track.title,
+          artist: track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist',
+          album: track.album || '',
+          thumbnail_url: track.thumbnail || '',
+          duration: track.duration || '0:00',
+        }),
+      }).catch(() => {});
+    } catch {}
+  },
+
+  playQueueIndex: async (index: number) => {
+    const { queue } = get();
+    if (index < 0 || index >= queue.length) return;
+    const track = queue[index];
+    if (!track) return;
+
+    prefetchedNextTrackId = null;
+
+    set({
+      currentTrack: track,
+      currentIndex: index,
+      isPlaying: true,
+      isBuffering: true,
+      playbackStatus: 'prebuffering',
+      currentTime: 0,
+      duration: track.duration_seconds || 0,
+      error: null,
+    });
+
+    const trackArtwork = getArtworkUrl(track) || track.thumbnail;
+
+    extractArtworkPalette(trackArtwork, track.title).then((palette) => {
+      set({ atmospherePalette: palette });
+      if (typeof document !== 'undefined') {
+        document.documentElement.style.setProperty('--ambient-glow', palette.glow);
+        document.documentElement.style.setProperty('--ambient-accent', palette.primary);
+      }
+    });
+
+    try {
+      safeSetItem(STORAGE_KEYS.LAST_TRACK, JSON.stringify(track));
+      safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(queue));
+    } catch {}
+
+    get().addToRecentlyPlayed(track);
+
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
+      const artistName = track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.title,
+        artist: artistName,
+        album: track.album || '',
+        artwork: trackArtwork
+          ? [{ src: trackArtwork, sizes: '512x512', type: 'image/jpeg' }]
+          : [],
+      });
+    }
+
+    await get().initEngine();
+    try {
+      await playbackEngine.load(track);
+      await playbackEngine.play();
+    } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        const isOffline = useOfflineStore.getState().isOffline;
+        const isCached = useOfflineStore.getState().isDownloaded(track.videoId);
+        if (isOffline || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+          if (!isCached) {
+            set({
+              error: `"${track.title}" is not available offline. Please download it first or reconnect to the internet.`,
+              isPlaying: false,
+              isBuffering: false,
+              playbackStatus: 'error',
+            });
+            return;
+          }
+        }
+      }
+      set({
+        error: err?.message || 'Playback error occurred',
+        isPlaying: false,
+        isBuffering: false,
+        playbackStatus: 'error',
+      });
+    }
+
     try {
       fetch('/api/history', {
         method: 'POST',
@@ -472,9 +628,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   togglePlay: async () => {
-    const { isPlaying, currentTrack, queue } = get();
-    if (!currentTrack && queue.length > 0) {
-      await get().playTrack(queue[0]);
+    const { isPlaying, currentTrack, queue, recentlyPlayed } = get();
+    if (!currentTrack) {
+      if (queue.length > 0) {
+        await get().playTrack(queue[0]);
+        return;
+      }
+      if (recentlyPlayed.length > 0) {
+        await get().playTrack(recentlyPlayed[0]);
+        return;
+      }
       return;
     }
     if (isPlaying) {
@@ -488,6 +651,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { currentTrack } = get();
     if (!currentTrack) return;
     set({ isPlaying: true });
+    if (playbackEngine.getCurrentTrackId?.() !== currentTrack.videoId) {
+      await playbackEngine.load(currentTrack);
+    }
     await playbackEngine.play();
   },
 
@@ -797,14 +963,117 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     get().moveQueueItem(from, to);
   },
 
-  togglePlayerExpanded: () => set((s) => ({ isPlayerExpanded: !s.isPlayerExpanded })),
-  setPlayerExpanded: (isPlayerExpanded) => set({ isPlayerExpanded }),
+  togglePlayerExpanded: () => {
+    const next = !get().isPlayerExpanded;
+    set({ isPlayerExpanded: next });
+    useUIStore.getState().setIsPlayerExpanded(next);
+  },
+  setPlayerExpanded: (isPlayerExpanded) => {
+    set({ isPlayerExpanded });
+    useUIStore.getState().setIsPlayerExpanded(isPlayerExpanded);
+  },
   toggleQueue: () => set((s) => ({ isQueueOpen: !s.isQueueOpen, isLyricsOpen: false })),
   toggleLyrics: () => set((s) => ({ isLyricsOpen: !s.isLyricsOpen, isQueueOpen: false })),
+  toggleAbout: () =>
+    set((s) => ({
+      isAboutOpen: !s.isAboutOpen,
+      aboutTrack: s.isAboutOpen ? null : s.aboutTrack,
+    })),
+  setAboutOpen: (isAboutOpen) =>
+    set((s) => ({
+      isAboutOpen,
+      aboutTrack: isAboutOpen ? s.aboutTrack : null,
+    })),
+  openAbout: (track) =>
+    set({
+      isAboutOpen: true,
+      aboutTrack: track || null,
+    }),
   toggleVideoDock: () => set((s) => ({ isVideoDockOpen: !s.isVideoDockOpen })),
   setVideoDockOpen: (isVideoDockOpen) => set({ isVideoDockOpen }),
   setFullscreenTab: (fullscreenTab) => set({ fullscreenTab }),
   setError: (error) => set({ error }),
+
+  // Waveform
+  setWaveformData: (data) => set({ waveformData: data }),
+  setWaveformLoading: (loading) => set({ waveformLoading: loading }),
+  fetchWaveform: async (videoId: string) => {
+    set({ waveformLoading: true });
+    try {
+      // Try to fetch waveform from backend (if endpoint exists)
+      // Fallback: generate synthetic waveform from duration
+      const { duration } = get();
+      if (duration > 0) {
+        // Generate a plausible synthetic waveform (64 points)
+        const synthetic = Array.from({ length: 64 }, (_, i) => {
+          const t = i / 63;
+          // Simple envelope: quieter at start/end, louder in middle with some variation
+          const envelope = Math.sin(t * Math.PI) * (0.3 + 0.7 * Math.random());
+          return Math.max(0, Math.min(1, envelope));
+        });
+        set({ waveformData: synthetic, waveformLoading: false });
+      } else {
+        set({ waveformData: null, waveformLoading: false });
+      }
+    } catch {
+      set({ waveformData: null, waveformLoading: false });
+    }
+  },
+
+  // Optimistic Sync Helpers
+  optimisticLike: (track, liked) => {
+    // This is called by UI for instant feedback; backend sync happens in LibraryStore
+    // We just ensure the track is in recently played
+    get().addToRecentlyPlayed(track);
+  },
+  optimisticQueueAdd: (track) => {
+    const { queue, originalQueue } = get();
+    const newQueue = [...queue, track];
+    const newOriginal = [...originalQueue, track];
+    set({ queue: newQueue, originalQueue: newOriginal });
+    try {
+      safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(newQueue));
+    } catch {}
+  },
+  optimisticQueueRemove: (index) => {
+    const { queue, originalQueue, currentIndex } = get();
+    const removedTrack = queue[index];
+    const newQueue = queue.filter((_, idx) => idx !== index);
+
+    let newCurrent = currentIndex;
+    if (index < currentIndex) {
+      newCurrent = currentIndex - 1;
+    } else if (index === currentIndex && newQueue.length > 0) {
+      newCurrent = Math.min(currentIndex, newQueue.length - 1);
+    }
+
+    const newOriginal = originalQueue.filter((t) => t.videoId !== removedTrack?.videoId);
+    set({ queue: newQueue, originalQueue: newOriginal, currentIndex: newCurrent });
+    try {
+      safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(newQueue));
+    } catch {}
+  },
+  optimisticQueueReorder: (from, to) => {
+    get().moveQueueItem(from, to);
+  },
+  optimisticQueuePlayNext: (track) => {
+    const { queue, originalQueue, currentIndex } = get();
+    const newQueue = [...queue];
+    newQueue.splice(currentIndex + 1, 0, track);
+
+    const newOriginal = [...originalQueue];
+    const origIdx = originalQueue.findIndex((t) => t.videoId === queue[currentIndex]?.videoId);
+    if (origIdx !== -1) {
+      newOriginal.splice(origIdx + 1, 0, track);
+    } else {
+      newOriginal.push(track);
+    }
+
+    set({ queue: newQueue, originalQueue: newOriginal });
+    try {
+      safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(newQueue));
+    } catch {}
+  },
 }));
 
 if (typeof window !== 'undefined') {

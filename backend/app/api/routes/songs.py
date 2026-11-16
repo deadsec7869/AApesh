@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Query
 from backend.app.services.ytmusic_service import ytmusic_service
-from backend.app.schemas.music import Track
+from backend.app.schemas.music import Track, SongContextResponse
 
 router = APIRouter(prefix="/songs", tags=["Songs"])
 
@@ -16,3 +16,10 @@ def get_song_details(video_id: str):
 def get_song_watch_playlist(video_id: str, playlist_id: Optional[str] = Query(None)):
     """Fetch watch playlist (radio/queue) related to a song."""
     return ytmusic_service.get_watch_playlist(video_id, playlist_id)
+
+
+@router.get("/{video_id}/context", response_model=SongContextResponse)
+def get_song_context(video_id: str):
+    """Retrieve verified music context, credits, artist info, and related tracks for About This Song."""
+    return ytmusic_service.get_song_context(video_id)
+

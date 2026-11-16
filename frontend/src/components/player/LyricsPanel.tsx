@@ -11,6 +11,83 @@ import { drawerPanelVariants, controlButtonHover, controlButtonTap, transitionSm
 import { LyricsCalibrationToolbar } from './LyricsCalibrationToolbar';
 import { LyricsSyncDiagnostics } from './LyricsSyncDiagnostics';
 import { SyncedLineWords } from './SyncedLineWords';
+import { LyricLine } from '@/types/music';
+
+interface LyricLineItemProps {
+  line: LyricLine;
+  idx: number;
+  isActive: boolean;
+  isNearby: boolean;
+  lineDir: 'ltr' | 'rtl';
+  fontClass: string;
+  translationMode: 'original' | 'dual' | 'translation';
+  nextLineStartTime?: number;
+  onSeekToLine: (idx: number) => void;
+  onSeekToWord: (seconds: number) => void;
+  setLineRef: (idx: number, el: HTMLDivElement | null) => void;
+}
+
+const LyricLineItem: React.FC<LyricLineItemProps> = React.memo(
+  ({
+    line,
+    idx,
+    isActive,
+    isNearby,
+    lineDir,
+    fontClass,
+    translationMode,
+    nextLineStartTime,
+    onSeekToLine,
+    onSeekToWord,
+    setLineRef,
+  }) => {
+    return (
+      <div
+        ref={(el) => setLineRef(idx, el)}
+        onClick={() => onSeekToLine(idx)}
+        dir={lineDir}
+        aria-current={isActive ? 'true' : undefined}
+        style={{
+          opacity: isActive ? 1 : isNearby ? 0.65 : 0.35,
+          transition: 'opacity 0.2s ease',
+        }}
+        className={`group cursor-pointer rounded-xl py-2 px-3 transition-colors duration-200 ${fontClass} ${
+          lineDir === 'rtl' ? 'lyric-line-rtl text-right' : 'lyric-line-ltr text-left'
+        } ${
+          isActive
+            ? 'lyric-line-active text-lg sm:text-xl font-bold'
+            : isNearby
+            ? 'lyric-line-nearby text-sm font-medium hover:opacity-90'
+            : 'lyric-line-distant text-xs sm:text-sm font-normal hover:opacity-75'
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between gap-3 ${
+            lineDir === 'rtl' ? 'flex-row-reverse' : 'flex-row'
+          }`}
+        >
+          <div className="flex-1 min-w-0">
+            <SyncedLineWords
+              line={line}
+              nextLineStartTime={nextLineStartTime}
+              isActive={isActive}
+              size="sm"
+              dir={lineDir}
+              translationMode={translationMode}
+              onSeekToWord={onSeekToWord}
+            />
+          </div>
+          {line.startTime !== undefined && (
+            <span className="text-[10px] font-mono text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              {formatTime(line.startTime / 1000)}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
+LyricLineItem.displayName = 'LyricLineItem';
 
 export const LyricsPanel: React.FC = () => {
   const { isLyricsOpen, toggleLyrics, currentTrack, currentTime, isPlaying, seek } = usePlayerStore();
@@ -51,6 +128,7 @@ export const LyricsPanel: React.FC = () => {
     currentTime,
     isPlaying,
     isActive: isLyricsOpen,
+    isDiagnosticsOpen,
   });
 
   // Global shortcut to toggle Developer Diagnostics (Ctrl+Shift+D)
@@ -119,7 +197,7 @@ export const LyricsPanel: React.FC = () => {
       animate="open"
       exit="exit"
       aria-label="Song Lyrics"
-      className="fixed top-0 right-0 bottom-24 md:bottom-28 w-80 md:w-96 z-40 glass-elevated border-l border-white/[0.08] p-5 md:p-6 flex flex-col shadow-2xl"
+      className="edition-drawer fixed top-0 right-0 bottom-24 md:bottom-28 w-80 md:w-96 z-40 glass-elevated border-l border-white/[0.08] p-5 md:p-6 flex flex-col shadow-2xl"
     >
       {/* Diagnostics HUD Overlay */}
       {isDiagnosticsOpen && (
@@ -281,50 +359,20 @@ export const LyricsPanel: React.FC = () => {
                 const isNearby = distance <= 2;
 
                 return (
-                  <motion.div
+                  <LyricLineItem
                     key={line.id || idx}
-                    ref={(el) => setLineRef(idx, el)}
-                    onClick={() => seekToLine(idx)}
-                    dir={lineDir}
-                    aria-current={isActive ? 'true' : undefined}
-                    animate={{
-                      opacity: isActive ? 1 : isNearby ? 0.65 : 0.35,
-                    }}
-                    transition={transitionSmooth}
-                    className={`group cursor-pointer rounded-xl py-2 px-3 transition-colors duration-200 ${fontClass} ${
-                      lineDir === 'rtl' ? 'lyric-line-rtl text-right' : 'lyric-line-ltr text-left'
-                    } ${
-                      isActive
-                        ? 'lyric-line-active text-lg sm:text-xl font-bold'
-                        : isNearby
-                        ? 'lyric-line-nearby text-sm font-medium hover:opacity-90'
-                        : 'lyric-line-distant text-xs sm:text-sm font-normal hover:opacity-75'
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center justify-between gap-3 ${
-                        lineDir === 'rtl' ? 'flex-row-reverse' : 'flex-row'
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <SyncedLineWords
-                          line={line}
-                          nextLineStartTime={lyricsData.lines[idx + 1]?.startTime}
-                          currentTimeMs={effectiveTimeMs}
-                          isActive={isActive}
-                          size="sm"
-                          dir={lineDir}
-                          translationMode={translationMode}
-                          onSeekToWord={seek}
-                        />
-                      </div>
-                      {line.startTime !== undefined && (
-                        <span className="text-[10px] font-mono text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          {formatTime(line.startTime / 1000)}
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
+                    line={line}
+                    idx={idx}
+                    isActive={isActive}
+                    isNearby={isNearby}
+                    lineDir={lineDir}
+                    fontClass={fontClass}
+                    translationMode={translationMode}
+                    nextLineStartTime={lyricsData.lines[idx + 1]?.startTime}
+                    onSeekToLine={seekToLine}
+                    onSeekToWord={seek}
+                    setLineRef={setLineRef}
+                  />
                 );
               }
 

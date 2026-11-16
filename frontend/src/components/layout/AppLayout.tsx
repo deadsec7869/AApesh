@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -7,36 +7,30 @@ import { BottomPlayer } from '../player/BottomPlayer';
 import { FullScreenPlayer } from '../player/FullScreenPlayer';
 import { QueuePanel } from '../player/QueuePanel';
 import { LyricsPanel } from '../player/LyricsPanel';
+import { AboutThisSongModal } from '../player/AboutThisSongModal';
 import { VideoDock } from '../player/VideoDock';
 import { CommandPalette } from '../common/CommandPalette';
 import { EqualizerModal } from '../common/EqualizerModal';
 import { StreamingQualityModal } from '../common/StreamingQualityModal';
 import { DynamicArtworkBackground } from './DynamicArtworkBackground';
+const SpatialArtworkEnvironment = React.lazy(() => import('../spatial/SpatialArtworkEnvironment').then(m => ({default:m.SpatialArtworkEnvironment})));
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { shouldLoadSpatialArtwork } from '../spatial/spatialLoading';
-
-// Keep Three.js and its post-processing dependencies out of the initial app
-// bundle. React.lazy does not invoke this import until the enabled branch below
-// actually renders the spatial environment.
-const SpatialArtworkEnvironment = lazy(() =>
-  import('../spatial/SpatialArtworkEnvironment').then((module) => ({
-    default: module.SpatialArtworkEnvironment,
-  })),
-);
 
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const { fetchLibrary } = useLibraryStore();
-  const { currentTrack, bottomPlayerClearance } = usePlayerStore();
-  const ambientGlow = useThemeStore((state) => state.ambientGlow);
-  const visualQuality = useThemeStore((state) => state.visualQuality);
-  const spatialArtworkEnabled = shouldLoadSpatialArtwork(ambientGlow, visualQuality);
+  const fetchLibrary = useLibraryStore(s => s.fetchLibrary);
+  const currentTrack = usePlayerStore(s => s.currentTrack);
+  const bottomPlayerClearance = usePlayerStore(s => s.bottomPlayerClearance);
+  const isPlayerExpanded = usePlayerStore(s => s.isPlayerExpanded);
+  const ambientGlow = useThemeStore(s => s.ambientGlow);
+  const visualQuality = useThemeStore(s => s.visualQuality);
 
-  // Load library on start
+  // Load library and restore player session on start
   useEffect(() => {
     fetchLibrary();
+    usePlayerStore.getState().initEngine();
   }, [fetchLibrary]);
 
   // Global Keyboard Shortcuts (Imperative state lookup avoids listener re-registration)
@@ -47,7 +41,7 @@ export const AppLayout: React.FC = () => {
       if (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
+        target.closest('button, a, select, [role=dialog]') || e.defaultPrevented || target.isContentEditable
       ) {
         return;
       }
@@ -132,22 +126,26 @@ export const AppLayout: React.FC = () => {
       <DynamicArtworkBackground />
 
       {/* 3D Spatial Immersive WebGL Layer */}
-      {spatialArtworkEnabled && (
-        <Suspense fallback={null}>
+      {currentTrack && ambientGlow && visualQuality !== 'off' && (
+        <React.Suspense fallback={null}>
           <SpatialArtworkEnvironment />
-        </Suspense>
+        </React.Suspense>
       )}
 
-      {/* Floating Left Navigation Rail */}
-      <Sidebar />
+      {/* Floating Left Navigation Rail (Hidden during Fullscreen) */}
+      {!isPlayerExpanded && <Sidebar />}
 
-      {/* Central Floating Workstation Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden px-2 md:px-0 pl-2 md:pl-20 lg:pl-24 pr-2 md:pr-5 lg:pr-8 py-2 md:py-3.5 relative z-10">
+      {/* Central Floating Workstation Area (Hidden during Fullscreen to eliminate conflicts and bleed) */}
+      <div
+        className={`edition-workspace flex-1 flex flex-col min-w-0 h-full overflow-hidden px-2 md:px-0 pl-2 md:pl-20 lg:pl-24 pr-2 md:pr-5 lg:pr-8 py-2 md:py-3.5 relative z-10 ${
+          isPlayerExpanded ? 'hidden' : ''
+        }`}
+      >
         {/* Floating Top Header */}
         <TopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
         {/* Main Floating Glass Canvas Workspace */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden rounded-[24px] md:rounded-[32px] bg-[#14151a]/65 backdrop-blur-3xl border border-white/[0.08] shadow-[0_24px_64px_rgba(0,0,0,0.75)] relative mt-1">
+        <div className="edition-canvas flex-1 flex flex-col min-w-0 overflow-hidden rounded-[24px] md:rounded-[32px] bg-[#14151a]/65 backdrop-blur-3xl border border-white/[0.08] shadow-[0_24px_64px_rgba(0,0,0,0.75)] relative mt-1">
           {/* Scrollable Page Body - dynamic safe space for floating bottom player */}
           <main
             className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 scroll-smooth px-4 md:px-8 py-6"
@@ -156,14 +154,14 @@ export const AppLayout: React.FC = () => {
             }}
           >
             <div className="w-full max-w-[1440px] mx-auto min-w-0">
-              <Outlet />
+              <React.Suspense fallback={<p role="status">Opening page…</p>}><Outlet /></React.Suspense>
             </div>
           </main>
         </div>
       </div>
 
-      {/* Persistent Bottom Player */}
-      <BottomPlayer />
+      {/* Persistent Bottom Player (Hidden during Fullscreen to prevent duplicate controls) */}
+      {!isPlayerExpanded && <BottomPlayer />}
 
       {/* Official YouTube Compliance Video Dock */}
       <VideoDock />
@@ -174,6 +172,7 @@ export const AppLayout: React.FC = () => {
       {/* Panels */}
       <QueuePanel />
       <LyricsPanel />
+      <AboutThisSongModal />
 
       {/* Command Palette Modal */}
       <CommandPalette
@@ -187,8 +186,8 @@ export const AppLayout: React.FC = () => {
       {/* Streaming Quality Engine Modal */}
       <StreamingQualityModal />
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNavigation />
+      {/* Mobile Bottom Navigation (Hidden during Fullscreen) */}
+      {!isPlayerExpanded && <BottomNavigation />}
     </div>
   );
 };

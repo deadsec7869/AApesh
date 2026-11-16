@@ -6,7 +6,7 @@ import { KaraokeWord } from './KaraokeWord';
 export interface KaraokeLyricLineProps {
   line: LyricLine;
   nextLineStartTime?: number;
-  currentTimeMs: number;
+  currentTimeMs?: number;
   isActive: boolean;
   size?: 'sm' | 'md' | 'lg';
   dir?: 'ltr' | 'rtl' | 'auto';
@@ -61,7 +61,7 @@ export const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = React.memo(
       );
     }
 
-    if (words.length === 0) {
+    if (words.length === 0 || words.every(word => word.isEstimated)) {
       return (
         <div className="flex flex-col">
           <span dir={dir} className="select-text leading-relaxed">

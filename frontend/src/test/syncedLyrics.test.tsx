@@ -81,7 +81,7 @@ describe('SyncedLineWords (Translation & Dual-Language Modes)', () => {
         translationMode="original"
       />
     );
-    expect(screen.getAllByText('First')[0]).toBeInTheDocument();
+    expect(screen.getByText('First line of the song')).toBeInTheDocument();
     expect(screen.queryByText('Primera línea de la canción')).not.toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe('SyncedLineWords (Translation & Dual-Language Modes)', () => {
         translationMode="dual"
       />
     );
-    expect(screen.getAllByText('First')[0]).toBeInTheDocument();
+    expect(screen.getByText('First line of the song')).toBeInTheDocument();
     expect(screen.getByText('Primera línea de la canción')).toBeInTheDocument();
   });
 
@@ -108,7 +108,7 @@ describe('SyncedLineWords (Translation & Dual-Language Modes)', () => {
       />
     );
     expect(screen.getByText('Primera línea de la canción')).toBeInTheDocument();
-    expect(screen.queryByText('First')).not.toBeInTheDocument();
+    expect(screen.queryByText('First line of the song')).not.toBeInTheDocument();
   });
 });
 

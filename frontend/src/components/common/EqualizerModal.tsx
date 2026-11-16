@@ -16,7 +16,11 @@ import {
   useEqualizerStore,
   EqualizerPreset,
   EqualizerBands,
+  type ParametricBand,
 } from '@/stores/useEqualizerStore';
+
+// Legacy graphic EQ band keys (excludes parametric)
+type GraphicEQBandKey = 'preamp' | 'b32' | 'b64' | 'b125' | 'b250' | 'b500' | 'b1k' | 'b2k' | 'b4k' | 'b8k' | 'b16k';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
 import {
@@ -39,7 +43,7 @@ const PRESET_LIST: EqualizerPreset[] = [
   'Jazz',
 ];
 
-const BANDS_CONFIG: { key: keyof EqualizerBands; label: string; freq: string; isPreamp?: boolean }[] = [
+const BANDS_CONFIG: { key: GraphicEQBandKey; label: string; freq: string; isPreamp?: boolean }[] = [
   { key: 'preamp', label: 'PREAMP', freq: 'Gain', isPreamp: true },
   { key: 'b32', label: '31 Hz', freq: 'Sub-Bass' },
   { key: 'b64', label: '62 Hz', freq: 'Bass' },
@@ -315,7 +319,7 @@ export const EqualizerModal: React.FC = () => {
                 <div className="overflow-x-auto no-scrollbar pb-1">
                   <div className="grid grid-cols-11 gap-1 sm:gap-2 min-w-[440px] items-end">
                     {BANDS_CONFIG.map(({ key, label, freq, isPreamp }) => {
-                      const val = bands[key];
+                      const val = bands[key] as number;
 
                       return (
                         <div key={key} className="flex flex-col items-center gap-1.5 select-none">

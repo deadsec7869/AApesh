@@ -118,7 +118,7 @@ export const AlbumPage: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-center sm:justify-start gap-3 pt-4">
             <button
-              onClick={handlePlayAll}
+              disabled={!album.tracks?.length} onClick={handlePlayAll}
               className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm transition-all duration-200 ease-out-expo shadow-play-btn hover:scale-[1.03] active:scale-[0.97]"
             >
               <Play className="w-4 h-4 fill-current translate-x-0.5" />
@@ -126,7 +126,7 @@ export const AlbumPage: React.FC = () => {
             </button>
 
             <button
-              onClick={handleShuffle}
+              disabled={!album.tracks?.length} onClick={handleShuffle}
               className="p-3 rounded-full bg-white/10 hover:bg-white/15 text-neutral-200 hover:text-white transition-all border border-white/10"
               title="Shuffle Album"
             >

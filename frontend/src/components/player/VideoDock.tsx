@@ -26,7 +26,7 @@ export const VideoDock: React.FC<VideoDockProps> = () => {
   let containerClasses = 'fixed -left-[9999px] -top-[9999px] w-[360px] h-[225px] opacity-[0.001] pointer-events-none -z-50 overflow-hidden';
 
   if (isFullscreenVideo) {
-    containerClasses = 'fixed inset-x-4 top-20 bottom-24 sm:inset-x-12 sm:top-24 sm:bottom-28 md:inset-x-20 lg:inset-x-36 z-40 rounded-[28px] overflow-hidden bg-black border border-white/15 shadow-2xl flex flex-col transition-all duration-300';
+    containerClasses = 'fixed inset-x-4 top-20 bottom-24 sm:inset-x-12 sm:top-24 sm:bottom-28 md:inset-x-20 lg:inset-x-36 z-[60] rounded-[28px] overflow-hidden bg-black border border-white/15 shadow-2xl flex flex-col transition-all duration-300';
   } else if (isDockVisible) {
     containerClasses = `fixed bottom-24 right-4 sm:right-6 z-30 rounded-2xl overflow-hidden glass-elevated border border-white/15 shadow-2xl transition-all duration-300 flex flex-col ${
       isMinimized

@@ -20,6 +20,9 @@ export const PlaylistPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [editing, setEditing] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const loadPlaylist = () => {
     if (!id) return;
     setIsLoading(true);
@@ -34,7 +37,10 @@ export const PlaylistPage: React.FC = () => {
           const normTracks: Track[] = data.tracks.map((t: any) => ({
             videoId: t.video_id || t.videoId,
             title: t.title,
-            artists: typeof t.artist === 'string' ? [{ name: t.artist }] : t.artists || [],
+            artists:
+              typeof t.artist === 'string'
+                ? [{ name: t.artist }]
+                : t.artists || [],
             album: t.album,
             thumbnail: t.thumbnail_url || t.thumbnail,
             duration: t.duration,
@@ -70,7 +76,9 @@ export const PlaylistPage: React.FC = () => {
       <div className="p-12 text-center text-neutral-400">
         <ListMusic className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
         <h2 className="text-xl font-bold text-white">Playlist not found</h2>
-        <p className="text-sm text-neutral-500 mt-1">{error || 'Could not load playlist.'}</p>
+        <p className="text-sm text-neutral-500 mt-1">
+          {error || 'Could not load playlist.'}
+        </p>
       </div>
     );
   }
@@ -97,9 +105,9 @@ export const PlaylistPage: React.FC = () => {
     }
   };
 
-  const handleRemoveTrack = async (track: Track) => {
+  const handleRemoveTrack = async (index: number) => {
     if (isCustom && playlist.tracks) {
-      const customTrack = playlist.tracks.find((t: any) => t.video_id === track.videoId || t.id === track.videoId);
+      const customTrack = playlist.tracks[index];
       if (customTrack) {
         await removeTrackFromPlaylist(playlist.id, customTrack.id);
         loadPlaylist();
@@ -135,16 +143,96 @@ export const PlaylistPage: React.FC = () => {
             {playlist.title}
           </h1>
           {playlist.description && (
-            <p className="text-sm text-neutral-400 line-clamp-2">{playlist.description}</p>
+            <p className="text-sm text-neutral-400 line-clamp-2">
+              {playlist.description}
+            </p>
           )}
 
           <div className="flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm text-neutral-300">
             {playlist.author && <span>By {playlist.author} • </span>}
-            <span>{tracks.length} songs</span>
+            <span>
+              {tracks.length} songs
+              {tracks.some((t) => t.duration_seconds) &&
+                ' · ' +
+                  Math.round(
+                    tracks.reduce((n, t) => n + (t.duration_seconds || 0), 0) /
+                      60,
+                  ) +
+                  ' min'}
+            </span>
           </div>
 
+          {isCustom && editing && (
+            <form
+              className="grid gap-2 max-w-md"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!id || saving) return;
+                const data = new FormData(e.currentTarget);
+                const title = String(data.get('title')).trim();
+                if (!title) {
+                  setSaveError('Enter a playlist name.');
+                  return;
+                }
+                setSaving(true);
+                setSaveError('');
+                try {
+                  await api.updatePlaylist(id, {
+                    title,
+                    description: String(data.get('description')).trim(),
+                  });
+                  setEditing(false);
+                  loadPlaylist();
+                  void useLibraryStore.getState().fetchPlaylists();
+                } catch {
+                  setSaveError('Could not save your playlist. Try again.');
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              <label>
+                Name
+                <input
+                  autoFocus
+                  required
+                  name="title"
+                  defaultValue={playlist.title}
+                  className="block w-full bg-black/40 rounded p-2"
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  name="description"
+                  defaultValue={playlist.description}
+                  className="block w-full bg-black/40 rounded p-2"
+                />
+              </label>
+              <div className="flex gap-3">
+                <button disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+                <button type="button" onClick={() => setEditing(false)}>
+                  Cancel
+                </button>
+              </div>
+              {saveError && <p role="alert">{saveError}</p>}
+            </form>
+          )}
           {/* Action Buttons */}
           <div className="flex items-center justify-center sm:justify-start gap-3 pt-4">
+            {isCustom && !editing && (
+              <button
+                aria-label="Edit playlist"
+                onClick={() => {
+                  setEditing(true);
+                  setSaveError('');
+                }}
+              >
+                <Edit2 size={18} />
+              </button>
+            )}
             {tracks.length > 0 && (
               <>
                 <button
@@ -183,7 +271,9 @@ export const PlaylistPage: React.FC = () => {
         {tracks.length === 0 ? (
           <div className="py-16 text-center text-neutral-400">
             <ListMusic className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
-            <p className="text-base font-medium text-neutral-300">This playlist is empty</p>
+            <p className="text-base font-medium text-neutral-300">
+              This playlist is empty
+            </p>
             <p className="text-xs text-neutral-500 mt-1">
               Add songs to this playlist from search, albums, or discover!
             </p>
@@ -206,7 +296,9 @@ export const PlaylistPage: React.FC = () => {
                   track={track}
                   index={idx}
                   contextQueue={tracks}
-                  onRemoveFromPlaylist={isCustom ? () => handleRemoveTrack(track) : undefined}
+                  onRemoveFromPlaylist={
+                    isCustom ? () => handleRemoveTrack(idx) : undefined
+                  }
                 />
               ))}
             </div>

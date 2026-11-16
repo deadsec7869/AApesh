@@ -5,7 +5,7 @@ import { KaraokeLyricLine } from './KaraokeLyricLine';
 export interface SyncedLineWordsProps {
   line: LyricLine;
   nextLineStartTime?: number;
-  currentTimeMs: number;
+  currentTimeMs?: number;
   isActive: boolean;
   size?: 'sm' | 'md' | 'lg';
   dir?: 'ltr' | 'rtl' | 'auto';

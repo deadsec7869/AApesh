@@ -1,0 +1,6 @@
+[32mINFO[0m:     Started server process [[36m6720[0m]
+[32mINFO[0m:     Waiting for application startup.
+2026-11-16 10:31:04,764 [INFO] aurora.api: Initializing Aurora Music database...
+2026-11-16 10:31:04,765 [INFO] aurora.api: Database initialized successfully.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     Uvicorn running on [1mhttp://127.0.0.1:8000[0m (Press CTRL+C to quit)

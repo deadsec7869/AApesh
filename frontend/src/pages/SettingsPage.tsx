@@ -143,6 +143,34 @@ export const SettingsPage: React.FC = () => {
               />
             </button>
           </div>
+
+          <div className="h-px bg-white/10" />
+
+          {/* 3D Spatial Quality Tier */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-neutral-200">Spatial 3D Environment Quality</div>
+              <div className="text-xs text-neutral-400">
+                Adjust 3D scene fidelity, particles, postprocessing, and Rapier physics (Press Ctrl+Shift+D for HUD)
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.05] border border-white/10 shrink-0">
+              {(['off', 'low', 'medium', 'high', 'ultra'] as const).map((q) => (
+                <button
+                  key={q}
+                  onClick={() => useThemeStore.getState().setVisualQuality(q)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                    useThemeStore.getState().visualQuality === q
+                      ? 'bg-white text-black shadow-play-btn'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
