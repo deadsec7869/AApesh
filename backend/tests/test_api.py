@@ -1,9 +1,13 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.app.main import app
+from backend.app.db.database import init_db
 from backend.app.services.cache_service import TTLCache
 
 
+# Endpoint tests use a non-context-managed client, so initialize the test
+# database explicitly instead of relying on application-import side effects.
+init_db()
 client = TestClient(app)
 
 
