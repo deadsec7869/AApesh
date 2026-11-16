@@ -25,6 +25,7 @@ wheels/
 .coverage
 htmlcov/
 .venv/
+.venv-desktop/
 venv/
 ENV/
 
@@ -37,6 +38,9 @@ ENV/
 node_modules/
 frontend/node_modules/
 dist/
+/release/
+/backend/dist/
+/backend/work/
 frontend/dist/
 frontend/dist-ssr/
 *.local

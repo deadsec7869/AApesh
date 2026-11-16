@@ -233,3 +233,43 @@ python -m pytest backend/tests/ -v
 ## ⚖️ Legal & Brand Notice
 
 AAPESH is an independent desktop web music workstation powered by the YouTube Music catalog via `ytmusicapi` and the official Google YouTube IFrame Player API. AAPESH is not affiliated with, endorsed by, or sponsored by Google LLC, YouTube, Spotify AB, or Apple Inc. All artist names, album titles, and album artwork belong to their respective copyright owners.
+# Windows desktop build
+
+The Windows shell uses Electron; FastAPI is packaged as a PyInstaller one-file
+backend and served only on `127.0.0.1`. The NSIS and portable distributions
+include the production Vite build and do not require Python on the user's PC.
+
+## Desktop development
+
+Install the frontend packages (`npm ci` at the repository root and
+`npm --prefix frontend ci`) and Python backend dependencies. Then run:
+
+```powershell
+npm run desktop:dev
+```
+
+This builds the Vite frontend and opens it in Electron while starting the Python
+backend in development mode.
+
+## Windows x64 release packaging
+
+Use a Windows x64 machine with Node.js 24+ and Python 3.14. Install the pinned
+desktop build dependencies, then build both distributables:
+
+```powershell
+npm ci
+npm --prefix frontend ci
+python -m pip install -r backend/requirements-desktop-lock.txt
+npm run desktop:dist
+```
+
+The output is written to `release/AAPESH-Setup-x64.exe` and
+`release/AAPESH-Portable-x64.exe`. The GitHub Actions workflow runs the
+frontend/backend suites, creates both artifacts on Windows, then installs,
+launches, restarts, reinstalls, and uninstalls the NSIS package before
+publishing a release for the `v2.0.0` tag.
+
+Desktop settings, SQLite data, and optional YTMusic credentials are stored in
+`%APPDATA%\AAPESH`; uninstalling the app intentionally leaves this directory
+intact. See `docs/releases/v2.0.0.md` for user installation guidance and known
+limitations.

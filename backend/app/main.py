@@ -1,8 +1,11 @@
 import logging
+import os
+from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import settings
 from backend.app.db.database import init_db
@@ -98,3 +101,30 @@ app.include_router(moods.router, prefix="/api")
 app.include_router(lyrics.router, prefix="/api")
 app.include_router(recommendations.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+
+# Electron points this at the production Vite build. The API remains available
+# at the same loopback origin, avoiding file:// renderer restrictions and
+# keeping existing relative /api requests unchanged.
+frontend_directory = os.getenv("AAPESH_FRONTEND_DIST")
+if frontend_directory:
+    frontend_root = Path(frontend_directory).resolve()
+    index_file = frontend_root / "index.html"
+    assets_directory = frontend_root / "assets"
+
+    if index_file.is_file():
+        if assets_directory.is_dir():
+            app.mount(
+                "/assets",
+                StaticFiles(directory=str(assets_directory)),
+                name="frontend-assets",
+            )
+
+        @app.get("/{frontend_path:path}", include_in_schema=False)
+        def serve_frontend(frontend_path: str):
+            if frontend_path == "api" or frontend_path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="Not Found")
+
+            requested_file = (frontend_root / frontend_path).resolve()
+            if frontend_root in requested_file.parents and requested_file.is_file():
+                return FileResponse(requested_file)
+            return FileResponse(index_file)
