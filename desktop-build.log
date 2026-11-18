@@ -1,0 +1,112 @@
+170 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.10
+170 INFO: Python: 3.14.6
+197 INFO: Platform: Windows-11-10.0.26300-SP0
+197 INFO: Python environment: C:\Python314
+282 INFO: Module search paths (PYTHONPATH):
+['C:\\Users\\Admin\\OneDrive\\Desktop\\aapesh',
+ 'C:\\Python314\\python314.zip',
+ 'C:\\Python314\\DLLs',
+ 'C:\\Python314\\Lib',
+ 'C:\\Python314',
+ 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages',
+ 'C:\\Python314\\Lib\\site-packages',
+ 'C:\\Users\\Admin\\OneDrive\\Desktop\\aapesh']
+902 INFO: Appending 'datas' from .spec
+912 INFO: checking Analysis
+924 INFO: Building because excludes changed
+924 INFO: Looking for Python shared library...
+924 INFO: Using Python shared library: C:\Python314\python314.dll
+924 INFO: Running Analysis Analysis-00.toc
+924 INFO: Target bytecode optimization level: 0
+924 INFO: Initializing module dependency graph...
+926 INFO: Initializing module graph hook caches...
+952 INFO: Analyzing modules for base_library.zip ...
+2626 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+3158 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+3358 INFO: Processing standard module hook 'hook-math.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+3468 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+3480 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+5596 INFO: Caching module dependency graph...
+5620 INFO: Analyzing C:\Users\Admin\OneDrive\Desktop\aapesh\desktop_launcher.py
+C:\Users\Admin\OneDrive\Desktop\aapesh\desktop_launcher.py:10: SyntaxWarning: "\A" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\A"? A raw string is also an option.
+  4. Stores SQLite database in %APPDATA%\AAPESH\aapesh.db
+5661 INFO: Processing standard module hook 'hook-webview.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\webview\\__pyinstaller'
+5736 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+5772 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+5778 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+5954 INFO: Processing standard module hook 'hook-webbrowser.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+6340 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+6410 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+6976 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+6978 INFO: SetuptoolsInfo: initializing cached setuptools info...
+7971 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+8094 INFO: Processing standard module hook 'hook-clr.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\pythonnet\\_pyinstaller'
+8113 INFO: Processing standard module hook 'hook-clr_loader.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+8213 INFO: Processing standard module hook 'hook-pycparser.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+8362 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+8608 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+8677 INFO: Processing standard module hook 'hook-cryptography.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+10035 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+10381 INFO: Processing standard module hook 'hook-uvicorn.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11908 INFO: Processing standard module hook 'hook-websockets.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+12799 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+14052 INFO: Processing standard module hook 'hook-pydantic.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+15014 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+16900 INFO: Processing standard module hook 'hook-sqlalchemy.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+17720 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+17721 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
+22311 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+22429 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+22430 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+22788 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+22842 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+23334 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+23336 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+23792 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
+23793 INFO: Analyzing hidden import 'uvicorn.workers'
+23799 INFO: Analyzing hidden import 'sqlalchemy.dialects.sqlite'
+23923 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+24309 INFO: Processing module hooks (post-graph stage)...
+24442 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+24557 WARNING: Hidden import "pycparser.lextab" not found!
+24557 WARNING: Hidden import "pycparser.yacctab" not found!
+24884 WARNING: Hidden import "tzdata" not found!
+24886 INFO: Processing standard module hook 'hook-sqlalchemy.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks'
+25345 WARNING: Hidden import "pysqlite2" not found!
+25345 WARNING: Hidden import "MySQLdb" not found!
+25345 WARNING: Hidden import "psycopg2" not found!
+26454 INFO: Performing binary vs. data reclassification (189 entries)
+26719 INFO: Looking for ctypes DLLs
+26775 INFO: Analyzing run-time hooks ...
+26781 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks'
+26786 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks'
+26790 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks'
+26794 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from 'C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+26817 INFO: Creating base_library.zip...
+26837 INFO: Looking for dynamic libraries
+28491 INFO: Extra DLL search directories (AddDllDirectory): []
+28492 INFO: Extra DLL search directories (PATH): []
+29319 INFO: Warnings written to C:\Users\Admin\OneDrive\Desktop\aapesh\build\aapesh\warn-aapesh.txt
+29407 INFO: Graph cross-reference written to C:\Users\Admin\OneDrive\Desktop\aapesh\build\aapesh\xref-aapesh.html
+29446 INFO: checking PYZ
+29497 INFO: checking PKG
+29499 INFO: Building because toc changed
+29499 INFO: Building PKG (CArchive) AAPESH.pkg
+C:\Users\Admin\OneDrive\Desktop\aapesh\desktop_launcher.py:10: SyntaxWarning: "\A" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\A"? A raw string is also an option.
+  4. Stores SQLite database in %APPDATA%\AAPESH\aapesh.db
+31885 INFO: Building PKG (CArchive) AAPESH.pkg completed successfully.
+31892 INFO: Bootloader C:\Users\Admin\AppData\Roaming\Python\Python314\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+31892 INFO: checking EXE
+31894 INFO: Rebuilding EXE-00.toc because AAPESH.exe missing
+31894 INFO: Building EXE from EXE-00.toc
+31894 INFO: Copying bootloader EXE to C:\Users\Admin\OneDrive\Desktop\aapesh\build\desktop-verified\AAPESH.exe
+31979 INFO: Copying icon to EXE
+32056 INFO: Copying 0 resources to EXE
+32056 INFO: Embedding manifest in EXE
+32089 INFO: Appending PKG archive to EXE
+32200 INFO: Fixing EXE headers
+32598 INFO: Building EXE from EXE-00.toc completed successfully.
+32604 INFO: checking COLLECT
+32606 INFO: Building COLLECT COLLECT-00.toc
+33097 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+33103 INFO: Build complete! The results are available in: C:\Users\Admin\OneDrive\Desktop\aapesh\build\desktop-verified

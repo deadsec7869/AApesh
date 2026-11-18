@@ -1,8 +1,66 @@
-﻿node_modules/
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
 dist/
-release/
+build/
+*.pkg
 *.exe
-*.db
-*.sqlite
-__pycache__/
+
+# Desktop build artifacts
+build/
+desktop-build.log
+build_desktop.py
+desktop_launcher.py
+aapesh.spec
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.tmp
+*.temp
+.cache/
+
+# Build directories
+build/
+dist/
+*.pkg
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Desktop build outputs
+build/
+dist/
+*.spec

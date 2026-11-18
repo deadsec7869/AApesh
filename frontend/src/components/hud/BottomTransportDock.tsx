@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Volume2, VolumeX, Volume1, Heart, Plus, Moon, Maximize2,
-  Loader2, Sparkles,
+  Loader2, Sparkles, Headphones,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useAudioDSPStore } from '@/stores/useAudioDSPStore';
+import { useUIStore } from '@/stores/useUIStore';
 import { formatTime } from '@/lib/utils';
 import { getArtworkUrl } from '@/utils/artwork';
 import { WaveformScrubber } from './WaveformScrubber';
@@ -28,11 +29,11 @@ interface BottomTransportDockProps {
 }
 
 /**
- * Bottom Transport Dock - Floating Pill (84px)
+ * Bottom Transport Dock - Floating Glass Pill (84px)
  *
  * Left: Mini artwork + title/artist + ♥ like toggle
- * Center: Precision transport (Shuffle, Prev, Magnetic Play/Pause, Next, Repeat) + Waveform Scrubber
- * Right: Volume slider, Playback speed, PiP toggle, Fullscreen expand
+ * Center: Precision transport (Shuffle, Prev, Play/Pause, Next, Repeat) + Waveform Scrubber
+ * Right: Volume slider, Playback speed, EQ, Fullscreen expand
  */
 
 export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ className = '' }) => {
@@ -74,7 +75,8 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
   } = usePlayerStore();
 
   const { isLiked, toggleLike } = useLibraryStore();
-  const { toggleOpen: toggleEqualizer, spatialAudio, toggleSpatialAudio } = useAudioDSPStore();
+  const { toggleOpen: toggleEqualizer, spatialAudio, toggleSpatialAudio, playbackSpeed } = useAudioDSPStore();
+  const { visualQuality } = useUIStore();
 
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [sleepTimerModalOpen, setSleepTimerModalOpen] = useState(false);
@@ -150,36 +152,21 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
       <footer
         ref={footerRef}
         aria-label="Audio Player Standby"
-        className={`fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[60%] max-w-2xl h-12 md:h-14 z-40 rounded-full px-4 md:px-6 flex items-center justify-between pointer-events-auto transition-all duration-300 select-none ${className}`}
-        style={{
-          background: 'rgba(14, 17, 24, 0.85)',
-          backdropFilter: 'blur(40px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.14)',
-        }}
+        className={`playback-dock !fixed bottom-[4.5rem] md:bottom-4 inset-x-0 mx-auto w-[calc(100%-2rem)] md:w-[60%] max-w-2xl h-14 z-40 px-4 md:px-6 flex items-center justify-between pointer-events-auto transition-all duration-300 select-none ${className}`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center"
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-            }}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-neutral-400" />
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
+            background: 'linear-gradient(135deg, rgb(var(--accent-primary-rgb)) 0%, rgb(var(--accent-secondary-rgb)) 100%)',
+            boxShadow: '0 4px 16px rgba(var(--accent-primary-rgb), 0.25)',
+          }}>
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="text-xs sm:text-sm font-semibold tracking-wide text-white">Nothing playing</div>
-            <div className="text-[10px] sm:text-[11px] text-neutral-400">Select any track to begin</div>
+            <div className="text-sm font-semibold tracking-wide text-white">Nothing playing</div>
+            <div className="text-[11px] text-tertiary">Select any track to begin</div>
           </div>
         </div>
-        <span className="text-[11px] font-mono tracking-wider text-neutral-400 uppercase px-2.5 py-1 rounded-full"
-          style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-          }}
-        >
+        <span className="text-[11px] font-mono tracking-wider text-tertiary uppercase px-3 py-1 rounded-full glass-pill">
           Standby
         </span>
       </footer>
@@ -193,27 +180,19 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
   const qualityInfo = getEffectiveQualityInfo();
 
   const primaryColor = atmospherePalette?.primary || '#ffffff';
-  const glowColor = atmospherePalette?.glow || 'rgba(255, 255, 255, 0.15)';
+  const glowColor = atmospherePalette?.glow || 'rgba(255, 255, 255, 0.12)';
 
   return (
     <>
       <footer
         ref={footerRef}
         aria-label="Floating Audio Player"
-        className={`fixed bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] md:w-[88%] max-w-6xl h-20 md:h-22 z-40 px-4 md:px-6 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-3 md:gap-5 ${className}`}
-        style={{
-          background: 'rgba(14, 17, 24, 0.82)',
-          backdropFilter: 'blur(32px) saturate(1.7)',
-          WebkitBackdropFilter: 'blur(32px) saturate(1.7)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '9999px',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.14)',
-        }}
+        className={`playback-dock h-16 xl:h-[84px] !fixed bottom-[4.5rem] md:bottom-4 inset-x-0 mx-auto w-[calc(100%-2rem)] md:w-[90%] max-w-7xl z-50 px-4 md:px-8 flex items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-4 md:gap-6 ${className}`}
       >
         {/* Ambient Artwork Glow */}
         {atmospherePalette && (
           <div
-            className="absolute -inset-1 rounded-full opacity-25 blur-2xl pointer-events-none -z-10 transition-all duration-700"
+            className="absolute -inset-1 rounded-full opacity-20 blur-2xl pointer-events-none -z-10 transition-all duration-700"
             style={{
               background: `radial-gradient(circle at 50% 100%, ${glowColor} 0%, transparent 70%)`,
             }}
@@ -223,32 +202,28 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
         {/* ====================================================================
             LEFT: Mini Artwork + Title/Artist + Like Button
             ==================================================================== */}
-        <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+        <div className="glass-interactive flex items-center gap-3 min-w-0 flex-1 xl:flex-initial px-2 py-1 rounded-xl max-w-[240px]">
           <button
             onClick={togglePlayerExpanded}
-            className="flex items-center gap-2.5 p-1 rounded-full transition-all cursor-pointer min-w-0 max-w-[200px] shrink-0"
-            style={{
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-            }}
+            className="flex items-center gap-3 p-1 rounded-xl transition-all cursor-pointer min-w-0 flex-1 text-left"
             aria-label="Expand to fullscreen player"
           >
-            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden bg-neutral-900 shrink-0 shadow-sm"
-              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden bg-neutral-900 shrink-0 shadow-sm"
+              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}
             >
               <ArtworkImage
                 item={currentTrack}
                 src={getArtworkUrl(currentTrack)}
                 alt={currentTrack.title}
                 className="w-full h-full object-cover"
-                fallbackIconClassName="w-3.5 h-3.5 text-neutral-500"
+                fallbackIconClassName="w-4 h-4 text-tertiary"
               />
             </div>
-            <div className="min-w-0 flex-1 pr-2 hidden sm:block">
+            <div className="min-w-0 flex-1 pr-2">
               <div className="font-semibold text-xs text-white truncate" title={currentTrack.title}>
                 {currentTrack.title}
               </div>
-              <div className="text-[10px] text-neutral-400 truncate mt-0.5" title={currentTrack.artists?.map((a) => a.name).join(', ')}>
+              <div className="text-[10px] text-tertiary truncate mt-0.5" title={currentTrack.artists?.map((a) => a.name).join(', ')}>
                 {currentTrack.artists?.map((a) => a.name).join(', ') || 'Unknown Artist'}
               </div>
             </div>
@@ -261,16 +236,16 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={() => toggleLike(currentTrack)}
             aria-label={liked ? 'Unlike track' : 'Like track'}
             title={liked ? 'Liked' : 'Like'}
-            className="p-1.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors shrink-0"
+            className="glass-pill w-9 h-9 hidden sm:flex items-center justify-center shrink-0 transition-all"
           >
-            <Heart className={`w-4 h-4 ${liked ? 'fill-current text-rose-500' : ''}`} />
+            <Heart className={`w-4 h-4 transition-all ${liked ? 'fill-current text-rose-500' : 'text-tertiary'}`} />
           </motion.button>
         </div>
 
         {/* ====================================================================
             CENTER: Transport Controls + Waveform Scrubber
             ==================================================================== */}
-        <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0 max-w-3xl">
+        <div className="flex flex-col items-center gap-0 xl:flex-1 min-w-0 max-w-4xl">
           {/* Transport Controls Row */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Shuffle */}
@@ -283,16 +258,16 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
                 shuffleMode === 'smart' ? 'Smart Shuffle: Active' :
                 shuffleMode === 'standard' ? 'Standard Shuffle' : 'Shuffle Off'
               }
-              className={`p-1.5 rounded-full transition-all ${
-                shuffleMode === 'smart' ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm' :
-                shuffleMode === 'standard' ? 'text-white bg-white/15' :
-                'text-neutral-400 hover:text-white'
+              className={`control-btn transition-all ${
+                shuffleMode === 'smart' ? 'bg-white/15 text-white ring-1 ring-white/25 shadow-sm' :
+                shuffleMode === 'standard' ? 'bg-white/10 text-white' :
+                'text-tertiary hover:text-white'
               }`}
             >
               {shuffleMode === 'smart' ? (
-                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <Sparkles className="w-4 h-4 text-white" />
               ) : (
-                <Shuffle className="w-3.5 h-3.5" />
+                <Shuffle className="w-4 h-4" />
               )}
             </motion.button>
 
@@ -302,35 +277,32 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
               whileTap={controlButtonTap}
               onClick={previous}
               aria-label="Previous track"
-              className="p-1.5 text-neutral-300 hover:text-white transition-colors"
+              className="control-btn"
             >
-              <SkipBack className="w-4 h-4 fill-current" />
+              <SkipBack className="w-5 h-5 fill-current" />
             </motion.button>
 
             {/* Magnetic Play/Pause Button */}
-            <Magnet padding={30} magnetStrength={0.3}>
+            <Magnet padding={35} magnetStrength={0.35}>
               <motion.button
                 whileHover={playButtonHover}
                 whileTap={playButtonTap}
                 onClick={togglePlay}
                 aria-label={isPlaying ? 'Pause' : 'Play'}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white text-black flex items-center justify-center shadow-[0_4px_24px_rgba(255,255,255,0.3)] transition-transform shrink-0"
-                style={{
-                  boxShadow: '0 4px 24px rgba(255,255,255,0.3), 0 0 0 1px rgba(255,255,255,0.1)',
-                }}
+                className="control-btn-primary"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {isBuffering ? (
                     <motion.div key="loader" variants={iconCrossfadeVariants} initial="initial" animate="animate" exit="exit">
-                      <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#050507' }} />
                     </motion.div>
                   ) : isPlaying ? (
                     <motion.div key="pause" variants={iconCrossfadeVariants} initial="initial" animate="animate" exit="exit">
-                      <Pause className="w-5 h-5 fill-current text-black" />
+                      <Pause className="w-6 h-6 fill-current" style={{ color: '#050507' }} />
                     </motion.div>
                   ) : (
                     <motion.div key="play" variants={iconCrossfadeVariants} initial="initial" animate="animate" exit="exit">
-                      <Play className="w-5 h-5 fill-current translate-x-0.5 text-black" />
+                      <Play className="w-6 h-6 fill-current translate-x-0.5" style={{ color: '#050507' }} />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -343,9 +315,9 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
               whileTap={controlButtonTap}
               onClick={next}
               aria-label="Next track"
-              className="p-1.5 text-neutral-300 hover:text-white transition-colors"
+              className="control-btn"
             >
-              <SkipForward className="w-4 h-4 fill-current" />
+              <SkipForward className="w-5 h-5 fill-current" />
             </motion.button>
 
             {/* Repeat */}
@@ -355,25 +327,26 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
               onClick={toggleRepeat}
               aria-label={`Repeat: ${repeatMode}`}
               title={`Repeat: ${repeatMode}`}
-              className={`p-1.5 rounded-full transition-all ${
-                repeatMode !== 'off' ? 'text-white bg-white/20 ring-1 ring-white/30 shadow-sm' : 'text-neutral-400 hover:text-white'
+              className={`control-btn transition-all ${
+                repeatMode !== 'off' ? 'bg-white/10 text-white ring-1 ring-white/25 shadow-sm' : 'text-tertiary hover:text-white'
               }`}
             >
-              {repeatMode === 'track' ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+              {repeatMode === 'track' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
             </motion.button>
           </div>
 
           {/* Waveform Scrubber */}
-          <div className="w-full max-w-xl">
+          <div className="hidden xl:flex items-center gap-2 w-full max-w-2xl">
             <WaveformScrubber
               waveformData={waveformData}
               currentTime={displayedTime}
               duration={duration}
               onSeek={seek}
               loading={waveformLoading}
-              height={40}
+              className="min-w-0 flex-1"
+              height={18}
             />
-            <div className="flex items-center justify-between text-[10px] font-mono tabular-nums text-neutral-400 select-none mt-1">
+            <div className="flex items-center justify-between text-[10px] font-mono tabular-nums text-tertiary select-none gap-2">
               <span>{formatTime(displayedTime)}</span>
               <span>{duration > 0 ? `-${formatTime(Math.max(0, duration - displayedTime))}` : '0:00'}</span>
             </div>
@@ -383,11 +356,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
         {/* ====================================================================
             RIGHT: Volume, Speed, EQ, Fullscreen
             ==================================================================== */}
-        <div className="flex items-center justify-end gap-2 sm:gap-2.5 min-w-0 shrink-0">
+        <div className="flex items-center justify-end gap-2 min-w-0 shrink-0 max-xl:contents max-xl:[&>button]:hidden">
           {error && (
             <span role="alert" title={error} className="absolute bottom-full right-3 mb-1 px-3 py-2 rounded-lg text-xs max-w-xs"
               style={{
-                background: 'rgba(14, 17, 24, 0.95)',
+                background: 'rgba(10, 10, 13, 0.95)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: 'rgba(255, 100, 100, 0.9)',
@@ -405,13 +378,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={toggleSpatialAudio}
             aria-label="Spatial Audio"
             title="Spatial Audio — saved preference (unavailable for YouTube streams)"
-            className={`p-1.5 rounded-full transition-all ${
-              spatialAudio
-                ? 'bg-white/20 text-white ring-1 ring-white/30'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            className={`control-btn transition-all ${
+              spatialAudio ? 'bg-white/15 text-white ring-1 ring-white/25' : ''
             }`}
           >
-            <Volume2 className="w-4 h-4" />
+            <Headphones className="w-4 h-4" style={{ color: spatialAudio ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
           </motion.button>
 
           {/* Lyrics */}
@@ -421,13 +392,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={toggleLyrics}
             aria-label="Lyrics"
             title="Synced Lyrics"
-            className={`p-1.5 rounded-full transition-colors ${
-              isLyricsOpen
-                ? 'text-white bg-white/20 ring-1 ring-white/25'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            className={`control-btn transition-all ${
+              isLyricsOpen ? 'bg-white/15 text-white ring-1 ring-white/20' : ''
             }`}
           >
-            <Volume1 className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" style={{ color: isLyricsOpen ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
           </motion.button>
 
           {/* Queue */}
@@ -437,13 +406,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={toggleQueue}
             aria-label="Queue"
             title="Play Queue"
-            className={`p-1.5 rounded-full transition-colors ${
-              isQueueOpen
-                ? 'text-white bg-white/20 ring-1 ring-white/25'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            className={`control-btn transition-all ${
+              isQueueOpen ? 'bg-white/15 text-white ring-1 ring-white/20' : ''
             }`}
           >
-            <VolumeX className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" style={{ color: isQueueOpen ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
           </motion.button>
 
           {/* About */}
@@ -453,13 +420,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={toggleAbout}
             aria-label="About This Song"
             title="About This Song (Credits & Metadata)"
-            className={`p-1.5 rounded-full transition-colors ${
-              isAboutOpen
-                ? 'text-white bg-white/20 ring-1 ring-white/25'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            className={`control-btn transition-all ${
+              isAboutOpen ? 'bg-white/15 text-white ring-1 ring-white/20' : ''
             }`}
           >
-            <Plus className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" style={{ color: isAboutOpen ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
           </motion.button>
 
           {/* Equalizer */}
@@ -468,10 +433,10 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             whileTap={controlButtonTap}
             onClick={toggleEqualizer}
             aria-label="Equalizer"
-            title="10-Band Graphic Equalizer"
-            className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-flex"
+            title="10-Band Parametric Equalizer"
+            className="control-btn hidden sm:inline-flex"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-tertiary" />
           </motion.button>
 
           {/* Video Dock */}
@@ -481,23 +446,21 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={toggleVideoDock}
             aria-label="Video Player Dock"
             title="Toggle Official Video"
-            className={`p-1.5 rounded-full transition-colors hidden sm:inline-flex ${
-              isVideoDockOpen
-                ? 'text-white bg-white/20 ring-1 ring-white/25'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            className={`control-btn transition-all hidden sm:inline-flex ${
+              isVideoDockOpen ? 'bg-white/15 text-white ring-1 ring-white/20' : ''
             }`}
           >
-            <Moon className="w-4 h-4" />
+            <Moon className="w-4 h-4" style={{ color: isVideoDockOpen ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
           </motion.button>
 
           {/* Volume Control */}
-          <div className="hidden lg:flex items-center gap-1.5 ml-1">
+          <div className="hidden lg:flex items-center gap-2 ml-1">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleMute}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
-              className="text-neutral-400 hover:text-white transition-colors p-1"
+              className="control-btn"
             >
               {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-neutral-500" /> : volume < 50 ? <Volume1 className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </motion.button>
@@ -512,25 +475,32 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
               aria-valuetext={`${currentVolume}% volume`}
               onChange={(e) => setVolume(Number(e.target.value))}
               aria-label="Volume Slider"
-              className="w-16 h-1 appearance-none bg-transparent cursor-pointer"
+              className="slider"
               style={{
-                background: `linear-gradient(to right, #ffffff ${currentVolume}%, rgba(255, 255, 255, 0.12) ${currentVolume}%)`,
-                borderRadius: '9999px',
+                width: '100px',
+                maxWidth: '100px',
               }}
             />
           </div>
 
           {/* Playback Speed */}
           <div className="hidden lg:flex items-center gap-1.5 ml-1">
-            <span className="text-[10px] font-mono tabular-nums text-neutral-400 px-2 py-0.5 rounded-full"
-              style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-              }}
-            >
-              {useAudioDSPStore.getState().playbackSpeed}x
+            <span className="glass-pill px-3 py-1 text-[10px] font-mono tabular-nums text-tertiary">
+              {playbackSpeed}x
             </span>
           </div>
+
+          {/* Visual Quality Toggle */}
+          <motion.button
+            whileHover={controlButtonHover}
+            whileTap={controlButtonTap}
+            onClick={() => useUIStore.getState().setVisualQuality(visualQuality === 'high' ? 'medium' : visualQuality === 'medium' ? 'low' : 'high')}
+            aria-label="Visual Quality"
+            title={`Visual Quality: ${visualQuality}`}
+            className="control-btn hidden sm:inline-flex"
+          >
+            <Sparkles className="w-4 h-4 text-tertiary" />
+          </motion.button>
 
           {/* Fullscreen Expand */}
           <motion.button
@@ -539,7 +509,7 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
             onClick={togglePlayerExpanded}
             aria-label="Expand Fullscreen Player"
             title="Expand Fullscreen (F)"
-            className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/5 transition-colors ml-1"
+            className="control-btn ml-1"
           >
             <Maximize2 className="w-4 h-4" />
           </motion.button>

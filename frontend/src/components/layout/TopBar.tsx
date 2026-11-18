@@ -4,10 +4,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  RotateCw,
   Zap,
   Play,
-  User,
   SlidersHorizontal,
   Headphones,
   Moon,
@@ -17,14 +15,16 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useEqualizerStore } from '@/stores/useEqualizerStore';
 import { api } from '@/api/client';
 import { Track } from '@/types/music';
-import { SpotlightCard } from '@/components/react-bits';
 import { OfflineStatusBadge } from '@/components/common/OfflineStatusBadge';
+import { useUIStore } from '@/stores/useUIStore';
 
 interface TopBarProps {
   onOpenCommandPalette: () => void;
+  onOpenEqualizerDrawer: () => void;
+  onToggleZenMode: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
+export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette, onOpenEqualizerDrawer, onToggleZenMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { playTrack, sleepTimer } = usePlayerStore();
@@ -37,6 +37,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
   const [isSearching, setIsSearching] = useState(false);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const capsuleRef = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: '50%', y: '50%' });
+
+  const setMousePosition = (x: string, y: string) => {
+    if (capsuleRef.current) {
+      capsuleRef.current.style.setProperty('--mouse-x', x);
+      capsuleRef.current.style.setProperty('--mouse-y', y);
+    }
+  };
 
   // Sync searchQuery with URL if on /search/:query
   useEffect(() => {
@@ -109,6 +118,16 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Track mouse position for specular spotlight
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePos({ x: `${x}%`, y: `${y}%` });
+    capsuleRef.current?.style.setProperty('--mouse-x', `${x}%`);
+    capsuleRef.current?.style.setProperty('--mouse-y', `${y}%`);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -130,35 +149,37 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
   return (
     <header className="w-full pt-3 pb-2 px-4 flex items-center justify-center z-30 shrink-0 select-none">
       {/* ====================================================================
-          FLOATING TOP SEARCH / COMMAND CAPSULE (Screenshots 3 & 4)
+          FLOATING TOP SEARCH / COMMAND CAPSULE
           ==================================================================== */}
-      <SpotlightCard
-        spotlightColor="rgba(255, 255, 255, 0.08)"
-        spotlightRadius={240}
-        className="edition-topbar flex items-center gap-2 p-1.5 rounded-full bg-[#15161b]/85 backdrop-blur-2xl border border-white/[0.09] shadow-[0_16px_40px_rgba(0,0,0,0.7)] max-w-2xl w-full justify-between"
+      <div
+        ref={capsuleRef}
+        onMouseMove={handleMouseMove}
+        className="top-capsule w-full max-w-4xl flex items-center gap-2 px-3 py-2 justify-between"
       >
         {/* Navigation Back/Forward Buttons */}
-        <div className="flex items-center gap-1 pl-1">
+        <div className="hidden md:flex items-center gap-1 pl-1">
           <button
             onClick={() => navigate(-1)}
             aria-label="Back"
-            className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06] focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+            className="glass-pill w-8 h-8 flex items-center justify-center transition-all"
+            style={{ minWidth: '36px' }}
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-4 h-4 text-tertiary" />
           </button>
           <button
             onClick={() => navigate(1)}
             aria-label="Forward"
-            className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06] focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+            className="glass-pill w-8 h-8 flex items-center justify-center transition-all"
+            style={{ minWidth: '36px' }}
           >
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4 text-tertiary" />
           </button>
         </div>
 
         {/* Search Input Field */}
         <div ref={searchContainerRef} className="relative flex-1 mx-2">
           <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-            <Search className="absolute left-2.5 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+            <Search className="absolute left-3 w-4 h-4 text-tertiary pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
@@ -168,23 +189,23 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
               }}
               onFocus={() => setShowSuggestions(true)}
               placeholder="Search songs, artists, albums, or lyrics..."
-              className="w-full pl-8 pr-10 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] focus:bg-white/[0.10] border border-transparent focus:border-white/15 text-white placeholder-neutral-400 text-xs focus:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40 transition-all"
+              className="input w-full pl-10 pr-12 py-2 rounded-full text-white placeholder-tertiary text-xs focus:outline-none"
             />
-            <span className="absolute right-2.5 hidden sm:flex items-center text-[10px] font-mono text-neutral-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="absolute right-3 hidden sm:flex items-center text-[10px] font-mono text-tertiary px-2 py-1 rounded border border-white/10 bg-white/5">
               ⌘K
             </span>
           </form>
 
           {/* Floating Live Suggestions Dropdown */}
           {showSuggestions && searchQuery.trim().length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-3 rounded-[24px] bg-[#14151c]/95 backdrop-blur-3xl border border-white/[0.12] p-4 shadow-[0_24px_64px_rgba(0,0,0,0.85)] z-50 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="glass-elevated absolute top-full left-0 right-0 mt-2 p-4 z-50 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
               {/* Header: Live Suggestions & Enter Hint */}
-              <div className="flex items-center justify-between text-[11px] pb-2 border-b border-white/[0.06]">
-                <div className="flex items-center gap-1.5 font-bold tracking-wider uppercase text-neutral-300">
-                  <Zap className="w-3.5 h-3.5 text-neutral-200 fill-current" />
+              <div className="flex items-center justify-between text-[11px] pb-2 border-b border-white/10">
+                <div className="flex items-center gap-1.5 font-bold tracking-wider uppercase text-secondary">
+                  <Zap className="w-3.5 h-3.5 text-white fill-current" />
                   <span>LIVE SUGGESTIONS</span>
                 </div>
-                <span className="text-neutral-500 text-[10px] font-mono">
+                <span className="text-muted text-[10px] font-mono">
                   Press Enter to search all
                 </span>
               </div>
@@ -192,14 +213,14 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
               {/* TRACKS Section */}
               {liveTracks.length > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-1">
                     TRACKS
                   </div>
                   <div className="flex flex-col gap-1">
                     {liveTracks.map((track) => (
                       <div
                         key={track.videoId}
-                        className="group flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+                        className="track-row group flex items-center justify-between gap-3 p-2 rounded-xl transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
                         tabIndex={0}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -213,13 +234,13 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
                           <img
                             src={track.thumbnail || ''}
                             alt={track.title}
-                            className="w-9 h-9 rounded-lg object-cover bg-charcoal-800 shrink-0"
+                            className="w-9 h-9 rounded-lg object-cover bg-neutral-800 shrink-0"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-semibold text-white group-hover:text-white truncate">
                               {track.title}
                             </div>
-                            <div className="text-[11px] text-neutral-400 truncate mt-0.5">
+                            <div className="text-[11px] text-tertiary truncate mt-0.5">
                               {track.artists?.map((a) => a.name).join(', ')}
                             </div>
                           </div>
@@ -232,9 +253,9 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
                             handlePlayLiveTrack(track);
                           }}
                           aria-label="Play track"
-                          className="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center transition-all shrink-0 focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+                          className="glass-pill w-8 h-8 flex items-center justify-center transition-all"
                         >
-                          <Play className="w-3.5 h-3.5 fill-current translate-x-0.5" />
+                          <Play className="w-4 h-4 fill-current translate-x-0.5" />
                         </button>
                       </div>
                     ))}
@@ -244,8 +265,8 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
 
               {/* ARTISTS Section */}
               {liveArtists.length > 0 && (
-                <div className="flex flex-col gap-1.5 pt-2 border-t border-white/[0.06]">
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-white/10">
+                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-1">
                     ARTISTS
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -253,9 +274,9 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
                       <button
                         key={idx}
                         onClick={() => handleSelectArtist(artist)}
-                        className="px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-xs font-medium text-neutral-300 hover:text-white flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+                        className="glass-pill px-3 py-1.5 text-xs font-medium text-tertiary hover:text-white transition-all"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
                         <span>{artist}</span>
                       </button>
                     ))}
@@ -264,7 +285,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
               )}
 
               {isSearching && liveTracks.length === 0 && (
-                <div className="py-6 text-center text-xs text-neutral-400">
+                <div className="py-6 text-center text-xs text-tertiary">
                   Searching tracks & artists...
                 </div>
               )}
@@ -272,7 +293,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
           )}
         </div>
 
-        {/* Right: Offline Indicator, Desktop.fm Link, Refresh & Red Sign In Pill Button */}
+        {/* Right: Offline Indicator, Desktop.fm Link, Refresh & Settings */}
         <div className="flex items-center gap-1.5 pr-1">
           {/* Offline Mode Indicator */}
           <OfflineStatusBadge />
@@ -282,33 +303,56 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
             onClick={() => navigate('/desktop-fm')}
             aria-label="Desktop.fm Experience"
             title="Desktop.fm Teaser & Design System"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-neutral-200 hover:text-white text-[11px] font-bold tracking-tight border border-white/[0.08] transition-all"
+            className="glass-pill hidden lg:flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold tracking-tight transition-all"
+            style={{ background: 'rgba(0, 255, 102, 0.15)', borderColor: 'rgba(0, 255, 102, 0.3)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00ff66] shadow-[0_0_6px_#00ff66]" />
-            <span>Desktop.fm</span>
+            <span className="text-[#00ff66] font-bold">Desktop.fm</span>
           </button>
 
-          {/* Refresh Button */}
+          {/* Command Palette / EQ Button */}
           <button
             onClick={onOpenCommandPalette}
             aria-label="Open command menu"
             title="Command menu"
-            className="w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.12] text-neutral-400 hover:text-white flex items-center justify-center transition-colors border border-white/[0.06] focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-white/40"
+            className="glass-pill w-9 h-9 flex items-center justify-center transition-all"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <SlidersHorizontal className="w-4 h-4 text-tertiary" />
           </button>
 
-          {/* Red Sign In Button (Reference Visual Match) */}
+          {/* Spatial Audio Toggle */}
+          <button
+            onClick={toggleSpatialAudio}
+            aria-label="Toggle Spatial Audio"
+            title="Spatial Audio"
+            className={`glass-pill w-9 h-9 flex items-center justify-center transition-all ${
+              spatialAudio ? 'bg-white/15 text-white ring-1 ring-white/25' : ''
+            }`}
+          >
+            <Headphones className="w-4 h-4" style={{ color: spatialAudio ? 'rgb(var(--accent-primary-rgb))' : 'rgba(255,255,255,0.7)' }} />
+          </button>
+
+          {/* Zen Mode Toggle */}
+          <button
+            onClick={() => useUIStore.getState().toggleZenMode()}
+            aria-label="Toggle Zen Mode"
+            title="Zen Mode"
+            className="glass-pill w-9 h-9 flex items-center justify-center transition-all"
+          >
+            <Moon className="w-4 h-4 text-tertiary" />
+          </button>
+
+          {/* Settings Button */}
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs shadow-md transition-all active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 focus-visible:ring-offset-black"
+            className="btn-primary flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold shrink-0"
             title="Settings"
           >
-            <User className="w-3.5 h-3.5 fill-current" />
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Settings</span>
           </button>
         </div>
-      </SpotlightCard>
+      </div>
     </header>
   );
 };

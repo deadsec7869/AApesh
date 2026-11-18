@@ -1,0 +1,271 @@
+/* ==========================================================================
+   AAPESH / SONIC EDITORIAL — DESIGN TOKEN SYSTEM
+   A distinctive visual identity for a music listening product.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   COLOR PALETTE — Deep neutrals with artwork-driven accents
+   -------------------------------------------------------------------------- */
+:root {
+  /* ---- Base Canvas ---- */
+  --color-void: #030305;              /* Near-black base, not pure #000 */
+  --color-ink: #0a0a0d;               /* Elevated surfaces */
+  --color-graphite: #141418;          /* Cards, panels */
+  --color-charcoal: #1e1e24;          /* Borders, subtle divisions */
+  --color-slate: #2a2a32;             /* Hover states, inputs */
+  --color-steel: #3a3a44;             /* Disabled, subtle elements */
+
+  /* ---- Text Hierarchy ---- */
+  --text-primary: #fafafa;            /* Pure white for headlines */
+  --text-secondary: #e4e4e7;          /* Body copy */
+  --text-tertiary: #a1a1aa;           /* Metadata, timestamps */
+  --text-muted: #71717a;              /* Placeholders, hints */
+  --text-inverse: #0a0a0d;            /* On light/accent backgrounds */
+
+  /* ---- Accent System (artwork-derived, with stable fallback) ---- */
+  --accent-primary: #f5c042;          /* Warm amber — fallback primary */
+  --accent-primary-rgb: 245, 192, 66;
+  --accent-secondary: #38bdf8;        /* Sky blue — fallback secondary */
+  --accent-secondary-rgb: 56, 189, 248;
+  --accent-tertiary: #f472b6;         /* Rose — for favorites, alerts */
+  --accent-tertiary-rgb: 244, 114, 182;
+  --accent-success: #4ade80;          /* Green — for success states */
+  --accent-success-rgb: 74, 222, 128;
+
+  /* ---- Glass Material System (4 levels, no more) ---- */
+  /* Level 1: Shell — Primary floating panels (AppLayout, modals) */
+  --glass-shell-bg: rgba(255, 255, 255, 0.035);
+  --glass-shell-bg-strong: rgba(255, 255, 255, 0.055);
+  --glass-shell-border: rgba(255, 255, 255, 0.08);
+  --glass-shell-border-hover: rgba(255, 255, 255, 0.14);
+  --glass-shell-blur: blur(24px) saturate(160%);
+  --glass-shell-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+    0 20px 50px -12px rgba(0, 0, 0, 0.6);
+
+  /* Level 2: Pill — Docks, tabs, action buttons (BottomTransportDock, TopBar) */
+  --glass-pill-bg: rgba(255, 255, 255, 0.045);
+  --glass-pill-bg-strong: rgba(255, 255, 255, 0.07);
+  --glass-pill-border: rgba(255, 255, 255, 0.09);
+  --glass-pill-blur: blur(20px) saturate(180%);
+  --glass-pill-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    0 10px 30px -8px rgba(0, 0, 0, 0.5);
+
+  /* Level 3: Interactive — Track cards, queue items, controls */
+  --glass-interactive-bg: rgba(255, 255, 255, 0.025);
+  --glass-interactive-bg-hover: rgba(255, 255, 255, 0.055);
+  --glass-interactive-border: rgba(255, 255, 255, 0.06);
+  --glass-interactive-blur: blur(16px) saturate(150%);
+  --glass-interactive-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 20px -4px rgba(0, 0, 0, 0.4);
+
+  /* Level 4: Elevated — Tooltips, dropdowns, popovers (highest contrast) */
+  --glass-elevated-bg: rgba(10, 10, 13, 0.92);
+  --glass-elevated-border: rgba(255, 255, 255, 0.12);
+  --glass-elevated-blur: blur(32px) saturate(180%);
+  --glass-elevated-shadow:
+    0 24px 60px -16px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  /* ---- Radius Scale (consistent, purposeful) ---- */
+  --radius-xs: 6px;       /* Chips, badges */
+  --radius-sm: 10px;      /* Buttons, inputs */
+  --radius-md: 14px;      /* Cards, track rows */
+  --radius-lg: 18px;      /* Panels, modals */
+  --radius-xl: 24px;      /* Hero cards, fullscreen */
+  --radius-2xl: 32px;     /* Major focal surfaces */
+  --radius-pill: 9999px;  /* Pills, full round */
+
+  /* ---- Spacing Scale (8px base, harmonious) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ---- Layout Dimensions ---- */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --topbar-height: 56px;
+  --player-height: 84px;
+  --player-expanded-height: 100vh;
+  --content-max-width: 1400px;
+  --content-gap: var(--space-6);
+
+  /* ---- Motion System (restrained, purposeful) ---- */
+  --motion-instant: 80ms;
+  --motion-fast: 140ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --motion-slower: 480ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);           /* Primary: confident, natural */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);         /* Transitions */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);     /* Microinteractions only */
+  --ease-sharp: cubic-bezier(0.4, 0, 1, 1);            /* Quick feedback */
+
+  /* ---- Typography Scale (Inter variable, editorial hierarchy) ---- */
+  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  --font-display: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Display — Hero headlines, album titles in fullscreen */
+  --text-display-xl: clamp(48px, 5vw, 72px) / 1.05 var(--font-display);
+  --text-display-lg: clamp(36px, 4vw, 52px) / 1.08 var(--font-display);
+  --text-display-md: clamp(28px, 3vw, 40px) / 1.1 var(--font-display);
+  --text-display-sm: clamp(22px, 2.5vw, 30px) / 1.15 var(--font-display);
+
+  /* Heading — Page titles, section headers */
+  --text-h1: 30px / 1.2 var(--font-display);
+  --text-h2: 24px / 1.25 var(--font-display);
+  --text-h3: 20px / 1.3 var(--font-display);
+  --text-h4: 18px / 1.35 var(--font-display);
+
+  /* Body — UI text, metadata */
+  --text-lg: 16px / 1.5 var(--font-sans);
+  --text-base: 14px / 1.55 var(--font-sans);
+  --text-sm: 13px / 1.5 var(--font-sans);
+  --text-xs: 12px / 1.5 var(--font-sans);
+  --text-2xs: 11px / 1.5 var(--font-sans);
+
+  /* Semantic font weights */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --weight-black: 900;
+
+  /* ---- Shadows (depth, not decoration) ---- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px -12px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+
+  /* ---- Focus Ring ---- */
+  --focus-ring: 2px solid rgba(var(--accent-primary-rgb), 0.6);
+  --focus-ring-offset: 2px;
+
+  /* ---- Z-Index Scale (intentional layering) ---- */
+  --z-base: 0;
+  --z-backdrop: -10;
+  --z-background: 0;
+  --z-content: 10;
+  --z-sticky: 20;
+  --z-dock: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+}
+
+/* Light mode (if ever needed) — uses same structure, inverted */
+[data-theme="light"] {
+  --color-void: #fafafa;
+  --color-ink: #ffffff;
+  --color-graphite: #f4f4f5;
+  --color-charcoal: #e4e4e7;
+  --color-slate: #d4d4d8;
+  --color-steel: #a1a1aa;
+
+  --text-primary: #0a0a0d;
+  --text-secondary: #18181b;
+  --text-tertiary: #52525b;
+  --text-muted: #71717a;
+  --text-inverse: #fafafa;
+
+  --glass-shell-bg: rgba(0, 0, 0, 0.03);
+  --glass-shell-bg-strong: rgba(0, 0, 0, 0.05);
+  --glass-shell-border: rgba(0, 0, 0, 0.06);
+  --glass-shell-border-hover: rgba(0, 0, 0, 0.1);
+  --glass-shell-blur: blur(20px) saturate(150%);
+  --glass-shell-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    0 20px 50px -12px rgba(0, 0, 0, 0.12);
+
+  --glass-pill-bg: rgba(0, 0, 0, 0.04);
+  --glass-pill-bg-strong: rgba(0, 0, 0, 0.06);
+  --glass-pill-border: rgba(0, 0, 0, 0.07);
+  --glass-pill-blur: blur(16px) saturate(160%);
+
+  --glass-interactive-bg: rgba(0, 0, 0, 0.02);
+  --glass-interactive-bg-hover: rgba(0, 0, 0, 0.045);
+  --glass-interactive-border: rgba(0, 0, 0, 0.05);
+  --glass-interactive-blur: blur(12px) saturate(140%);
+
+  --glass-elevated-bg: rgba(250, 250, 250, 0.95);
+  --glass-elevated-border: rgba(0, 0, 0, 0.08);
+  --glass-elevated-blur: blur(28px) saturate(160%);
+  --glass-elevated-shadow:
+    0 24px 60px -16px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 48px -12px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 64px -16px rgba(0, 0, 0, 0.15);
+
+  --focus-ring: 2px solid rgba(var(--accent-primary-rgb), 0.5);
+}
+
+/* ==========================================================================
+   RUNTIME AURA COLORS (set by AuraStage from artwork)
+   ========================================================================== */
+:root {
+  --aura-primary: var(--accent-primary);
+  --aura-secondary: var(--accent-secondary);
+  --aura-primary-rgb: var(--accent-primary-rgb);
+  --aura-secondary-rgb: var(--accent-secondary-rgb);
+}
+
+/* ==========================================================================
+   REDUCED MOTION — Respect user preference globally
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   HIGH CONTRAST MODE — Accessibility
+   ========================================================================== */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-shell-border: rgba(255, 255, 255, 0.25);
+    --glass-pill-border: rgba(255, 255, 255, 0.3);
+    --glass-interactive-border: rgba(255, 255, 255, 0.2);
+    --glass-elevated-border: rgba(255, 255, 255, 0.4);
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --glass-shell-bg: Canvas;
+    --glass-pill-bg: Canvas;
+    --glass-interactive-bg: Canvas;
+    --glass-elevated-bg: Canvas;
+    --text-primary: CanvasText;
+    --text-secondary: CanvasText;
+    --text-tertiary: CanvasText;
+  }
+}

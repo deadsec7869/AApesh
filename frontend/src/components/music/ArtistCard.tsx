@@ -44,7 +44,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
           {artist.name}
         </h3>
         <span className="text-xs text-neutral-400 truncate mt-0.5">
-          {artist.subscribers ? `${formatCompactNumber(artist.subscribers)} fans` : 'Artist'}
+          {artist.subscribers ? `${formatCompactNumber(parseInt(artist.subscribers, 10))} fans` : 'Artist'}
         </span>
       </div>
     </div>

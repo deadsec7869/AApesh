@@ -1,5 +1,12 @@
-import React, { useRef, useEffect, useMemo, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+
+// Extend CanvasRenderingContext2D to include roundRect
+declare global {
+  interface CanvasRenderingContext2D {
+    roundRect(x: number, y: number, w: number, h: number, radii: number | number[]): void;
+  }
+}
 
 interface WaveformScrubberProps {
   /** Waveform data as normalized array (0-1) */
@@ -19,31 +26,42 @@ interface WaveformScrubberProps {
 }
 
 /**
- * WaveformScrubber - Interactive Waveform with Hover Preview
+ * Elastic Liquid Waveform Scrubber
  *
  * Canvas-based waveform visualization with:
- * - Real-time playback progress overlay
- * - Hover timestamp tooltip
- * - Click/drag to seek
+ * - Real-time playback progress overlay with aura gradient
+ * - Hover timestamp tooltip with glass card
+ * - Click/drag to seek with elastic spring physics
  * - Keyboard accessible (ArrowLeft/Right)
  * - Responsive to reduced motion
+ * - Glowing progress fill with aura colors
  */
 
-export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
+export const WaveformScrubber = ({
   waveformData,
   currentTime,
   duration,
   onSeek,
   loading = false,
   className = '',
-  height = 48,
-}) => {
+  height = 44,
+}: WaveformScrubberProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [progressWidth, setProgressWidth] = useState(0);
+
+  // Set CSS custom properties via ref
+  const setMousePosition = (x: string, y: string) => {
+    if (containerRef.current) {
+      containerRef.current.style.setProperty('--mouse-x', x);
+      containerRef.current.style.setProperty('--mouse-y', y);
+    }
+  };
 
   // Reduced motion media query
   useEffect(() => {
@@ -55,6 +73,11 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Initialize mouse position for fallback
+  useEffect(() => {
+    setMousePosition('50%', '50%');
+  }, []);
+
   // Draw waveform on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,6 +85,10 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const palette = getComputedStyle(canvas);
+    const primary = palette.getPropertyValue('--aura-primary-rgb').trim() || '99, 102, 241';
+    const secondary = palette.getPropertyValue('--aura-secondary-rgb').trim() || primary;
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -72,7 +99,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     const width = rect.width;
     const height = rect.height;
     const centerY = height / 2;
-    const maxAmplitude = height * 0.4;
+    const maxAmplitude = height * 0.35;
 
     // Clear
     ctx.clearRect(0, 0, width, height);
@@ -80,7 +107,11 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     if (loading) {
       // Loading shimmer
       const time = Date.now() / 1000;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, 'rgba(255,255,255,0.03)');
+      gradient.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0.03)');
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
       return;
     }
@@ -90,43 +121,72 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     const progress = duration > 0 ? currentTime / duration : 0;
     const progressX = progress * width;
 
-    // Draw waveform bars
+    // Draw waveform bars with elastic liquid effect
     for (let i = 0; i < data.length; i++) {
       const x = i * barWidth;
       const amplitude = data[i] * maxAmplitude;
-      const barHeight = Math.max(1, amplitude);
+      const barHeight = Math.max(2, amplitude);
 
       // Determine color based on progress
       const isPlayed = x < progressX;
-      const baseColor = isPlayed ? '#FFFFFF' : 'rgba(255, 255, 255, 0.18)';
+      const baseColor = isPlayed
+        ? `rgba(${primary}, ${0.8 + 0.2 * Math.sin(Date.now() / 200 + i * 0.1)})`
+        : 'rgba(255, 255, 255, 0.12)';
+
+      // Elastic liquid bar with rounded caps
+      const barX = x + barWidth * 0.15;
+      const barW = barWidth * 0.7;
+      const radius = barW / 2;
 
       ctx.fillStyle = baseColor;
-      ctx.fillRect(
-        x + barWidth * 0.1,
-        centerY - barHeight / 2,
-        barWidth * 0.8,
-        barHeight
-      );
+      ctx.beginPath();
+      ctx.roundRect(barX, centerY - barHeight / 2, barW, barHeight, radius);
+      ctx.fill();
     }
 
-    // Draw playhead
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.moveTo(progressX, 0);
-    ctx.lineTo(progressX, height);
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Draw progress fill with aura gradient
+    if (progress > 0) {
+      const gradient = ctx.createLinearGradient(0, 0, progressX, 0);
+      gradient.addColorStop(0, `rgb(${primary})`);
+      gradient.addColorStop(0.5, `rgba(${primary}, 0.8)`);
+      gradient.addColorStop(1, `rgb(${secondary})`);
 
-    // Playhead circle
-    ctx.beginPath();
-    ctx.arc(progressX, centerY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-    ctx.strokeStyle = '#050507';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.roundRect(0, centerY - 3, progressX, 6, 3);
+      ctx.fill();
+    }
+
+    // Draw playhead with elastic droplet
+    if (!isDragging) {
+      const dropletSize = 14 + Math.sin(Date.now() / 150) * 1.5;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = `rgb(${primary})`;
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      ctx.beginPath();
+      ctx.ellipse(progressX, centerY, dropletSize / 2, dropletSize / 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.beginPath();
+      ctx.ellipse(progressX - dropletSize * 0.2, centerY - dropletSize * 0.2, dropletSize * 0.3, dropletSize * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+    }
   }, [waveformData, currentTime, duration, loading, height]);
+
+  // Animate progress width for smooth elastic feel
+  useEffect(() => {
+    if (duration > 0) {
+      const targetProgress = (currentTime / duration) * 100;
+      setProgressWidth(targetProgress);
+    }
+  }, [currentTime, duration]);
 
   // Handle mouse move for tooltip
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -138,6 +198,11 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     const time = progress * duration;
     setHoverTime(time);
     setIsHovering(true);
+
+    // Update CSS custom properties for specular spotlight
+    const percentX = `${(x / rect.width) * 100}%`;
+    const percentY = `${(e.clientY / rect.height) * 100}%`;
+    setMousePosition(percentX, percentY);
   };
 
   const handleMouseLeave = () => {
@@ -161,6 +226,14 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
   useEffect(() => {
     if (isDragging) {
+      const handleDrag = (e: MouseEvent) => {
+        if (!canvasRef.current || duration <= 0) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const progress = Math.max(0, Math.min(1, x / rect.width));
+        onSeek(progress * duration);
+      };
+
       window.addEventListener('mousemove', handleDrag);
       window.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -168,15 +241,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging]);
-
-  const handleDrag = (e: MouseEvent) => {
-    if (!canvasRef.current || duration <= 0) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const progress = Math.max(0, Math.min(1, x / rect.width));
-    onSeek(progress * duration);
-  };
+  }, [isDragging, duration, onSeek]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -200,8 +265,10 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
   if (!waveformData && !loading) {
     return (
       <div
-        className={`relative h-${height} px-2 ${className}`}
-        role="slider"
+        ref={containerRef}
+        className={`liquid-glass-interactive relative px-2 ${className}`}
+        style={{ height }}
+      role="slider"
         aria-label="Playback progress"
         aria-valuemin={0}
         aria-valuemax={duration}
@@ -209,23 +276,27 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <div className="absolute inset-0 rounded-full bg-white/10" />
+        <div className="absolute inset-0 rounded-full bg-white/5" />
         <div
-          className="absolute top-0 bottom-0 rounded-full bg-white transition-all duration-100"
-          style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full transition-all duration-300 ease-spring-gentle"
+          style={{
+            width: `${progressWidth}%`,
+            background: 'linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)',
+            borderRadius: '9999px',
+          }}
         />
         {isHovering && hoverTime !== null && (
           <motion.div
-            initial={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded text-[10px] font-mono whitespace-nowrap pointer-events-none"
-            style={{
-              background: 'rgba(14, 15, 20, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: 'white',
-            }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-xl whitespace-nowrap pointer-events-none z-10 liquid-glass-elevated"
           >
-            {formatTime(hoverTime)} / {formatTime(duration)}
+            <div className="flex items-center gap-2">
+              <span className="liquid-time">{formatTime(hoverTime)}</span>
+              <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-white/10 text-white/70">
+                / {formatTime(duration)}
+              </span>
+            </div>
           </motion.div>
         )}
       </div>
@@ -234,7 +305,9 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
 
   return (
     <div
-      className={`relative h-${height} px-2 ${className}`}
+      ref={containerRef}
+      className={`relative px-2 ${className}`}
+      style={{ height }}
       role="slider"
       aria-label="Playback progress"
       aria-valuemin={0}
@@ -245,7 +318,7 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
     >
       <canvas
         ref={canvasRef}
-        className="w-full h-full cursor-pointer select-none"
+        className="block w-full h-full cursor-pointer select-none"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onMouseDown={handleMouseDown}
@@ -257,45 +330,46 @@ export const WaveformScrubber: React.FC<WaveformScrubberProps> = ({
       {/* Hover Tooltip */}
       {isHovering && hoverTime !== null && (
         <motion.div
-          initial={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg whitespace-nowrap pointer-events-none z-10"
-          style={{
-            background: 'rgba(14, 15, 20, 0.95)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-          }}
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-xl whitespace-nowrap pointer-events-none z-10 liquid-glass-elevated"
         >
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs">{formatTime(hoverTime)}</span>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono"
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.7)',
-              }}
-            >
+            <span className="liquid-time">{formatTime(hoverTime)}</span>
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-white/10 text-white/70">
               / {formatTime(duration)}
             </span>
           </div>
         </motion.div>
       )}
 
-      {/* Progress indicator for reduced motion */}
+      {/* Progress indicator for reduced motion / visual reference */}
       {reducedMotion && (
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-1/2 -translate-y-1/2 h-0.5 rounded-full bg-white/10 w-full"
+            className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-white/10 w-full"
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 h-0.5 rounded-full bg-white transition-all duration-100"
-            style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+            className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full transition-all duration-300 ease-spring-gentle"
+            style={{
+              width: `${progressWidth}%`,
+              background: 'linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)',
+              borderRadius: '9999px',
+            }}
           />
         </div>
       )}
+
+      {/* Live progress bar overlay for elastic feel */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-2 w-full pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)`,
+          width: `${progressWidth}%`,
+          borderRadius: '9999px',
+          opacity: 0.15,
+        }}
+      />
     </div>
   );
 };
