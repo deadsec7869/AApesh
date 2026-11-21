@@ -40,9 +40,13 @@ extend(THREE);
  * - On restore: re-initializes visualizer, resumes frameloop.
  *
  * Visibility Handling:
- * - Clamps dpr to [1, 1.5] and switches frameloop between 'always'/'never'
+ * - Clamps dpr to [1, 1.5] and switches frameloop between 'always'/'demand'
  *   via `document.visibilitychange` so minimizing the Windows .exe or
  *   switching tabs drops GPU usage to 0% immediately without killing audio.
+ * - When `!isPlaying` OR `document.hidden` OR `visualizerMode === 'stealth'`,
+ *   switches to `frameloop="demand"` (rendering only on resize/palette change)
+ *   and back to `frameloop="always"` only while `isPlaying && !document.hidden`,
+ *   with `dpr={[1, 1.25]}` and `antialias: false` on high-DPI displays.
  */
 
 interface SoundstageCanvasProps {
@@ -219,6 +223,7 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
   const visualizerMode = useUIStore(s => s.visualizerMode);
   const isPlayerExpanded = usePlayerStore(s => s.isPlayerExpanded);
   const currentTrack = usePlayerStore(s => s.currentTrack);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isTabVisible, setIsTabVisible] = useState(true);
@@ -251,6 +256,11 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
   if (!currentTrack) return null;
 
   const canvasDPR = calculateDPR(visualQuality);
+
+  // Use demand render loop when paused, tab hidden, or in stealth mode
+  // This dramatically reduces GPU usage when not actively playing
+  const shouldUseDemandLoop = !isPlaying || !isTabVisible || visualizerMode === 'stealth';
+  const frameloop = shouldUseDemandLoop ? 'demand' : 'always';
 
   const onCreated = ({ gl }: { gl: THREE.WebGLRenderer }) => {
     const canvas = gl.domElement;
@@ -302,12 +312,12 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
             dpr={canvasDPR}
             gl={{
               alpha: true,
-              antialias: true,
+              antialias: false, // Disable antialias for performance
               powerPreference: 'high-performance',
               toneMapping: THREE.ACESFilmicToneMapping,
               toneMappingExposure: 1.0,
             }}
-            frameloop={isTabVisible ? 'always' : 'never'}
+            frameloop={frameloop}
             onCreated={onCreated}
             className="w-full h-full"
           >
@@ -326,13 +336,13 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
   );
 };
 
-function calculateDPR(visualQuality: 'high' | 'medium' | 'low' | 'off'): number {
+function calculateDPR(visualQuality: 'high' | 'medium' | 'low' | 'off'): number | [number, number] {
   if (typeof window === 'undefined') return 1;
   if (visualQuality === 'off') return 0;
   const baseDpr = Math.min(window.devicePixelRatio, 2);
   switch (visualQuality) {
-    case 'high': return Math.min(baseDpr, 1.5);
-    case 'medium': return Math.min(baseDpr, 1.25);
+    case 'high': return [1, Math.min(baseDpr, 1.25)];
+    case 'medium': return [1, Math.min(baseDpr, 1.25)];
     case 'low': return 1;
     default: return 1;
   }

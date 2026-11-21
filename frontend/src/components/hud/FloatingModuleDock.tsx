@@ -15,6 +15,12 @@ import {
   DownloadCloud,
   Headphones,
   Play,
+  LayoutDashboard,
+  Grid,
+  Users,
+  Music,
+  FileText,
+  SlidersHorizontal as EqualizerIcon,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
@@ -22,29 +28,31 @@ import { useUIStore } from '@/stores/useUIStore';
 import { useOfflineStore } from '@/stores/useOfflineStore';
 import { useAudioDSPStore } from '@/stores/useAudioDSPStore';
 import { api } from '@/api/client';
-import { Track, Shelf, ShelfItem } from '@/types/music';
+import { Track, Shelf, ShelfItem, LyricsResponse, LyricLine } from '@/types/music';
 import { ArtworkImage } from '@/components/common/ArtworkImage';
 import { TrackRow } from '@/components/music/TrackRow';
 import { useNavigate } from 'react-router-dom';
+import { useSyncedLyrics } from '@/hooks/useSyncedLyrics';
+import { getArtworkUrl } from '@/utils/artwork';
 
 const MODULES = [
   {
     id: 'overview',
-    label: 'Overview / Discovery',
-    icon: Radio,
+    label: 'Overview',
+    icon: LayoutDashboard,
     tabs: [
-      { id: 'home', label: 'Home / Charts', icon: Radio },
-      { id: 'search', label: 'Search', icon: Sparkles },
-      { id: 'artists', label: 'Artists / Credits', icon: Headphones },
+      { id: 'discover', label: 'Discover', icon: Sparkles },
+      { id: 'search', label: 'Search', icon: Search },
+      { id: 'artists', label: 'Artists', icon: Users },
     ],
   },
   {
     id: 'tracks',
-    label: 'Tracks / Queue',
+    label: 'Tracks',
     icon: ListMusic,
     tabs: [
-      { id: 'queue', label: 'Up Next Queue', icon: ListMusic },
-      { id: 'playlists', label: 'Saved Playlists', icon: Sparkles },
+      { id: 'queue', label: 'Queue', icon: Music },
+      { id: 'playlists', label: 'Playlists', icon: FileText },
       { id: 'history', label: 'History', icon: History },
     ],
   },
@@ -54,7 +62,7 @@ const MODULES = [
     icon: SlidersHorizontal,
     tabs: [
       { id: 'lyrics', label: 'Synced Lyrics', icon: Mic2 },
-      { id: 'eq', label: '10-Band Parametric EQ', icon: SlidersHorizontal },
+      { id: 'eq', label: '10-Band EQ', icon: SlidersHorizontal },
     ],
   },
 ] as const;
@@ -69,16 +77,21 @@ export const FloatingModuleDock: React.FC<FloatingModuleDockProps> = ({ classNam
   const [moduleStates, setModuleStates] = useState<
     Record<ModuleId, { expanded: boolean; activeTab: string }>
   >({
-    overview: { expanded: false, activeTab: 'home' },
+    overview: { expanded: false, activeTab: 'discover' },
     tracks: { expanded: false, activeTab: 'queue' },
     lyrics: { expanded: false, activeTab: 'lyrics' },
   });
   const [moduleOrder, setModuleOrder] = useState<ModuleId[]>(['overview', 'tracks', 'lyrics']);
   const [draggedModule, setDraggedModule] = useState<ModuleId | null>(null);
-  const orderedModules = useMemo(
-    () => moduleOrder.map((id) => MODULES.find((module) => module.id === id)!).filter(Boolean),
-    [moduleOrder],
-  );
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Force re-render on breakpoint change
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -105,7 +118,7 @@ export const FloatingModuleDock: React.FC<FloatingModuleDockProps> = ({ classNam
       const next = { ...prev };
       const wasExpanded = prev[moduleId]?.expanded;
 
-      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (!isDesktop) {
         (Object.keys(next) as ModuleId[]).forEach((key) => {
           if (key !== moduleId) {
             next[key] = { ...next[key], expanded: false };
@@ -116,7 +129,7 @@ export const FloatingModuleDock: React.FC<FloatingModuleDockProps> = ({ classNam
       next[moduleId] = { ...next[moduleId], expanded: !wasExpanded };
       return next;
     });
-  }, []);
+  }, [isDesktop]);
 
   const setActiveTab = useCallback((moduleId: ModuleId, tab: string) => {
     setModuleStates((prev) => ({
@@ -136,119 +149,258 @@ export const FloatingModuleDock: React.FC<FloatingModuleDockProps> = ({ classNam
     setDraggedModule(null);
   }, [draggedModule]);
 
+  const orderedModules = useMemo(
+    () => moduleOrder.map((id) => MODULES.find((module) => module.id === id)!).filter(Boolean),
+    [moduleOrder],
+  );
+
   return (
     <div
-      className={`relative z-20 h-14 w-full shrink-0 pointer-events-none px-3 ${className}`}
+      className={`relative z-10 w-full h-full pointer-events-none ${className}`}
+      role="region"
+      aria-label="Module dock"
     >
-      <div
-        className="relative flex h-full w-full flex-col items-center justify-center"
-        role="region"
-        aria-label="Module dock"
-      >
-        {/* Expanded Module Cards */}
-        <div className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 grid min-h-0 w-full grid-cols-1 gap-3 pointer-events-none lg:grid-cols-3 lg:items-stretch">
-          <AnimatePresence>
-            {orderedModules.map((module, moduleIndex) => {
+      <div className="relative flex h-full w-full flex-col">
+        {/* Desktop: 3 equal columns side-by-side */}
+        {isDesktop && (
+          <div className="flex h-full w-full flex-1 gap-3 pointer-events-none">
+            {orderedModules.map((module, moduleIndex) => (
+              <ModuleColumn
+                key={module.id}
+                module={module}
+                moduleIndex={moduleIndex}
+                state={moduleStates[module.id]}
+                onToggle={() => toggleModule(module.id)}
+                onTabChange={(tab) => setActiveTab(module.id, tab)}
+                onClose={() => toggleModule(module.id)}
+                isDragged={draggedModule === module.id}
+                onDragStart={() => setDraggedModule(module.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleModuleDrop(module.id)}
+                onDragEnd={() => setDraggedModule(null)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Mobile: Horizontal scrollable pills at bottom */}
+        {!isDesktop && (
+          <div className="flex h-14 w-full items-center justify-start gap-2 overflow-x-auto flex-nowrap pointer-events-auto px-3">
+            {orderedModules.map((module) => {
               const state = moduleStates[module.id];
               const isExpanded = state?.expanded ?? false;
-              const activeTab = state?.activeTab || module.tabs[0]?.id;
-
-              if (!isExpanded) return null;
+              const Icon = module.icon;
 
               return (
-                <motion.div
-                  key={`${module.id}-expanded`}
-                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                <motion.button
+                  key={module.id}
+                  type="button"
+                  draggable
+                  onDragStart={() => setDraggedModule(module.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleModuleDrop(module.id)}
+                  onDragEnd={() => setDraggedModule(null)}
+                  aria-label={`${module.label}; drag to reorder`}
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="relative flex flex-col pointer-events-auto overflow-hidden"
+                  onClick={() => toggleModule(module.id)}
+                  className="module-pill flex shrink-0 items-center gap-2 px-3 py-2 rounded-2xl transition-all"
                   style={{
-                    width: '100%',
-                    gridColumn: moduleIndex + 1,
-                    minWidth: 0,
-                    maxWidth: 'none',
-                    height: 'min(52vh, 560px)',
-                    maxHeight: 'min(52vh, 560px)',
                     background: 'rgba(16, 16, 20, 0.88)',
                     backdropFilter: 'blur(24px) saturate(180%)',
                     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '16px',
+                    border: isExpanded
+                      ? '1px solid rgba(255, 255, 255, 0.2)'
+                      : '1px solid rgba(255, 255, 255, 0.08)',
                     boxShadow:
-                      '0 24px 64px -16px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+                      '0 8px 32px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
                   }}
                 >
-                  <ModuleCardContent
-                    module={module}
-                    activeTab={activeTab}
-                    onTabChange={(tab) => setActiveTab(module.id, tab)}
-                    onClose={() => toggleModule(module.id)}
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      isExpanded ? 'text-white' : 'text-tertiary'
+                    }`}
+                    aria-hidden="true"
                   />
-                </motion.div>
+                  <span
+                    className={`text-xs font-medium truncate transition-colors ${
+                      isExpanded ? 'text-white' : 'text-secondary'
+                    }`}
+                  >
+                    {module.label}
+                  </span>
+                  <motion.span
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2, ease: [0.34, 1.4, 0.64, 1] }}
+                    className="flex-shrink-0"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5 text-tertiary" />
+                  </motion.span>
+                </motion.button>
               );
             })}
+          </div>
+        )}
+
+        {/* Expanded module cards (mobile only - desktop uses columns) */}
+        {!isDesktop && (
+          <AnimatePresence>
+            <div className="absolute bottom-[calc(100%+0.5rem)] left-3 right-3 grid min-h-0 w-full grid-cols-1 gap-3 pointer-events-none">
+              {orderedModules.map((module) => {
+                const state = moduleStates[module.id];
+                const isExpanded = state?.expanded ?? false;
+                const activeTab = state?.activeTab || module.tabs[0]?.id;
+
+                if (!isExpanded) return null;
+
+                return (
+                  <motion.div
+                    key={`${module.id}-expanded`}
+                    initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="relative flex flex-col pointer-events-auto overflow-hidden"
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: 'none',
+                      height: 'min(52vh, 560px)',
+                      maxHeight: 'min(52vh, 560px)',
+                      background: 'rgba(16, 16, 20, 0.88)',
+                      backdropFilter: 'blur(24px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '16px',
+                      boxShadow:
+                        '0 24px 64px -16px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
+                    <ModuleCardContent
+                      module={module}
+                      activeTab={activeTab}
+                      onTabChange={(tab) => setActiveTab(module.id, tab)}
+                      onClose={() => toggleModule(module.id)}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
           </AnimatePresence>
-        </div>
-
-        {/* Bottom Dock Pills */}
-        <div className="flex h-full w-full items-center justify-start gap-2 overflow-x-auto flex-nowrap pointer-events-auto lg:justify-center">
-          {orderedModules.map((module) => {
-            const state = moduleStates[module.id];
-            const isExpanded = state?.expanded ?? false;
-            const Icon = module.icon;
-
-            return (
-              <motion.button
-                key={module.id}
-                type="button"
-                draggable
-                onDragStart={() => setDraggedModule(module.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleModuleDrop(module.id)}
-                onDragEnd={() => setDraggedModule(null)}
-                aria-label={`${module.label}; drag to reorder`}
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                onClick={() => toggleModule(module.id)}
-                className="module-pill flex shrink-0 items-center gap-2 px-3 py-2 rounded-2xl transition-all"
-                style={{
-                  background: 'rgba(16, 16, 20, 0.88)',
-                  backdropFilter: 'blur(24px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                  border: isExpanded
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow:
-                    '0 8px 32px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
-                }}
-              >
-                <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isExpanded ? 'text-white' : 'text-tertiary'
-                  }`}
-                  aria-hidden="true"
-                />
-                <span
-                  className={`text-xs font-medium truncate transition-colors ${
-                    isExpanded ? 'text-white' : 'text-secondary'
-                  }`}
-                >
-                  {module.label}
-                </span>
-                <motion.span
-                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2, ease: [0.34, 1.4, 0.64, 1] }}
-                  className="flex-shrink-0"
-                >
-                  <ChevronUp className="w-3.5 h-3.5 text-tertiary" />
-                </motion.span>
-              </motion.button>
-            );
-          })}
-        </div>
+        )}
       </div>
+    </div>
+  );
+};
+
+interface ModuleColumnProps {
+  module: (typeof MODULES)[number];
+  moduleIndex: number;
+  state: { expanded: boolean; activeTab: string };
+  onToggle: () => void;
+  onTabChange: (tab: string) => void;
+  onClose: () => void;
+  isDragged: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
+}
+
+const ModuleColumn: React.FC<ModuleColumnProps> = ({
+  module,
+  moduleIndex,
+  state,
+  onToggle,
+  onTabChange,
+  onClose,
+  isDragged,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+}) => {
+  const isExpanded = state?.expanded ?? false;
+  const activeTab = state?.activeTab || module.tabs[0]?.id;
+  const Icon = module.icon;
+
+  return (
+    <div className="relative flex h-full w-full flex-col flex-1 min-w-0 pointer-events-auto overflow-hidden">
+      {/* Expanded Content */}
+      <AnimatePresence mode="wait">
+        {isExpanded && (
+          <motion.div
+            key={`${module.id}-expanded`}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="flex flex-col flex-1 min-h-0 pointer-events-auto overflow-hidden"
+            style={{
+              background: 'rgba(16, 16, 20, 0.88)',
+              backdropFilter: 'blur(24px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '16px',
+              boxShadow:
+                '0 24px 64px -16px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <ModuleCardContent
+              module={module}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              onClose={onClose}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Collapsed Pill at bottom of column */}
+      <motion.button
+        type="button"
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onDragEnd={onDragEnd}
+        aria-label={`${module.label}; drag to reorder`}
+        aria-expanded={isExpanded}
+        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        onClick={onToggle}
+        className="module-pill flex shrink-0 items-center justify-center gap-2 w-full h-11 px-3 py-2 rounded-2xl transition-all pointer-events-auto"
+        style={{
+          background: 'rgba(16, 16, 20, 0.88)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          border: isExpanded
+            ? '1px solid rgba(255, 255, 255, 0.2)'
+            : '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow:
+            '0 8px 32px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+          opacity: isDragged ? 0.5 : 1,
+        }}
+      >
+        <Icon
+          className={`w-4 h-4 shrink-0 transition-colors ${isExpanded ? 'text-white' : 'text-tertiary'}`}
+          aria-hidden="true"
+        />
+        <span
+          className={`text-xs font-medium transition-colors ${isExpanded ? 'text-white' : 'text-secondary'}`}
+        >
+          {module.label}
+        </span>
+        <motion.span
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: [0.34, 1.4, 0.64, 1] }}
+          className="flex-shrink-0"
+        >
+          <ChevronUp className="w-3.5 h-3.5 text-tertiary" />
+        </motion.span>
+      </motion.button>
     </div>
   );
 };
@@ -268,67 +420,75 @@ const ModuleCardContent: React.FC<ModuleCardContentProps> = ({
 }) => {
   const ModuleIcon = module.icon;
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'home':
-      case 'search':
-      case 'artists':
-        return <OverviewTabContent />;
-      case 'queue':
-      case 'playlists':
-      case 'history':
-        return <TracksTabContent tab={activeTab} />;
-      case 'lyrics':
-      case 'eq':
-        return <LyricsTabContent tab={activeTab} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="flex flex-col h-full overflow-hidden p-4">
-      <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/10 shrink-0 min-w-0">
+      {/* Row 1: Icon + Title + Minimize */}
+      <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-white/10 shrink-0 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <ModuleIcon className="w-4 h-4 text-white shrink-0" />
           <span className="text-sm font-semibold text-white truncate">{module.label}</span>
         </div>
-        <div className="flex items-center gap-1 shrink-0 flex-nowrap">
-          {module.tabs.map((tab) => {
-            const TabIcon = tab.icon;
-            // Only show icon on non-active tabs, text on active tab
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange(tab.id)}
-                aria-label={tab.label}
-                aria-pressed={activeTab === tab.id}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-white/10 text-white ring-1 ring-white/20 shadow-sm font-semibold'
-                    : 'text-tertiary hover:text-white'
-                }`}
-              >
-                {activeTab !== tab.id && <TabIcon className="w-3.5 h-3.5 shrink-0" />}
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-7 h-7 rounded-full glass-pill flex items-center justify-center transition-all ml-1 shrink-0"
-            aria-label="Minimize module"
-          >
-            <X className="w-3.5 h-3.5 text-tertiary hover:text-white" />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-7 h-7 rounded-full glass-pill flex items-center justify-center transition-all ml-1 shrink-0"
+          aria-label="Minimize module"
+        >
+          <X className="w-3.5 h-3.5 text-tertiary hover:text-white" />
+        </button>
       </div>
 
+      {/* Row 2: Sub-tabs bar */}
+      <div className="flex items-center gap-1 px-1 pb-2 border-b border-white/10 shrink-0 min-w-0 overflow-x-auto">
+        {module.tabs.map((tab) => {
+          const TabIcon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              aria-label={tab.label}
+              aria-pressed={activeTab === tab.id}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all shrink-0 whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'bg-white/10 text-white ring-1 ring-white/20 shadow-sm font-semibold'
+                  : 'text-tertiary hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <TabIcon className="w-3.5 h-3.5 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">{renderTabContent()}</div>
     </div>
   );
+
+  function renderTabContent() {
+    switch (activeTab) {
+      case 'discover':
+        return <OverviewTabContent />;
+      case 'search':
+        return <SearchTabContent />;
+      case 'artists':
+        return <ArtistsTabContent />;
+      case 'queue':
+        return <QueueTabContent />;
+      case 'playlists':
+        return <PlaylistsTabContent />;
+      case 'history':
+        return <HistoryTabContent />;
+      case 'lyrics':
+        return <LyricsTabContent />;
+      case 'eq':
+        return <EqTabContent />;
+      default:
+        return null;
+    }
+  }
 };
 
 const OverviewTabContent: React.FC = () => {
@@ -568,76 +728,213 @@ const OverviewTabContent: React.FC = () => {
   );
 };
 
-const TracksTabContent: React.FC<{ tab: string }> = ({ tab }) => {
+const SearchTabContent: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(false);
+  const play = usePlayerStore((s) => s.playTrack);
+  const recent = usePlayerStore((s) => s.recentlyPlayed);
+  const navigate = useNavigate();
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const res = await api.search(query.trim(), 'songs', 20);
+      setResults(res.songs || []);
+    } catch {
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <form onSubmit={handleSearch} className="shrink-0 mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search songs, artists, albums..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-white placeholder-tertiary text-sm"
+            style={{
+              background: 'rgba(16, 16, 20, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+            autoFocus
+          />
+        </div>
+      </form>
+
+      {loading && (
+        <div className="flex items-center justify-center py-8 text-tertiary text-xs">
+          Searching…
+        </div>
+      )}
+
+      {results.length > 0 && (
+        <div className="flex-1 overflow-y-auto">
+          <h3 className="heading text-sm font-semibold mb-2.5">Results</h3>
+          <div className="flex flex-col gap-1">
+            {results.map((t, i) => (
+              <TrackRow key={t.videoId} track={t} index={i} contextQueue={results} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && results.length === 0 && query && (
+        <div className="flex items-center justify-center py-8 text-tertiary text-xs">
+          No results found
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ArtistsTabContent: React.FC = () => {
+  const { currentTrack } = usePlayerStore();
+  const followed = useLibraryStore((s) => s.followedArtists);
+  const navigate = useNavigate();
+
+  const trackArtists = currentTrack?.artists || [];
+
+  return (
+    <div className="flex flex-col space-y-6">
+      {trackArtists.length > 0 && (
+        <section>
+          <h3 className="heading text-sm font-semibold mb-2.5">Track Artists</h3>
+          <div className="flex flex-wrap gap-2">
+            {trackArtists.map((a, i) => (
+              <button
+                key={a.id || i}
+                type="button"
+                onClick={() => navigate(`/search/${encodeURIComponent(a.name)}`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                <Users className="w-3 h-3 text-tertiary" />
+                <span className="text-white">{a.name}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {followed.length > 0 && (
+        <section>
+          <h3 className="heading text-sm font-semibold mb-2.5">Followed Artists</h3>
+          <div className="grid grid-cols-3 gap-2.5">
+            {followed.map((a) => (
+              <a
+                key={a.id}
+                href={
+                  a.id.startsWith('UC')
+                    ? '/artist/' + a.id
+                    : '/search/' + encodeURIComponent(a.name)
+                }
+                className="group flex flex-col items-center w-full"
+              >
+                <ArtworkImage
+                  src={a.thumbnail}
+                  alt=""
+                  className="aspect-square w-full rounded-full mb-1.5"
+                />
+                <strong className="text-xs font-medium text-white truncate text-center w-full">
+                  {a.name}
+                </strong>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {trackArtists.length === 0 && followed.length === 0 && (
+        <div className="flex items-center justify-center h-full text-tertiary text-xs">
+          No artist data available
+        </div>
+      )}
+    </div>
+  );
+};
+
+const QueueTabContent: React.FC = () => {
+  const navigate = useNavigate();
+  const queue = usePlayerStore((s) => s.queue);
+  const currentIndex = usePlayerStore((s) => s.currentIndex);
+  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
+
+  if (queue.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-tertiary gap-2 py-8">
+        <Music className="w-10 h-10 text-neutral-600" />
+        <p className="font-medium text-sm text-secondary">Queue is empty</p>
+        <p className="text-xs">Add songs from search, albums, or discover!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-1 pb-2 border-b border-white/10 mb-2">
+        <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider">
+          {queue.length} tracks
+        </h3>
+      </div>
+      <div className="flex flex-col gap-1">
+        {queue.map((track, idx) => (
+          <TrackRow
+            key={track.videoId || idx}
+            track={track}
+            index={idx}
+            contextQueue={queue}
+            onRemoveFromPlaylist={() => removeFromQueue(idx)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const PlaylistsTabContent: React.FC = () => {
   const navigate = useNavigate();
   const { playlists } = useLibraryStore();
   const { isInitialized, initialize } = useOfflineStore();
-  const queue = usePlayerStore((s) => s.queue);
-  const currentIndex = usePlayerStore((s) => s.currentIndex);
-  const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
 
   useEffect(() => {
     if (!isInitialized) initialize();
   }, [isInitialized, initialize]);
 
-  if (tab === 'queue') {
-    if (queue.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full text-tertiary gap-2 py-8">
-          <ListMusic className="w-10 h-10 text-neutral-600" />
-          <p className="font-medium text-sm text-secondary">Queue is empty</p>
-          <p className="text-xs">Add songs from search, albums, or discover!</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between px-1 pb-2 border-b border-white/10 mb-2">
-          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider">
-            {queue.length} tracks
-          </h3>
-        </div>
-        <div className="flex flex-col gap-1">
-          {queue.map((track, idx) => (
-            <TrackRow
-              key={track.videoId || idx}
-              track={track}
-              index={idx}
-              contextQueue={queue}
-              onRemoveFromPlaylist={track => removeFromQueue(idx)}
-            />
-          ))}
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="heading text-sm font-semibold">Your Playlists</h3>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => navigate('/library')}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
+          >
+            <DownloadCloud className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Import</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/library')}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-black font-medium text-xs transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New</span>
+          </button>
         </div>
       </div>
-    );
-  }
-
-  if (tab === 'playlists') {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="heading text-sm font-semibold">Your Playlists</h3>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => navigate('/library')}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
-            >
-              <DownloadCloud className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Import</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/library')}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-black font-medium text-xs transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New</span>
-            </button>
-          </div>
-        </div>
+      {playlists.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">
           {playlists.map((pl) => (
             <div
@@ -667,10 +964,16 @@ const TracksTabContent: React.FC<{ tab: string }> = ({ tab }) => {
             </div>
           ))}
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <div className="flex items-center justify-center h-full text-tertiary text-xs">
+          No playlists yet
+        </div>
+      )}
+    </div>
+  );
+};
 
+const HistoryTabContent: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       <h3 className="heading text-sm font-semibold mb-2">History</h3>
@@ -685,24 +988,98 @@ const TracksTabContent: React.FC<{ tab: string }> = ({ tab }) => {
   );
 };
 
-const LyricsTabContent: React.FC<{ tab: string }> = ({ tab }) => {
-  const { toggleOpen: toggleEqualizer } = useAudioDSPStore();
+const LyricsTabContent: React.FC = () => {
+  const { currentTrack, isPlaying, currentTime, seek } = usePlayerStore();
 
-  if (tab === 'lyrics') {
+  if (!currentTrack?.videoId) {
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="heading text-sm font-semibold">Synced Lyrics</h3>
-          <span className="caption text-[11px] text-tertiary">Click any line to seek</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center text-center py-6">
-          <p className="text-tertiary text-xs">
-            Open Full-Screen Player for live word-synced lyrics.
-          </p>
-        </div>
+      <div className="flex flex-col h-full items-center justify-center text-tertiary text-xs">
+        No track playing
       </div>
     );
   }
+
+  // Fetch lyrics for the current track
+  const [lyrics, setLyrics] = useState<LyricsResponse | null>(null);
+  const [lyricsLoading, setLyricsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentTrack?.videoId) return;
+    setLyricsLoading(true);
+    // In a real app, this would fetch from an API
+    // For now, we'll show a placeholder
+    setTimeout(() => {
+      setLyricsLoading(false);
+      setLyrics(null);
+    }, 100);
+  }, [currentTrack?.videoId]);
+
+  const { activeLineIndex, seekToLine, containerRef, setLineRef, isAutoFollowPaused, resumeAutoFollow } = useSyncedLyrics({
+    lyrics,
+    currentTime,
+    isPlaying,
+    isActive: true,
+    onSeek: seek,
+  });
+
+  if (lyricsLoading) {
+    return (
+      <div className="flex items-center justify-center h-full text-tertiary text-xs">
+        Loading lyrics…
+      </div>
+    );
+  }
+
+  if (!lyrics?.lines || lyrics.lines.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-center py-8">
+        <p className="text-tertiary text-xs">
+          No synced lyrics available for this track.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="heading text-sm font-semibold">Synced Lyrics</h3>
+        <span className="caption text-[11px] text-tertiary">Click any line to seek</span>
+      </div>
+      <div className="flex-1 overflow-y-auto pr-2">
+        <div
+          ref={containerRef}
+          className="space-y-1"
+          onScroll={(e) => {
+            const target = e.target as HTMLDivElement;
+            const scrollTop = target.scrollTop;
+            const clientHeight = target.clientHeight;
+            const scrollHeight = target.scrollHeight;
+            // Auto-follow logic would go here
+          }}
+        >
+          {lyrics.lines.map((line, i) => (
+            <div
+              key={i}
+              onClick={() => seekToLine(i)}
+              ref={(el) => setLineRef(i, el)}
+              className={`w-full text-left px-2 py-1.5 rounded-lg text-sm transition-all cursor-pointer ${
+                i === activeLineIndex
+                  ? 'bg-white/10 text-white ring-1 ring-white/20'
+                  : 'text-tertiary hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span className="block whitespace-pre-wrap">{line.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EqTabContent: React.FC = () => {
+  const { toggleOpen: toggleEqualizer } = useAudioDSPStore();
 
   return (
     <div className="flex flex-col h-full justify-between">

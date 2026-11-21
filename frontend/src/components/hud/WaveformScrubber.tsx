@@ -185,6 +185,8 @@ export function WaveformScrubber({
     );
   }
 
+  const bars = waveformData && waveformData.length > 0 ? waveformData : FALLBACK_BARS;
+
   const scrollerStyle = {
     height,
     minHeight: height,
@@ -216,35 +218,21 @@ export function WaveformScrubber({
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Waveform Bars */}
+      {/* Waveform Bars - Visible crisp vertical bars using absolute positioning */}
       <div className="waveform-bars" role="img" aria-label="Audio waveform">
-        {waveformData && waveformData.length > 0
-          ? waveformData.map((amp, i) => (
-              <div
-                key={i}
-                className="waveform-bar"
-                style={
-                  {
-                    height: `${Math.max(2, amp * 100)}%`,
-                    left: `${(i / waveformData.length) * 100}%`,
-                    width: `${100 / waveformData.length}%`,
-                    '--bar-index': i,
-                    '--total-bars': waveformData.length,
-                  } as React.CSSProperties
-                }
-              />
-            ))
-          : FALLBACK_BARS.map((amp, i) => (
-              <div
-                key={i}
-                className="waveform-bar skeleton"
-                style={{
-                  height: `${amp * 100}%`,
-                  left: `${(i / FALLBACK_BARS.length) * 100}%`,
-                  width: `${100 / FALLBACK_BARS.length}%`,
-                }}
-              />
-            ))}
+        {bars.map((amp, i) => (
+          <div
+            key={i}
+            className="waveform-bar"
+            style={{
+              height: `${Math.max(4, amp * 100)}%`,
+              left: `${(i / bars.length) * 100}%`,
+              width: `${100 / bars.length}%`,
+              '--bar-index': i,
+              '--total-bars': bars.length,
+            } as React.CSSProperties}
+          />
+        ))}
       </div>
 
       {/* Played Progress Fill */}
@@ -354,7 +342,7 @@ export function WaveformScrubber({
         />
       )}
 
-      {/* Current Time Indicator */}
+      {/* Current Time Indicator - White vertical playhead needle */}
       <div
         className="waveform-current-time"
         style={{ left: `${played}%` }}

@@ -220,10 +220,11 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
     <>
       <footer
         ref={footerRef}
-        aria-label="Floating Audio Player"
+        aria-label="Audio Player Transport"
         className={`playback-dock !h-auto relative z-30 w-full shrink-0 rounded-none px-4 py-2 md:px-8 flex flex-col items-center justify-between transition-all duration-300 pointer-events-auto select-none gap-1 ${className}`}
         onMouseMove={handleFooterMouseMove}
         onMouseUp={handleFooterMouseUp}
+        style={{ background: '#000000' }}
       >
         {/* Ambient Artwork Glow */}
         {atmospherePalette && (
@@ -257,7 +258,7 @@ export const BottomTransportDock: React.FC<BottomTransportDockProps> = ({ classN
         </div>
 
         {/* ====================================================================
-            BOTTOM ROW: Studio Transport Bar
+            BOTTOM ROW: Studio Transport Bar on solid black background
             ==================================================================== */}
         <div className="flex items-center justify-between gap-4 w-full pointer-events-auto">
           {/* Left: Context Title + View Density Pills */}

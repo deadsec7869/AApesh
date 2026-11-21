@@ -184,7 +184,7 @@ export const AppLayout: React.FC = () => {
   }, [commandPaletteOpen, isPlayerExpanded, zenMode]);
 
   return (
-    <div className="relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-black text-[var(--text-primary)] font-sans selection:bg-white/20 selection:text-white">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-black text-[var(--text-primary)] font-sans selection:bg-white/20 selection:text-white">
       <AuraStage />
 
       {/* Band 1 — fixed-height studio chrome */}
@@ -194,24 +194,29 @@ export const AppLayout: React.FC = () => {
         onToggleZenMode={() => setZenMode(!useUIStore.getState().zenMode)}
       />}
 
-      {/* Band 2 — one bounded stage owns visuals, route content and modules */}
-      <section className={`relative mx-3 mb-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-white/10 bg-black/25 ${isPlayerExpanded ? 'hidden' : ''}`} aria-label="Studio stage">
+      {/* Band 2 — bounded stage: visuals + module dock ONLY (no route outlet) */}
+      <section
+        className={`relative mx-3 mb-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-white/10 bg-[#0c0d10] ${isPlayerExpanded ? 'hidden' : ''}`}
+        aria-label="Studio stage"
+      >
+        {/* Visualizer layer (z-0) */}
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <LiquidRippleVisualizer />
           <SoundstageCanvas />
         </div>
-        <main className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 py-5 md:px-8 lg:px-12">
-            <div className="mx-auto min-h-full w-full max-w-[1400px]">
-              <React.Suspense fallback={<p role="status" className="p-8 text-center text-tertiary">Opening page…</p>}><Outlet /></React.Suspense>
-            </div>
-          </div>
-        </main>
-        {!zenMode && <FloatingModuleDock />}
+
+        {/* Module dock (z-10) - absolute positioned at bottom of stage */}
+        {!zenMode && (
+          <FloatingModuleDock className="absolute inset-3 z-10 flex items-end gap-3 pointer-events-none lg:items-stretch" />
+        )}
       </section>
 
-      {/* Band 3 — transport remains in document flow */}
-      {!isPlayerExpanded && !zenMode && <BottomTransportDock />}
+      {/* Band 3 — solid opaque black bottom chassis holding waveform + transport */}
+      {!isPlayerExpanded && !zenMode && (
+        <footer className="shrink-0 bg-black px-4 pt-2 pb-3 border-t border-white/5" role="region" aria-label="Playback transport">
+          <BottomTransportDock />
+        </footer>
+      )}
 
       {/* ====================================================================
           OVERLAYS & MODALS
