@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
 import { createParticleTexture } from './useSpatialArtworkTexture';
 import { audioReactiveEngine } from '@/services/audio/AudioReactiveEngine';
 import { QualityProfile } from './qualitySettings';

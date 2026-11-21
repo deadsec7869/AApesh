@@ -26,6 +26,9 @@ declare global {
 export class YouTubeIframeProvider implements PlaybackProvider {
   name = 'YouTubeIframeEngine';
   private player: any = null;
+  private initPromise: Promise<void> | null = null;
+  private cancelInitialization: (() => void) | null = null;
+  private loadGeneration = 0;
   private isReady = false;
   private callbacks: PlaybackCallbacks | null = null;
   private timeUpdateTimer: any = null;
@@ -59,7 +62,19 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       return;
     }
 
-    return new Promise((resolve) => {
+    if (this.initPromise) return this.initPromise;
+    const promise = new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const finish = (error?: unknown) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        this.cancelInitialization = null;
+        if (error) reject(error); else resolve();
+      };
+      const timeout = setTimeout(() => finish(new Error('YouTube player did not become ready. Check your connection and retry.')), 12000);
+      this.cancelInitialization = () => finish(new Error('YouTube player was disposed.'));
+
       // Ensure target element exists in DOM
       let container = document.getElementById('aurora-youtube-player');
       if (!container) {
@@ -84,6 +99,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       }
 
       const initPlayer = () => {
+        if (settled) return;
         try {
           console.info(`[YT RECREATE] time=${Date.now()} reason=initialization`);
           this.player = new window.YT.Player('aurora-youtube-player', {
@@ -102,6 +118,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
             },
             events: {
               onReady: () => {
+                if (settled) return;
                 this.isReady = true;
                 if (this.player && typeof this.player.setVolume === 'function') {
                   this.player.setVolume(this.targetVolume);
@@ -111,26 +128,22 @@ export class YouTubeIframeProvider implements PlaybackProvider {
                   this.pendingTrack = null;
                   this.load(trackToLoad);
                 }
-                resolve();
+                finish();
               },
               onStateChange: (event: any) => {
                 this.handleStateChange(event.data);
               },
+              onAutoplayBlocked: () => {
+                this.intendedPlayState = false;
+                this.stopPrebufferTimer();
+                this.setStatus('error');
+                this.callbacks?.onError('Playback was blocked. Press Play to continue.');
+              },
               onError: (error: any) => {
+                if (!this.matchesCurrentVideo()) return;
                 const errorCode = error?.data ?? 'unknown';
                 console.warn('[YouTubeIframeProvider] Playback error code:', errorCode);
                 this.setStatus('error');
-                // Error codes 101 and 150 mean video cannot be embedded
-                if (errorCode === 150 || errorCode === 101) {
-                  console.info('[YouTubeIframeProvider] Track embed-restricted, auto-skipping to next track...');
-                  if (this.callbacks) {
-                    this.callbacks.onError('Track is unavailable in embedded player. Skipping...');
-                    setTimeout(() => {
-                      if (this.callbacks) this.callbacks.onEnded();
-                    }, 1200);
-                  }
-                  return;
-                }
                 if (this.callbacks) {
                   this.callbacks.onError(`Playback error (code: ${errorCode})`);
                 }
@@ -139,7 +152,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
           });
         } catch (e) {
           console.error('[YouTubeIframeProvider] Error initializing YT.Player:', e);
-          resolve();
+          finish(e);
         }
       };
 
@@ -148,7 +161,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       } else {
         const prevCallback = window.onYouTubeIframeAPIReady;
         window.onYouTubeIframeAPIReady = () => {
-          if (prevCallback) prevCallback();
+          try { prevCallback?.(); } catch (error) { console.warn(error); }
           initPlayer();
         };
 
@@ -165,6 +178,20 @@ export class YouTubeIframeProvider implements PlaybackProvider {
         }
       }
     });
+    this.initPromise = promise.catch(error => {
+      this.initPromise = null;
+      try { this.player?.destroy?.(); } catch {}
+      this.player = null; this.isReady = false;
+      throw error;
+    });
+    return this.initPromise;
+  }
+
+  private matchesCurrentVideo(): boolean {
+    try {
+      const observed = this.player?.getVideoData?.()?.video_id;
+      return !observed || observed === this.currentTrackId;
+    } catch { return false; }
   }
 
   private setStatus(status: PlaybackStatus) {
@@ -253,7 +280,8 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   }
 
   private handleStateChange(state: number) {
-    if (!this.callbacks) return;
+    if (!this.callbacks || !this.matchesCurrentVideo()) return;
+    if (state === 1 && !this.intendedPlayState) { this.player?.pauseVideo?.(); return; }
 
     // YT.PlayerState: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
     if (state === 1) {
@@ -293,15 +321,17 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     }
   }
 
-  async load(track: Track): Promise<void> {
-    if (!track?.videoId) return;
+  async load(track: Track, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) return;
+    if (!track?.videoId) throw new Error('Missing YouTube track identifier');
+    ++this.loadGeneration;
 
     // Guard against redundant reloads of the same song
     if (this.currentTrackId === track.videoId && this.isReady) {
       if (import.meta.env.DEV) {
         console.debug(`[YT LOAD] Skip redundant reload: ${track.videoId}`);
       }
-      return;
+      if (this.playbackStatus === 'error') { /* Explicit retry must reload a failed video. */ } else return;
     }
 
     if (!this.isReady || !this.player) {
@@ -319,6 +349,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       this.prebufferedTrack = null;
     }
 
+    this.stopTimeTimer();
     this.currentTrackId = track.videoId;
     this.lastKnownTime = 0;
     this.lastKnownDuration = track.duration_seconds || 0;
@@ -373,6 +404,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     } catch (e) {
       console.error('[YouTubeIframeProvider] loadVideoById error:', e);
       this.setStatus('error');
+      throw e;
     }
   }
 
@@ -433,6 +465,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
       }
     } catch (e) {
       console.error('[YouTubeIframeProvider] play error:', e);
+      throw e;
     }
   }
 
@@ -455,7 +488,7 @@ export class YouTubeIframeProvider implements PlaybackProvider {
   seek(timeInSeconds: number): void {
     if (!this.player || !this.isReady) return;
     const now = Date.now();
-    if (now - this.lastSeekTime < 50) return;
+    if (!Number.isFinite(timeInSeconds)) return;
     this.lastSeekTime = now;
 
     try {
@@ -525,6 +558,9 @@ export class YouTubeIframeProvider implements PlaybackProvider {
     if (import.meta.env.DEV) {
       console.debug(`[YT STOP] time=${Date.now()} videoId=${this.currentTrackId} reason=destroy`);
     }
+    this.cancelInitialization?.();
+    this.initPromise = null;
+    this.pendingTrack = null;
     this.stopTimeTimer();
     this.stopPrebufferTimer();
     if (this.player && typeof this.player.destroy === 'function') {

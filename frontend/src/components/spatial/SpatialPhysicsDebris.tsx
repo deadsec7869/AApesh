@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
 import { Physics, RigidBody, RapierRigidBody } from '@react-three/rapier';
 import { audioReactiveEngine } from '@/services/audio/AudioReactiveEngine';
 import { QualityProfile } from './qualitySettings';

@@ -22,7 +22,7 @@ import {
 // Legacy graphic EQ band keys (excludes parametric)
 type GraphicEQBandKey = 'preamp' | 'b32' | 'b64' | 'b125' | 'b250' | 'b500' | 'b1k' | 'b2k' | 'b4k' | 'b8k' | 'b16k';
 import { usePlayerStore } from '@/stores/usePlayerStore';
-import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import { playbackController as defaultPlaybackEngine } from '@/services/player/runtime';
 import {
   modalBackdropVariants,
   modalSurfaceVariants,

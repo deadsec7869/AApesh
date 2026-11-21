@@ -1,38 +1,35 @@
 /* ==========================================================================
    AAPESH / SONIC EDITORIAL — DESIGN TOKEN SYSTEM
-   A distinctive visual identity for a music listening product.
+   Noomo Beat inspired: Deep void canvas, liquid glass, editorial typography
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   COLOR PALETTE — Deep neutrals with artwork-driven accents
-   -------------------------------------------------------------------------- */
 :root {
-  /* ---- Base Canvas ---- */
-  --color-void: #030305;              /* Near-black base, not pure #000 */
-  --color-ink: #0a0a0d;               /* Elevated surfaces */
-  --color-graphite: #141418;          /* Cards, panels */
-  --color-charcoal: #1e1e24;          /* Borders, subtle divisions */
-  --color-slate: #2a2a32;             /* Hover states, inputs */
-  --color-steel: #3a3a44;             /* Disabled, subtle elements */
+  /* ---- Void Canvas ---- */
+  --color-void: #030305;
+  --color-ink: #0a0a0d;
+  --color-graphite: #141418;
+  --color-charcoal: #1e1e24;
+  --color-slate: #2a2a32;
+  --color-steel: #3a3a44;
 
   /* ---- Text Hierarchy ---- */
-  --text-primary: #fafafa;            /* Pure white for headlines */
-  --text-secondary: #e4e4e7;          /* Body copy */
-  --text-tertiary: #a1a1aa;           /* Metadata, timestamps */
-  --text-muted: #71717a;              /* Placeholders, hints */
-  --text-inverse: #0a0a0d;            /* On light/accent backgrounds */
+  --text-primary: #fafafa;
+  --text-secondary: #e4e4e7;
+  --text-tertiary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-inverse: #0a0a0d;
 
-  /* ---- Accent System (artwork-derived, with stable fallback) ---- */
-  --accent-primary: #f5c042;          /* Warm amber — fallback primary */
+  /* ---- Accent System (artwork-derived, stable fallback) ---- */
+  --accent-primary: #f5c042;          /* Warm amber */
   --accent-primary-rgb: 245, 192, 66;
-  --accent-secondary: #38bdf8;        /* Sky blue — fallback secondary */
+  --accent-secondary: #38bdf8;        /* Sky blue */
   --accent-secondary-rgb: 56, 189, 248;
-  --accent-tertiary: #f472b6;         /* Rose — for favorites, alerts */
+  --accent-tertiary: #f472b6;         /* Rose */
   --accent-tertiary-rgb: 244, 114, 182;
-  --accent-success: #4ade80;          /* Green — for success states */
+  --accent-success: #4ade80;          /* Green */
   --accent-success-rgb: 74, 222, 128;
 
-  /* ---- Glass Material System (4 levels, no more) ---- */
+  /* ---- Glass Material System (4 levels) ---- */
   /* Level 1: Shell — Primary floating panels (AppLayout, modals) */
   --glass-shell-bg: rgba(255, 255, 255, 0.035);
   --glass-shell-bg-strong: rgba(255, 255, 255, 0.055);
@@ -44,7 +41,7 @@
     inset 0 -1px 1px rgba(0, 0, 0, 0.2),
     0 20px 50px -12px rgba(0, 0, 0, 0.6);
 
-  /* Level 2: Pill — Docks, tabs, action buttons (BottomTransportDock, TopBar) */
+  /* Level 2: Pill — Docks, tabs, action buttons (BottomTransportDock, TopHUD) */
   --glass-pill-bg: rgba(255, 255, 255, 0.045);
   --glass-pill-bg-strong: rgba(255, 255, 255, 0.07);
   --glass-pill-border: rgba(255, 255, 255, 0.09);
@@ -62,7 +59,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 6px 20px -4px rgba(0, 0, 0, 0.4);
 
-  /* Level 4: Elevated — Tooltips, dropdowns, popovers (highest contrast) */
+  /* Level 4: Elevated — Tooltips, dropdowns, popovers */
   --glass-elevated-bg: rgba(10, 10, 13, 0.92);
   --glass-elevated-border: rgba(255, 255, 255, 0.12);
   --glass-elevated-blur: blur(32px) saturate(180%);
@@ -70,16 +67,16 @@
     0 24px 60px -16px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
-  /* ---- Radius Scale (consistent, purposeful) ---- */
-  --radius-xs: 6px;       /* Chips, badges */
-  --radius-sm: 10px;      /* Buttons, inputs */
-  --radius-md: 14px;      /* Cards, track rows */
-  --radius-lg: 18px;      /* Panels, modals */
-  --radius-xl: 24px;      /* Hero cards, fullscreen */
-  --radius-2xl: 32px;     /* Major focal surfaces */
-  --radius-pill: 9999px;  /* Pills, full round */
+  /* ---- Radius Scale ---- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 9999px;
 
-  /* ---- Spacing Scale (8px base, harmonious) ---- */
+  /* ---- Spacing Scale (8px base) ---- */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -94,51 +91,46 @@
   --space-20: 80px;
 
   /* ---- Layout Dimensions ---- */
-  --sidebar-width: 260px;
+  --sidebar-width: 280px;
   --sidebar-collapsed: 72px;
-  --topbar-height: 56px;
-  --player-height: 84px;
-  --player-expanded-height: 100vh;
+  --top-hud-height: 56px;
+  --bottom-dock-height: 84px;
   --content-max-width: 1400px;
-  --content-gap: var(--space-6);
+  --content-gap: 24px;
 
-  /* ---- Motion System (restrained, purposeful) ---- */
+  /* ---- Motion System ---- */
   --motion-instant: 80ms;
   --motion-fast: 140ms;
   --motion-base: 200ms;
   --motion-slow: 320ms;
   --motion-slower: 480ms;
 
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);           /* Primary: confident, natural */
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);         /* Transitions */
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);     /* Microinteractions only */
-  --ease-sharp: cubic-bezier(0.4, 0, 1, 1);            /* Quick feedback */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 1, 1);
 
-  /* ---- Typography Scale (Inter variable, editorial hierarchy) ---- */
+  /* ---- Typography Scale ---- */
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
   --font-display: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 
-  /* Display — Hero headlines, album titles in fullscreen */
   --text-display-xl: clamp(48px, 5vw, 72px) / 1.05 var(--font-display);
   --text-display-lg: clamp(36px, 4vw, 52px) / 1.08 var(--font-display);
   --text-display-md: clamp(28px, 3vw, 40px) / 1.1 var(--font-display);
   --text-display-sm: clamp(22px, 2.5vw, 30px) / 1.15 var(--font-display);
 
-  /* Heading — Page titles, section headers */
   --text-h1: 30px / 1.2 var(--font-display);
   --text-h2: 24px / 1.25 var(--font-display);
   --text-h3: 20px / 1.3 var(--font-display);
   --text-h4: 18px / 1.35 var(--font-display);
 
-  /* Body — UI text, metadata */
   --text-lg: 16px / 1.5 var(--font-sans);
   --text-base: 14px / 1.55 var(--font-sans);
   --text-sm: 13px / 1.5 var(--font-sans);
   --text-xs: 12px / 1.5 var(--font-sans);
   --text-2xs: 11px / 1.5 var(--font-sans);
 
-  /* Semantic font weights */
   --weight-light: 300;
   --weight-regular: 400;
   --weight-medium: 500;
@@ -147,7 +139,7 @@
   --weight-extrabold: 800;
   --weight-black: 900;
 
-  /* ---- Shadows (depth, not decoration) ---- */
+  /* ---- Shadows ---- */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
@@ -158,21 +150,35 @@
   --focus-ring: 2px solid rgba(var(--accent-primary-rgb), 0.6);
   --focus-ring-offset: 2px;
 
-  /* ---- Z-Index Scale (intentional layering) ---- */
-  --z-base: 0;
-  --z-backdrop: -10;
-  --z-background: 0;
-  --z-content: 10;
-  --z-sticky: 20;
-  --z-dock: 30;
-  --z-overlay: 40;
-  --z-modal: 50;
-  --z-popover: 60;
-  --z-toast: 70;
-  --z-tooltip: 80;
+  /* ---- Z-Index Scale ---- */
+  --z-backdrop: -10;      /* SoundstageCanvas / LiquidRippleVisualizer */
+  --z-background: 0;      /* App background */
+  --z-content: 10;        /* Main content */
+  --z-sticky: 20;         /* Sticky headers */
+  --z-studio-bar: 25;     /* TopStudioBar */
+  --z-drawer-backdrop: 30; /* Drawer overlays */
+  --z-drawer: 40;         /* Drawer panels */
+  --z-module-dock: 45;    /* FloatingModuleDock cards */
+  --z-dock: 50;           /* Bottom transport dock */
+  --z-modal: 60;          /* Modals */
+  --z-popover: 70;        /* Popovers */
+  --z-toast: 80;          /* Toasts */
+  --z-tooltip: 90;        /* Tooltips */
 }
 
-/* Light mode (if ever needed) — uses same structure, inverted */
+/* Module Card Dimensions */
+:root {
+  --module-card-width: 380px;
+  --module-card-height-collapsed: 48px;
+  --module-card-height-expanded: 420px;
+  --module-card-width-mobile: 100%;
+  --module-card-height-mobile: 380px;
+  --module-gap: 16px;
+  --waveform-height: 56px;
+  --transport-height: 64px;
+}
+
+/* Light mode (if ever needed) */
 [data-theme="light"] {
   --color-void: #fafafa;
   --color-ink: #ffffff;

@@ -1,6 +1,9 @@
+import { VisualStageBoundary } from '@/components/canvas/VisualStageBoundary';
+import { StageRenderScheduler } from '@/components/canvas/StageRenderScheduler';
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
+import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
 import { Preload } from '@react-three/drei';
 import { QualityProfile } from './qualitySettings';
 import { CinematicLightingController } from './cinematicLighting';
@@ -104,6 +107,7 @@ export const SpatialScene: React.FC<SpatialSceneProps> = ({ quality }) => {
     : 1;
 
   return (
+    <VisualStageBoundary>
     <div
       aria-hidden="true"
       style={{ zIndex: isPlayerExpanded ? 42 : 0 }}
@@ -119,9 +123,10 @@ export const SpatialScene: React.FC<SpatialSceneProps> = ({ quality }) => {
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.0,
         }}
-        frameloop={isTabVisible ? 'always' : 'never'}
+        frameloop={isTabVisible ? 'demand' : 'never'}
         className="w-full h-full"
       >
+        <StageRenderScheduler reducedMotion={reducedMotion} />
         {/* Core Audio Reactive Update Loop (60fps continuous) */}
         <AudioEngineUpdater />
 
@@ -173,5 +178,6 @@ export const SpatialScene: React.FC<SpatialSceneProps> = ({ quality }) => {
         <Preload all />
       </Canvas>
     </div>
+    </VisualStageBoundary>
   );
 };

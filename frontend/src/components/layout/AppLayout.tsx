@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import { TopBar } from './TopBar';
 import { BottomNavigation } from './BottomNavigation';
 import { BottomTransportDock } from '../hud/BottomTransportDock';
 import { FullScreenPlayer } from '../player/FullScreenPlayer';
@@ -13,8 +11,11 @@ import { VideoDock } from '../player/VideoDock';
 import { CommandPalette } from '../common/CommandPalette';
 import { EqualizerDrawer } from '../hud/EqualizerDrawer';
 import { StreamingQualityModal } from '../common/StreamingQualityModal';
-import { DynamicArtworkBackground } from './DynamicArtworkBackground';
 import { AuraStage } from '../hud/AuraStage';
+import { TopStudioBar } from '../hud/TopStudioBar';
+import { SoundstageCanvas } from '../canvas/SoundstageCanvas';
+import { LiquidRippleVisualizer } from '../canvas/LiquidRippleVisualizer';
+import { FloatingModuleDock } from '../hud/FloatingModuleDock';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useLibraryStore } from '@/stores/useLibraryStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -24,11 +25,9 @@ import { Sparkles } from 'lucide-react';
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const fetchLibrary = useLibraryStore(s => s.fetchLibrary);
-  const currentTrack = usePlayerStore(s => s.currentTrack);
-  const bottomPlayerClearance = usePlayerStore(s => s.bottomPlayerClearance);
   const isPlayerExpanded = usePlayerStore(s => s.isPlayerExpanded);
   const theme = useThemeStore(s => s.theme);
-  const { leftDockCollapsed, zenMode, setZenMode, equalizerDrawerOpen, setEqualizerDrawerOpen } = useUIStore();
+  const { zenMode, setZenMode, equalizerDrawerOpen, setEqualizerDrawerOpen } = useUIStore();
 
   // Load library and restore player session on start
   useEffect(() => {
@@ -50,7 +49,7 @@ export const AppLayout: React.FC = () => {
     return () => media.removeEventListener('change', applyTheme);
   }, [theme]);
 
-  // Global Keyboard Shortcuts (Imperative state lookup avoids listener re-registration)
+  // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Avoid triggering when user is typing in inputs or textareas
@@ -63,7 +62,36 @@ export const AppLayout: React.FC = () => {
         return;
       }
 
-      // Cmd+K / Ctrl+K
+      // Escape - close drawers, exit fullscreen, close modals
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isPlayerExpanded) {
+          usePlayerStore.getState().setPlayerExpanded(false);
+          return;
+        }
+        if (useUIStore.getState().leftDockOpen) {
+          useUIStore.getState().setLeftDockOpen(false);
+          return;
+        }
+        if (useUIStore.getState().rightDockOpen) {
+          useUIStore.getState().setRightDockOpen(false);
+          return;
+        }
+        if (commandPaletteOpen) {
+          setCommandPaletteOpen(false);
+          return;
+        }
+        if (useUIStore.getState().equalizerDrawerOpen) {
+          useUIStore.getState().setEqualizerDrawerOpen(false);
+          return;
+        }
+        if (useUIStore.getState().zenMode) {
+          setZenMode(false);
+          return;
+        }
+      }
+
+      // Cmd+K / Ctrl+K - Command Palette
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
@@ -79,7 +107,7 @@ export const AppLayout: React.FC = () => {
 
       const player = usePlayerStore.getState();
 
-      // Space -> play/pause
+      // Space -> play/pause (only when not typing)
       if (e.code === 'Space') {
         e.preventDefault();
         player.togglePlay();
@@ -136,75 +164,65 @@ export const AppLayout: React.FC = () => {
       else if (e.key === 'e' || e.key === 'E') {
         setEqualizerDrawerOpen(!useUIStore.getState().equalizerDrawerOpen);
       }
-      // / -> search focus
-      else if (e.key === '/') {
+      // / -> search focus (unless typing)
+      else if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
         searchInput?.focus();
+      }
+      // V - Visualizer mode cycle
+      else if (e.key === 'v' || e.key === 'V') {
+        if (!['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+          e.preventDefault();
+          useUIStore.getState().cycleVisualizerMode();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [commandPaletteOpen, isPlayerExpanded, zenMode]);
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-[#050505] text-neutral-100 font-sans selection:bg-white/20 selection:text-white">
-      {/* ====================================================================
-          LIQUID AURA STAGE - Z-Layer 0
-          Full-viewport chromatic backdrop with animated color orbs
-          ==================================================================== */}
+    <div className="relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-black text-[var(--text-primary)] font-sans selection:bg-white/20 selection:text-white">
       <AuraStage />
 
-      {/* ====================================================================
-          Dynamic Current-Song Artwork Background (Crossfading full-viewport atmospheric canvas)
-          ==================================================================== */}
-      <DynamicArtworkBackground />
+      {/* Band 1 — fixed-height studio chrome */}
+      {!isPlayerExpanded && !zenMode && <TopStudioBar
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        onOpenEqualizerDrawer={() => useUIStore.getState().setEqualizerDrawerOpen(true)}
+        onToggleZenMode={() => setZenMode(!useUIStore.getState().zenMode)}
+      />}
 
-      {/* Floating Left Navigation Island (Hidden during Fullscreen) */}
-      {!isPlayerExpanded && !useUIStore.getState().zenMode && <Sidebar />}
-
-      {/* Central Floating Workstation Area (Hidden during Fullscreen) */}
-      <div
-        className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden px-4 md:pr-8 lg:pr-12 py-4 md:py-5 relative z-10 ${
-          isPlayerExpanded ? 'hidden' : ''
-        } ${
-          zenMode ? 'md:pl-8' : leftDockCollapsed ? 'md:pl-24' : 'md:pl-60'
-        }`}
-      >
-        {/* Floating Top Header */}
-        <TopBar
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          onOpenEqualizerDrawer={() => useUIStore.getState().setEqualizerDrawerOpen(true)}
-          onToggleZenMode={() => setZenMode(!useUIStore.getState().zenMode)}
-        />
-
-        {/* Main Floating Glass Canvas Workspace */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden rounded-2xl md:rounded-3xl glass-shell relative mt-2 border-0">
-          {/* Scrollable Page Body - dynamic safe space for floating bottom player */}
-          <main
-            className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 scroll-smooth px-4 md:px-8 lg:px-12 py-6"
-            style={{
-              paddingBottom: `${bottomPlayerClearance || (currentTrack ? 140 : 100)}px`,
-            }}
-          >
-            <div className="w-full max-w-[1400px] mx-auto min-w-0">
+      {/* Band 2 — one bounded stage owns visuals, route content and modules */}
+      <section className={`relative mx-3 mb-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-white/10 bg-black/25 ${isPlayerExpanded ? 'hidden' : ''}`} aria-label="Studio stage">
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <LiquidRippleVisualizer />
+          <SoundstageCanvas />
+        </div>
+        <main className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 py-5 md:px-8 lg:px-12">
+            <div className="mx-auto min-h-full w-full max-w-[1400px]">
               <React.Suspense fallback={<p role="status" className="p-8 text-center text-tertiary">Opening page…</p>}><Outlet /></React.Suspense>
             </div>
-          </main>
-        </div>
-      </div>
+          </div>
+        </main>
+        {!zenMode && <FloatingModuleDock />}
+      </section>
 
-      {/* Persistent Bottom Player (Hidden during Fullscreen & Zen) */}
-      {!isPlayerExpanded && !useUIStore.getState().zenMode && <BottomTransportDock />}
+      {/* Band 3 — transport remains in document flow */}
+      {!isPlayerExpanded && !zenMode && <BottomTransportDock />}
 
+      {/* ====================================================================
+          OVERLAYS & MODALS
+          ==================================================================== */}
       {/* Official YouTube Compliance Video Dock */}
       <VideoDock />
 
       {/* Full-Screen Sheet */}
       <FullScreenPlayer />
 
-      {/* Panels */}
+      {/* Panels (for desktop when not using FloatingModuleDock) */}
       <QueuePanel />
       <LyricsPanel />
       <AboutThisSongModal />
@@ -229,8 +247,19 @@ export const AppLayout: React.FC = () => {
 
       {/* Zen Mode Overlay */}
       {useUIStore.getState().zenMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="glass-elevated p-8 rounded-2xl text-center pointer-events-auto max-w-md mx-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="glass-elevated p-8 rounded-2xl text-center pointer-events-auto max-w-md mx-4"
+          >
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{
               background: 'linear-gradient(135deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)',
               boxShadow: '0 8px 32px rgba(var(--aura-primary-rgb), 0.3)',
@@ -247,8 +276,8 @@ export const AppLayout: React.FC = () => {
             >
               Exit Zen Mode
             </motion.button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

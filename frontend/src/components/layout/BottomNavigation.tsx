@@ -11,7 +11,7 @@ export const BottomNavigation: React.FC = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-floating border-t border-white/[0.08] flex items-center justify-around px-2 pt-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+    <nav className="md:hidden relative z-40 w-full shrink-0 glass-floating border-t border-white/[0.08] flex items-center justify-around px-2 pt-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
       {navItems.map((item) => {
         const Icon = item.icon;
         return (

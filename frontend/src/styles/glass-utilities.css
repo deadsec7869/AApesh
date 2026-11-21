@@ -1,0 +1,890 @@
+/* ==========================================================================
+   AAPESH / SONIC EDITORIAL — GLASS UTILITY CLASSES
+   Semantic, composable glass materials from design tokens
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   LEVEL 1: SHELL — Primary floating panels (AppLayout, modals, fullscreen)
+   -------------------------------------------------------------------------- */
+.glass-shell {
+  background: var(--glass-shell-bg);
+  backdrop-filter: var(--glass-shell-blur);
+  -webkit-backdrop-filter: var(--glass-shell-blur);
+  border: 1px solid var(--glass-shell-border);
+  box-shadow: var(--glass-shell-shadow);
+  border-radius: var(--radius-xl);
+  position: relative;
+}
+
+.glass-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  pointer-events: none;
+}
+
+.glass-shell:hover {
+  border-color: var(--glass-shell-border-hover);
+  background: var(--glass-shell-bg-strong);
+  box-shadow: var(--glass-shell-shadow), 0 0 40px -10px rgba(var(--accent-primary-rgb), 0.08);
+  transition: border-color var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-slow) var(--ease-out);
+}
+
+/* Stronger variant for elevated panels */
+.glass-shell-strong {
+  background: var(--glass-shell-bg-strong);
+  backdrop-filter: var(--glass-shell-blur);
+  -webkit-backdrop-filter: var(--glass-shell-blur);
+  border-color: var(--glass-shell-border-hover);
+  box-shadow: var(--glass-shell-shadow), 0 0 32px -4px rgba(var(--accent-primary-rgb), 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   LEVEL 2: PILL — Docks, tabs, action buttons (BottomTransportDock, TopHUD)
+   -------------------------------------------------------------------------- */
+.glass-pill {
+  background: var(--glass-pill-bg);
+  backdrop-filter: var(--glass-pill-blur);
+  -webkit-backdrop-filter: var(--glass-pill-blur);
+  border: 1px solid var(--glass-pill-border);
+  box-shadow: var(--glass-pill-shadow);
+  border-radius: var(--radius-pill);
+  position: relative;
+}
+
+.glass-pill::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 12px;
+  right: 12px;
+  height: 35%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    transparent 100%
+  );
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+.glass-pill:hover {
+  background: var(--glass-pill-bg-strong);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 12px 36px -10px rgba(0, 0, 0, 0.5);
+  transition: all var(--motion-fast) var(--ease-out);
+}
+
+.glass-pill:active {
+  transform: scale(0.96);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 4px 12px -4px rgba(0, 0, 0, 0.35);
+  transition: transform var(--motion-instant) var(--ease-out),
+              box-shadow var(--motion-instant) var(--ease-out);
+}
+
+.glass-pill-active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: var(--text-primary) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 24px -6px rgba(var(--accent-primary-rgb), 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   LEVEL 3: INTERACTIVE — Track cards, queue items, controls
+   -------------------------------------------------------------------------- */
+.glass-interactive {
+  background: var(--glass-interactive-bg);
+  backdrop-filter: var(--glass-interactive-blur);
+  -webkit-backdrop-filter: var(--glass-interactive-blur);
+  border: 1px solid var(--glass-interactive-border);
+  box-shadow: var(--glass-interactive-shadow);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  transition: background var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out);
+}
+
+.glass-interactive:hover {
+  background: var(--glass-interactive-bg-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 28px -6px rgba(0, 0, 0, 0.45);
+}
+
+/* Playing state for track rows */
+.glass-interactive-playing {
+  border-color: rgba(var(--accent-primary-rgb), 0.35);
+  background: rgba(var(--accent-primary-rgb), 0.04);
+}
+
+.glass-interactive-playing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--accent-primary-rgb), 0.02) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   LEVEL 4: ELEVATED — Tooltips, dropdowns, popovers, modals
+   -------------------------------------------------------------------------- */
+.glass-elevated {
+  background: var(--glass-elevated-bg);
+  backdrop-filter: var(--glass-elevated-blur);
+  -webkit-backdrop-filter: var(--glass-elevated-blur);
+  border: 1px solid var(--glass-elevated-border);
+  box-shadow: var(--glass-elevated-shadow);
+  border-radius: var(--radius-xl);
+  position: relative;
+}
+
+.glass-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   SPECIALIZED GLASS COMPONENTS
+   -------------------------------------------------------------------------- */
+
+/* Top HUD Bar */
+.top-hud {
+  @apply glass-pill;
+  height: var(--top-hud-height);
+  border-radius: var(--radius-pill);
+}
+
+/* Bottom Transport Dock */
+.playback-dock {
+  @apply glass-pill;
+  height: var(--bottom-dock-height);
+  border-radius: var(--radius-pill);
+}
+
+/* Drawer Panel (slide-over) */
+.drawer-panel {
+  @apply glass-shell;
+  border-radius: var(--radius-2xl);
+}
+
+/* Modal / Fullscreen */
+.modal,
+.fullscreen-sheet {
+  @apply glass-elevated;
+}
+
+/* Content Card (track rows, album cards) */
+.content-card {
+  @apply glass-interactive;
+  border-radius: var(--radius-lg);
+}
+
+/* Visualizer Mode Pill (TopHUD switcher) */
+.visualizer-pill {
+  @apply glass-pill;
+  padding: var(--space-2) var(--space-4);
+  gap: var(--space-2);
+}
+
+/* Search Input */
+.search-input {
+  @apply glass-interactive;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--glass-interactive-bg) !important;
+  border-color: var(--glass-interactive-border) !important;
+  border-radius: var(--radius-pill);
+  transition: all var(--motion-fast) var(--ease-out);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(var(--accent-primary-rgb), 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.18);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   BUTTON SYSTEM
+   -------------------------------------------------------------------------- */
+
+.btn {
+  @apply glass-pill;
+  transition: all var(--motion-fast) var(--ease-out);
+}
+
+.btn:hover {
+  background: var(--glass-pill-bg-strong);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--focus-ring),
+              var(--glass-pill-shadow);
+}
+
+.btn-primary {
+  @apply glass-pill;
+  background: linear-gradient(135deg, rgb(var(--accent-primary-rgb)) 0%, rgb(var(--accent-secondary-rgb)) 100%) !important;
+  border-color: transparent !important;
+  color: var(--text-inverse) !important;
+  font-weight: var(--weight-semibold);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.015);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    0 16px 40px -10px rgba(var(--accent-primary-rgb), 0.35);
+}
+
+.btn-ghost {
+  @apply glass-interactive;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.btn-ghost:hover {
+  background: var(--glass-interactive-bg-hover) !important;
+}
+
+/* --------------------------------------------------------------------------
+   SLIDER / SCRUBBER
+   -------------------------------------------------------------------------- */
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  height: 4px;
+  transition: height var(--motion-fast) var(--ease-out);
+  position: relative;
+}
+
+.slider:hover {
+  height: 8px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.88) 100%);
+  cursor: pointer;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.15),
+    0 0 12px rgba(var(--accent-primary-rgb), 0.25);
+  opacity: 1;
+  transition: transform var(--motion-fast) var(--ease-spring),
+              box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(255, 255, 255, 0.25),
+    0 0 20px rgba(var(--accent-primary-rgb), 0.4);
+}
+
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 3px rgba(var(--accent-primary-rgb), 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.5);
+}
+
+.slider::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--accent-primary-rgb)) 0%,
+    rgb(var(--accent-secondary-rgb)) 100%
+  ) !important;
+  border-radius: var(--radius-pill);
+  height: 4px;
+}
+
+/* Volume slider variant */
+.volume-slider {
+  width: 100px;
+  max-width: 100px;
+}
+
+/* --------------------------------------------------------------------------
+   TABS / SEGMENTED CONTROL
+   -------------------------------------------------------------------------- */
+
+.tabs {
+  @apply glass-pill;
+  padding: 4px;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.tab {
+  @apply glass-pill;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: all var(--motion-fast) var(--ease-out);
+}
+
+.tab[data-state="active"] {
+  @apply glass-pill-active;
+}
+
+/* --------------------------------------------------------------------------
+   DRAWER / MODAL HANDLES
+   -------------------------------------------------------------------------- */
+
+.drawer-handle {
+  @apply glass-pill;
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   SCROLLBAR — Thin Frosted
+   -------------------------------------------------------------------------- */
+
+.scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   TYPOGRAPHY UTILITIES
+   -------------------------------------------------------------------------- */
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.body {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.caption {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  color: var(--text-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   FOCUS VISIBLE
+   -------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* --------------------------------------------------------------------------
+   SELECTION
+   -------------------------------------------------------------------------- */
+
+::selection {
+  background: rgba(var(--accent-primary-rgb), 0.25);
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   SHIMMER ANIMATION FOR LOADING STATES
+   -------------------------------------------------------------------------- */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   VISUALIZER MODE SWITCHER (TopHUD)
+   -------------------------------------------------------------------------- */
+
+.visualizer-mode-selector {
+  @apply glass-pill;
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+}
+
+.visualizer-mode-option {
+  @apply glass-pill;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: all var(--motion-fast) var(--ease-out);
+  cursor: pointer;
+}
+
+.visualizer-mode-option[data-active="true"] {
+  @apply glass-pill-active;
+}
+
+/* --------------------------------------------------------------------------
+   REDUCED MOTION — Global override
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-shell,
+  .glass-pill,
+  .glass-interactive,
+  .glass-elevated,
+  .btn,
+  .slider,
+  .tab,
+  .shimmer {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   WAVEFORM SCRUBBER — Full-width interactive waveform with A-B loop
+   -------------------------------------------------------------------------- */
+
+.waveform-scrubber {
+  position: relative;
+  width: 100%;
+  height: var(--waveform-height, 56px);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.waveform-scrubber:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+.waveform-scrubber[aria-busy="true"] {
+  cursor: wait;
+}
+
+.waveform-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.waveform-bar {
+  position: absolute;
+  bottom: 0;
+  width: calc(100% / var(--total-bars, 64));
+  max-width: 4px;
+  min-width: 1px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top,
+    rgb(var(--accent-primary-rgb)) 0%,
+    rgb(var(--accent-secondary-rgb)) 100%);
+  opacity: 0.7;
+  transform-origin: bottom;
+  transition: height 0.05s ease-out, opacity 0.1s ease-out;
+  will-change: height, opacity;
+}
+
+.waveform-bar.skeleton {
+  background: linear-gradient(to top,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.02) 100%);
+  animation: shimmer 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--bar-index, 0) * 0.02s);
+}
+
+.waveform-bar:hover {
+  opacity: 1;
+}
+
+.waveform-progress {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to right,
+    rgb(var(--accent-primary-rgb)) 0%,
+    rgb(var(--accent-secondary-rgb)) 100%);
+  opacity: 0.4;
+  clip-path: inset(0 calc(100% - var(--played-width, 0%)) 0 0);
+  border-radius: inherit;
+  transition: clip-path 0.05s linear;
+}
+
+.waveform-buffered {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to right,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0.6;
+  clip-path: inset(0 calc(100% - var(--buffered-width, 0%)) 0 0);
+  border-radius: inherit;
+}
+
+.waveform-loop-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: rgba(var(--accent-primary-rgb), 0.12);
+  border-left: 1px solid rgba(var(--accent-primary-rgb), 0.5);
+  border-right: 1px solid rgba(var(--accent-primary-rgb), 0.5);
+  box-shadow: inset 0 0 20px rgba(var(--accent-primary-rgb), 0.2);
+}
+
+.waveform-loop-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(var(--accent-primary-rgb), 0.8);
+  box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.6);
+}
+
+.waveform-loop-label {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgb(var(--accent-primary-rgb));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.waveform-loop-marker-drag {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 16px;
+  margin-left: -8px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.waveform-loop-marker-drag:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.waveform-loop-marker-drag:focus-visible:not(:focus-visible) {
+  outline: none;
+}
+
+.waveform-loop-marker-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgb(var(--accent-primary-rgb));
+  text-shadow: 0 0 4px rgba(var(--accent-primary-rgb), 0.8);
+  text-transform: uppercase;
+}
+
+.waveform-loop-marker-drag:hover .waveform-loop-marker-label {
+  transform: scale(1.2);
+}
+
+.waveform-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: rgba(10, 10, 13, 0.95);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.waveform-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(10, 10, 13, 0.95);
+}
+
+.waveform-hover-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.waveform-current-time {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff, 0 0 16px rgba(var(--accent-primary-rgb), 0.5);
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.waveform-current-time-marker {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff, 0 0 16px rgba(var(--accent-primary-rgb), 0.5);
+  border: 2px solid var(--color-void);
+}
+
+.waveform-current-time-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  white-space: nowrap;
+  background: rgba(10, 10, 13, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.waveform-skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: inherit;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 13, 0.8);
+  backdrop-filter: blur(8px);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.waveform-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.waveform-scrubber {
+  touch-action: none;
+}
+
+.waveform-scrubber:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Skeleton bars for loading state */
+@keyframes skeleton-wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.waveform-bar.skeleton {
+  animation: skeleton-wave 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--bar-index, 0) * 0.05s);
+}
+
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  .waveform-tooltip {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .waveform-current-time-label {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .waveform-current-time-marker {
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .waveform-bar {
+    transition: none !important;
+  }
+
+  .waveform-progress {
+    transition: none !important;
+  }
+
+  .waveform-bar.skeleton {
+    animation: none !important;
+  }
+
+  .shimmer {
+    animation: none !important;
+  }
+}

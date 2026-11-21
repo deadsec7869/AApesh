@@ -21,7 +21,7 @@ from pathlib import Path
 from contextlib import closing
 
 import webview
-import uvicorn
+from backend.app.desktop_runtime import BackendServer
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -51,10 +51,12 @@ BACKEND_DIR = BASE_DIR / "backend"
 def get_appdata_dir() -> Path:
     """Get persistent data directory for database, settings, cache."""
     if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
     else:
         base = Path.home() / ".local" / "share"
-    return base / "AAPESH"
+    if not base.is_absolute():
+        base = Path.home() / "AppData" / "Roaming"
+    return base.resolve() / "AAPESH"
 
 AAPESH_DATA_DIR = get_appdata_dir()
 AAPESH_DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -77,7 +79,7 @@ def create_backend_app(db_url: str) -> FastAPI:
     from fastapi import FastAPI, Request
     from fastapi.responses import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
-    from sqlalchemy import create_engine
+    from sqlalchemy import text
     from sqlalchemy.orm import declarative_base, sessionmaker
 
     # Override database URL for this process
@@ -92,10 +94,9 @@ def create_backend_app(db_url: str) -> FastAPI:
     config_module.settings.DATABASE_URL = db_url
 
     # Recreate engine with new database
-    connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
-    db_module.engine = create_engine(db_url, connect_args=connect_args, echo=False)
-    db_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_module.engine)
-    db_module.Base.metadata.create_all(bind=db_module.engine)
+    db_module.engine.dispose()
+    db_module.engine = db_module.create_database_engine(db_url)
+    db_module.SessionLocal.configure(bind=db_module.engine)
 
     # Import routes after database is configured
     from backend.app.api.routes import (
@@ -106,10 +107,13 @@ def create_backend_app(db_url: str) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         logging.info("Initializing AAPESH database...")
-        db_module.Base.metadata.create_all(bind=db_module.engine)
-        logging.info("Database initialized successfully.")
-        yield
-        logging.info("AAPESH API shutting down.")
+        try:
+            db_module.init_db()
+            logging.info("Database initialized successfully.")
+            yield
+        finally:
+            db_module.engine.dispose()
+            logging.info("AAPESH API shutting down.")
 
     app = FastAPI(
         title="AAPESH API",
@@ -141,8 +145,11 @@ def create_backend_app(db_url: str) -> FastAPI:
         )
 
     # Health Check
+    @app.get("/health", include_in_schema=False)
     @app.get("/api/health")
     def health_check():
+        with db_module.engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
         return {"status": "healthy", "app": "AAPESH", "environment": "production", "database": "connected"}
 
     # Register API Routes
@@ -175,46 +182,6 @@ def create_backend_app(db_url: str) -> FastAPI:
     return app
 
 # ─── Server Thread ──────────────────────────────────────────────────────
-class BackendServer:
-    """Runs FastAPI + Uvicorn in a background thread."""
-
-    def __init__(self, port: int, db_url: str):
-        self.port = port
-        self.db_url = db_url
-        self.server = None
-        self.thread = None
-        self._started = threading.Event()
-
-    def start(self):
-        """Start the server in a background thread."""
-        self.thread = threading.Thread(target=self._run, daemon=True)
-        self.thread.start()
-        self._started.wait(timeout=10)
-        if not self._started.is_set():
-            raise RuntimeError("Backend server failed to start within 10 seconds")
-
-    def _run(self):
-        """Run the Uvicorn server directly (no subprocess)."""
-        app = create_backend_app(self.db_url)
-        config = uvicorn.Config(
-            app,
-            host="127.0.0.1",
-            port=self.port,
-            log_level="warning",
-            access_log=False,
-            log_config=None,
-        )
-        self.server = uvicorn.Server(config)
-        self._started.set()
-        self.server.run()
-
-    def stop(self):
-        """Stop the server."""
-        if self.server:
-            self.server.should_exit = True
-        if self.thread:
-            self.thread.join(timeout=5)
-
 # ─── WebView Window ─────────────────────────────────────────────────────
 class AAPESHWindow:
     """Manages the PyWebView window."""
@@ -277,39 +244,21 @@ def main():
             return
         raise FileNotFoundError(error_msg)
 
-    # Find free port
-    port = find_free_port()
-    logger.info(f"Using port {port}")
-
-    # Start backend server
-    backend = BackendServer(port, DATABASE_URL)
-    logger.info("Starting backend server...")
-    backend.start()
-    logger.info(f"Backend running on http://127.0.0.1:{port}")
-
-    # Wait a moment for server to be ready
-    time.sleep(0.5)
-
-    # Create and show window
-    logger.info("Opening WebView window...")
-    window = AAPESHWindow(port)
-    window.create()
-
-    # Start WebView event loop (blocks until window closed)
-    def on_closing():
-        logger.info("Window closing, shutting down backend...")
+    backend = BackendServer(0, DATABASE_URL, create_backend_app)
+    try:
+        backend.start()
+        logger.info("Backend ready on port %s", backend.port)
+        window = AAPESHWindow(backend.port)
+        window.create()
+        window.window.events.closed += backend.stop
+        webview.start(
+            gui="edgechromium" if sys.platform == "win32" else None,
+            storage_path=str(AAPESH_DATA_DIR / "webview"),
+            debug=False,
+            private_mode=False,
+        )
+    finally:
         backend.stop()
-        logger.info("Shutdown complete")
-
-    webview.start(
-        func=None,
-        storage_path=str(AAPESH_DATA_DIR / "webview"),
-        debug=False,
-        private_mode=False,
-    )
-
-    # Cleanup
-    backend.stop()
 
 if __name__ == "__main__":
     try:

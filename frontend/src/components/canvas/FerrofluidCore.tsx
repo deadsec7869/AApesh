@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
 import { VisualEnergy } from '@/services/audio/AudioReactiveEngine';
 
 interface FerrofluidCoreProps {
@@ -63,9 +63,9 @@ const FERROFLUID_VERTEX = `
       + i.x + vec4(0.0, i1.x, i2.x, 1.0));
     vec4 ns = 0.142857142857 * D - p * p * p * p;
     vec4 j = p - 49.0 * p * p * p * p * p;
-    vec4 x_ = x0.x + j.x * ns.x;
-    vec4 y_ = x0.y + j.y * ns.y;
-    vec4 z_ = x0.z + j.z * ns.z;
+    vec4 x_ = vec4(x0.x, x1.x, x2.x, x3.x) + j * ns;
+    vec4 y_ = vec4(x0.y, x1.y, x2.y, x3.y) + j * ns;
+    vec4 z_ = vec4(x0.z, x1.z, x2.z, x3.z) + j * ns;
     vec4 t = 0.5 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3));
     t = t * t;
     t = t * t;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Track, RepeatMode } from '@/types/music';
-import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import { playbackController } from '@/services/player/runtime';
+import type { PlaybackPhase } from '@/services/player/PlaybackStateMachine';
 import { PlaybackProvider } from '@/services/player/PlaybackProvider';
 import { extractArtworkPalette, ArtworkPalette } from '@/lib/colorExtractor';
 import { getArtworkUrl } from '@/utils/artwork';
@@ -12,7 +13,6 @@ import {
 import { PlaybackStatus, BufferHealth } from '@/types/playback';
 import { resolveStreamingQuality } from '@/services/audio/qualityResolver';
 import { api } from '@/api/client';
-import { useOfflineStore } from '@/stores/useOfflineStore';
 import { useUIStore } from '@/stores/useUIStore';
 
 export interface SleepTimerState {
@@ -23,6 +23,8 @@ export interface SleepTimerState {
 
 interface PlayerState {
   currentTrack: Track | null;
+  playbackRequestId: number;
+  playbackPhase: PlaybackPhase;
   queue: Track[];
   originalQueue: Track[];
   currentIndex: number;
@@ -102,6 +104,7 @@ interface PlayerState {
   setVideoDockOpen: (open: boolean) => void;
   setFullscreenTab: (tab: 'art' | 'lyrics' | 'queue' | 'video') => void;
   setError: (error: string | null) => void;
+  incrementPlaybackRequestId: () => void;
 
   // Waveform
   setWaveformData: (data: number[] | null) => void;
@@ -195,13 +198,16 @@ const getSavedRecentlyPlayed = (): Track[] => {
   return [];
 };
 
-let engineInitialized = false;
-let playbackEngine: PlaybackProvider = defaultPlaybackEngine;
+let engineInitialization: Promise<void> | null = null;
+const playbackEngine: PlaybackProvider = playbackController;
+let selectionGeneration = 0;
 let sleepTimerInterval: any = null;
 let prefetchedNextTrackId: string | null = null;
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
+  playbackRequestId: 0,
+  playbackPhase: 'IDLE',
   queue: [],
   originalQueue: [],
   currentIndex: -1,
@@ -270,10 +276,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   initEngine: async () => {
-    if (engineInitialized) return;
-    engineInitialized = true;
+    if (engineInitialization) return engineInitialization;
+    engineInitialization = (async () => {
 
-    // If local history is empty, try loading backend history
+    // History enrichment must not block engine initialization.
+    void (async () => {
     if (get().recentlyPlayed.length === 0) {
       try {
         const res = await fetch('/api/history?limit=30');
@@ -296,11 +303,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       } catch {}
     }
 
+    })();
+
     await playbackEngine.init({
       onStateChange: (isPlaying, isBuffering) => {
         set({ isPlaying, isBuffering });
         if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-          navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+          try { navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'; } catch {}
         }
       },
       onStatusChange: (playbackStatus) => {
@@ -315,6 +324,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           currentTime,
           duration: duration > 0 ? duration : state.duration,
         });
+        if (duration > 0 && Number.isFinite(duration)) {
+          try { navigator.mediaSession?.setPositionState?.({ duration, position: Math.max(0, Math.min(duration, currentTime)), playbackRate: playbackController.getPlaybackRate() }); } catch {}
+        }
 
         // Predictive Audio Prefetching: Preload lyrics & artwork when >70% elapsed
         const actualDur = duration > 0 ? duration : state.duration;
@@ -334,7 +346,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         if (actualDur > 12 && (currentTime / actualDur >= 0.85 || actualDur - currentTime <= 15)) {
           const nextTrack = state.queue[state.currentIndex + 1];
           if (nextTrack && typeof playbackEngine.prebufferTrack === 'function') {
-            playbackEngine.prebufferTrack(nextTrack);
+            void playbackEngine.prebufferTrack(nextTrack).catch(() => {});
           }
         }
       },
@@ -347,7 +359,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
         if (repeatMode === 'track') {
           playbackEngine.seek(0);
-          playbackEngine.play();
+          void playbackEngine.play().catch(() => {});
         } else {
           get().next();
         }
@@ -361,20 +373,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     // Setup Media Session Handlers
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', () => get().play());
-      navigator.mediaSession.setActionHandler('pause', () => get().pause());
-      navigator.mediaSession.setActionHandler('stop', () => get().pause());
-      navigator.mediaSession.setActionHandler('previoustrack', () => get().previous());
-      navigator.mediaSession.setActionHandler('nexttrack', () => get().next());
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      safeMediaHandler('play', () => get().play());
+      safeMediaHandler('pause', () => get().pause());
+      safeMediaHandler('stop', () => get().pause());
+      safeMediaHandler('previoustrack', () => get().previous());
+      safeMediaHandler('nexttrack', () => get().next());
+      safeMediaHandler('seekbackward', (details) => {
         const skip = details.seekOffset || 10;
         get().seek(Math.max(0, get().currentTime - skip));
       });
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      safeMediaHandler('seekforward', (details) => {
         const skip = details.seekOffset || 10;
         get().seek(Math.min(get().duration, get().currentTime + skip));
       });
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
+      safeMediaHandler('seekto', (details) => {
         if (details.seekTime !== undefined) {
           get().seek(details.seekTime);
         }
@@ -385,7 +397,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     try {
       const savedLast = safeGetItem(STORAGE_KEYS.LAST_TRACK);
       const savedQueue = safeGetItem(STORAGE_KEYS.QUEUE);
-      if (savedLast) {
+      if (savedLast && !get().currentTrack) {
         const track = JSON.parse(savedLast);
         const queue = savedQueue ? JSON.parse(savedQueue) : [track];
         const idx = queue.findIndex((t: Track) => t.videoId === track.videoId);
@@ -400,9 +412,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch (e) {
       console.warn('Failed to load saved queue:', e);
     }
+    })().catch((error) => { engineInitialization = null; throw error; });
+    return engineInitialization;
   },
 
   playTrack: async (track: Track, newQueue?: Track[]) => {
+    get().incrementPlaybackRequestId();
+    const generation = ++selectionGeneration;
     let queue = newQueue ? [...newQueue] : [...get().queue];
     let originalQueue = newQueue ? [...newQueue] : [...get().originalQueue];
 
@@ -451,12 +467,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     // Extract dynamic artwork palette asynchronously
     extractArtworkPalette(trackArtwork, track.title).then((palette) => {
+      if (generation !== selectionGeneration) return;
       set({ atmospherePalette: palette });
       if (typeof document !== 'undefined') {
         document.documentElement.style.setProperty('--ambient-glow', palette.glow);
         document.documentElement.style.setProperty('--ambient-accent', palette.primary);
       }
-    });
+    }).catch(() => {});
 
     // Save to localStorage
     try {
@@ -468,7 +485,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     get().addToRecentlyPlayed(track);
 
     // Update Media Session
-    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
+    try { if (typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
       const artistName = track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
       navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title,
@@ -478,35 +495,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           ? [{ src: trackArtwork, sizes: '512x512', type: 'image/jpeg' }]
           : [],
       });
-    }
+    } } catch {}
 
-    await get().initEngine();
     try {
-      await playbackEngine.load(track);
-      await playbackEngine.play();
-    } catch (err: any) {
-      if (typeof window !== 'undefined') {
-        const isOffline = useOfflineStore.getState().isOffline;
-        const isCached = useOfflineStore.getState().isDownloaded(track.videoId);
-        if (isOffline || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-          if (!isCached) {
-            set({
-              error: `"${track.title}" is not available offline. Please download it first or reconnect to the internet.`,
-              isPlaying: false,
-              isBuffering: false,
-              playbackStatus: 'error',
-            });
-            return;
-          }
-        }
-      }
-      set({
-        error: err?.message || 'Playback error occurred',
-        isPlaying: false,
-        isBuffering: false,
-        playbackStatus: 'error',
-      });
+      await get().initEngine();
+      if (generation !== selectionGeneration) return;
+      await playbackController.select(track);
+    } catch (error) {
+      if (generation === selectionGeneration) set({ error: error instanceof Error ? error.message : 'Playback failed', isPlaying: false, isBuffering: false, playbackStatus: 'error' });
     }
+    if (generation !== selectionGeneration || track.source === 'local') return;
 
     // Record to history on backend
     try {
@@ -527,94 +525,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   playQueueIndex: async (index: number) => {
     const { queue } = get();
-    if (index < 0 || index >= queue.length) return;
-    const track = queue[index];
-    if (!track) return;
-
-    prefetchedNextTrackId = null;
-
-    set({
-      currentTrack: track,
-      currentIndex: index,
-      isPlaying: true,
-      isBuffering: true,
-      playbackStatus: 'prebuffering',
-      currentTime: 0,
-      duration: track.duration_seconds || 0,
-      error: null,
-    });
-
-    const trackArtwork = getArtworkUrl(track) || track.thumbnail;
-
-    extractArtworkPalette(trackArtwork, track.title).then((palette) => {
-      set({ atmospherePalette: palette });
-      if (typeof document !== 'undefined') {
-        document.documentElement.style.setProperty('--ambient-glow', palette.glow);
-        document.documentElement.style.setProperty('--ambient-accent', palette.primary);
-      }
-    });
-
-    try {
-      safeSetItem(STORAGE_KEYS.LAST_TRACK, JSON.stringify(track));
-      safeSetItem(STORAGE_KEYS.QUEUE, JSON.stringify(queue));
-    } catch {}
-
-    get().addToRecentlyPlayed(track);
-
-    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
-      const artistName = track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title,
-        artist: artistName,
-        album: track.album || '',
-        artwork: trackArtwork
-          ? [{ src: trackArtwork, sizes: '512x512', type: 'image/jpeg' }]
-          : [],
-      });
-    }
-
-    await get().initEngine();
-    try {
-      await playbackEngine.load(track);
-      await playbackEngine.play();
-    } catch (err: any) {
-      if (typeof window !== 'undefined') {
-        const isOffline = useOfflineStore.getState().isOffline;
-        const isCached = useOfflineStore.getState().isDownloaded(track.videoId);
-        if (isOffline || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-          if (!isCached) {
-            set({
-              error: `"${track.title}" is not available offline. Please download it first or reconnect to the internet.`,
-              isPlaying: false,
-              isBuffering: false,
-              playbackStatus: 'error',
-            });
-            return;
-          }
-        }
-      }
-      set({
-        error: err?.message || 'Playback error occurred',
-        isPlaying: false,
-        isBuffering: false,
-        playbackStatus: 'error',
-      });
-    }
-
-    try {
-      fetch('/api/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          videoId: track.videoId,
-          title: track.title,
-          artist: track.artists?.map((a) => a.name).join(', ') || 'Unknown Artist',
-          album: track.album || '',
-          thumbnail_url: track.thumbnail || '',
-          duration: track.duration || '0:00',
-        }),
-      }).catch(() => {});
-    } catch {}
+    if (!Number.isInteger(index) || !queue[index]) return;
+    const work = get().playTrack(queue[index]);
+    set({ currentIndex: index });
+    await work;
   },
 
   addToRecentlyPlayed: (track: Track) => {
@@ -628,6 +542,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   togglePlay: async () => {
+    get().incrementPlaybackRequestId();
     const { isPlaying, currentTrack, queue, recentlyPlayed } = get();
     if (!currentTrack) {
       if (queue.length > 0) {
@@ -648,21 +563,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   play: async () => {
+    get().incrementPlaybackRequestId();
     const { currentTrack } = get();
     if (!currentTrack) return;
-    set({ isPlaying: true });
-    if (playbackEngine.getCurrentTrackId?.() !== currentTrack.videoId) {
-      await playbackEngine.load(currentTrack);
+    if (playbackController.getCurrentTrackId() !== currentTrack.videoId) {
+      await get().playTrack(currentTrack);
+      return;
     }
-    await playbackEngine.play();
+    await playbackController.play();
   },
 
   pause: () => {
-    set({ isPlaying: false, playbackStatus: 'paused' });
-    playbackEngine.pause();
+    get().incrementPlaybackRequestId();
+    ++selectionGeneration;
+    set({ isPlaying: false, isBuffering: false, playbackStatus: 'paused' });
+    playbackController.pause();
   },
 
   next: async () => {
+    get().incrementPlaybackRequestId();
     const { queue, currentIndex, repeatMode, autoplayEnabled } = get();
     if (queue.length === 0) return;
 
@@ -674,7 +593,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       } else if (autoplayEnabled) {
         // Autoplay: fetch recommendations from backend and append to queue
         try {
+          const generation = selectionGeneration;
           const recs = await api.getRecommendations(10);
+          if (generation !== selectionGeneration || get().queue !== queue) return;
           if (recs && recs.length > 0) {
             const existingIds = new Set(queue.map((t) => t.videoId));
             const fresh = recs.filter((t) => !existingIds.has(t.videoId));
@@ -697,11 +618,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
 
     if (queue[nextIndex]) {
-      get().playTrack(queue[nextIndex]);
+      await get().playQueueIndex(nextIndex);
     }
   },
 
   previous: () => {
+    get().incrementPlaybackRequestId();
     const { queue, currentIndex, currentTime } = get();
     if (queue.length === 0) return;
 
@@ -713,16 +635,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
     if (queue[prevIndex]) {
-      get().playTrack(queue[prevIndex]);
+      void get().playQueueIndex(prevIndex);
     }
   },
 
   seek: (seconds: number) => {
-    set({ currentTime: seconds });
-    playbackEngine.seek(seconds);
+    if (!Number.isFinite(seconds)) return;
+    get().incrementPlaybackRequestId();
+    const target = Math.max(0, get().duration > 0 ? Math.min(get().duration, seconds) : seconds);
+    set({ currentTime: target });
+    playbackEngine.seek(target);
   },
 
   setVolume: (volume: number) => {
+    if (!Number.isFinite(volume)) return;
     const clamped = Math.max(0, Math.min(100, volume));
     set({ volume: clamped, isMuted: clamped === 0 });
     playbackEngine.setVolume(clamped);
@@ -993,6 +919,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setVideoDockOpen: (isVideoDockOpen) => set({ isVideoDockOpen }),
   setFullscreenTab: (fullscreenTab) => set({ fullscreenTab }),
   setError: (error) => set({ error }),
+  incrementPlaybackRequestId: () => set((s) => ({ playbackRequestId: s.playbackRequestId + 1 })),
 
   // Waveform
   setWaveformData: (data) => set({ waveformData: data }),
@@ -1080,3 +1007,19 @@ if (typeof window !== 'undefined') {
   (window as any).__aapeshPlayerStore = usePlayerStore;
   (window as any).__auroraPlayerStore = usePlayerStore;
 }
+
+
+function safeMediaHandler(action: MediaSessionAction, handler: MediaSessionActionHandler): void {
+  try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* Optional host capability. */ }
+}
+
+playbackController.subscribe(state => {
+  usePlayerStore.setState({
+    playbackRequestId: state.playbackRequestId,
+    playbackPhase: state.phase,
+    isPlaying: state.wantsPlay,
+    isBuffering: state.phase === 'LOADING' || state.phase === 'BUFFERING' || state.phase === 'RECOVERING',
+    error: state.error,
+    playbackStatus: state.phase === 'LOADING' ? 'prebuffering' : state.phase === 'RECOVERING' ? 'buffering' : state.phase.toLowerCase() as PlaybackStatus,
+  });
+});

@@ -37,7 +37,7 @@ export interface AudioCapabilities {
 export interface PlaybackProvider {
   name: string;
   init(callbacks: PlaybackCallbacks): Promise<void>;
-  load(track: Track): Promise<void>;
+  load(track: Track, signal?: AbortSignal): Promise<void>;
   play(): Promise<void>;
   pause(): void;
   seek(timeInSeconds: number): void;

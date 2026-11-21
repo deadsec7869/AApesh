@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type VisualizerMode = 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth';
+export type VisualizerMode = 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
 
 export interface UIState {
   // Visualizer
@@ -24,10 +24,16 @@ export interface UIState {
   setSearchQuery: (query: string) => void;
   clearSearchQuery: () => void;
 
-  // Left Dock (Library)
+  // Left Dock (Library) - Desktop persistent, Mobile slide-over
   leftDockCollapsed: boolean;
   setLeftDockCollapsed: (collapsed: boolean) => void;
   toggleLeftDock: () => void;
+  leftDockOpen: boolean;
+  setLeftDockOpen: (open: boolean) => void;
+
+  // Right Dock (Queue/Lyrics/EQ) - Desktop persistent, Mobile slide-over
+  rightDockOpen: boolean;
+  setRightDockOpen: (open: boolean) => void;
 
   // Top Telemetry Bar
   topBarVisible: boolean;
@@ -61,9 +67,13 @@ export interface UIState {
   // Ambient Artwork Glow
   ambientGlowEnabled: boolean;
   setAmbientGlowEnabled: (enabled: boolean) => void;
+
+  // View Mode
+  viewMode: 'stage' | 'grid' | 'stealth';
+  setViewMode: (mode: UIState['viewMode']) => void;
 }
 
-const VISUALIZER_MODES: VisualizerMode[] = ['ferrofluid', 'cymatics', 'starfield', 'stealth'];
+const VISUALIZER_MODES: VisualizerMode[] = ['ferrofluid', 'cymatics', 'starfield', 'stealth', 'ripple'];
 
 export const useUIStore = create<UIState>()(
   persist(
@@ -97,6 +107,12 @@ export const useUIStore = create<UIState>()(
       leftDockCollapsed: false,
       setLeftDockCollapsed: (collapsed) => set({ leftDockCollapsed: collapsed }),
       toggleLeftDock: () => set((s) => ({ leftDockCollapsed: !s.leftDockCollapsed })),
+      leftDockOpen: true,
+      setLeftDockOpen: (open) => set({ leftDockOpen: open }),
+
+      // Right Dock
+      rightDockOpen: true,
+      setRightDockOpen: (open) => set({ rightDockOpen: open }),
 
       // Top Bar
       topBarVisible: true,
@@ -106,6 +122,7 @@ export const useUIStore = create<UIState>()(
       equalizerDrawerOpen: false,
       setEqualizerDrawerOpen: (open) => set({ equalizerDrawerOpen: open }),
       toggleEqualizerDrawer: () => set((s) => ({ equalizerDrawerOpen: !s.equalizerDrawerOpen })),
+      toggleEqualizer: () => set((s) => ({ equalizerDrawerOpen: !s.equalizerDrawerOpen })),
 
       // Spatial Audio Drawer (legacy)
       spatialAudioDrawerOpen: false,
@@ -126,6 +143,10 @@ export const useUIStore = create<UIState>()(
       // Visual Quality
       visualQuality: 'high',
       setVisualQuality: (quality) => set({ visualQuality: quality }),
+
+      // View Mode
+      viewMode: 'stage',
+      setViewMode: (mode) => set({ viewMode: mode }),
 
       // Ambient Glow
       ambientGlowEnabled: true,

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import { playbackController as defaultPlaybackEngine, localAudioProvider } from '@/services/player/runtime';
 
 /**
  * AAPESH Audio DSP Store — Pro Audio Control Center
@@ -631,6 +631,9 @@ export const useEqualizerStore = {
 };
 
 // Expose for debugging
+localAudioProvider.applyDSP(useAudioDSPStore.getState());
+useAudioDSPStore.subscribe(state => localAudioProvider.applyDSP(state));
+
 if (typeof window !== 'undefined') {
   (window as any).__aapeshAudioDSPStore = useAudioDSPStore;
   // Legacy alias

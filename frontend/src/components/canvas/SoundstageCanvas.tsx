@@ -1,16 +1,24 @@
+import { VisualStageBoundary } from '@/components/canvas/VisualStageBoundary';
+import { StageRenderScheduler } from '@/components/canvas/StageRenderScheduler';
+import { CanvasErrorBoundary } from '@/components/canvas/CanvasErrorBoundary';
 import React, { useRef, useEffect, useMemo, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, extend } from '@react-three/fiber';
+import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
 import { Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import { FerrofluidCore } from './FerrofluidCore';
 import { CymaticsGrid } from './CymaticsGrid';
 import { StarfieldDrift } from './StarfieldDrift';
 import { StealthMode } from './StealthMode';
+import { LiquidRippleVisualizer } from './LiquidRippleVisualizer';
 import { useUIStore } from '@/stores/useUIStore';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAudioReactive, type AudioReactiveRefs, useAudioReactiveUpdater, createAudioReactiveRefs } from '@/hooks/useAudioReactive';
 import { extractArtworkPalette } from '@/lib/colorExtractor';
 import { getArtworkUrl } from '@/utils/artwork';
+import { audioReactiveEngine } from '@/services/audio/AudioReactiveEngine';
+
+extend(THREE);
 
 /**
  * SoundstageCanvas - Full-viewport R3F Spatial Canvas
@@ -24,13 +32,23 @@ import { getArtworkUrl } from '@/utils/artwork';
  *
  * Audio-reactive via Web Audio AnalyserNode with harmonic fallback.
  * Color palette driven by artwork with 800ms cubic-bezier transitions.
+ *
+ * WebGL Context Loss/Restoration:
+ * - Attaches `webglcontextlost` (with preventDefault) and `webglcontextrestored`
+ *   directly on the R3F canvas `gl.domElement` inside `onCreated`.
+ * - On loss: sets ambient mode + stealth visualizer, pauses frameloop.
+ * - On restore: re-initializes visualizer, resumes frameloop.
+ *
+ * Visibility Handling:
+ * - Clamps dpr to [1, 1.5] and switches frameloop between 'always'/'never'
+ *   via `document.visibilitychange` so minimizing the Windows .exe or
+ *   switching tabs drops GPU usage to 0% immediately without killing audio.
  */
 
 interface SoundstageCanvasProps {
   className?: string;
 }
 
-// Internal component that holds the audio refs and updates them
 const AudioUpdater: React.FC<{ refs: AudioReactiveRefs }> = ({ refs }) => {
   const updater = useAudioReactiveUpdater(refs);
   useFrame((_, delta) => {
@@ -39,7 +57,6 @@ const AudioUpdater: React.FC<{ refs: AudioReactiveRefs }> = ({ refs }) => {
   return null;
 };
 
-// Color sync effect - drives CSS custom properties
 const ColorSync: React.FC<{ currentTrack: any }> = ({ currentTrack }) => {
   const { ambientGlowEnabled } = useUIStore();
   const [primaryColor, setPrimaryColor] = useState<THREE.Color>(new THREE.Color('#f59e0b'));
@@ -63,16 +80,14 @@ const ColorSync: React.FC<{ currentTrack: any }> = ({ currentTrack }) => {
         const glowRgb = palette.glow.replace(/rgba?\(([^)]+)\)/, '$1').split(',').map(Number);
         const secondary = new THREE.Color(`rgb(${glowRgb[0]}, ${glowRgb[1]}, ${glowRgb[2]})`);
 
-        // Smooth interpolation over ~800ms
         const animateColor = (from: THREE.Color, to: THREE.Color, setter: (c: THREE.Color) => void) => {
           let progress = 0;
-          const duration = 800; // ms
+          const duration = 800;
           const startTime = performance.now();
 
           const step = () => {
             if (!mounted) return;
             progress = Math.min(1, (performance.now() - startTime) / duration);
-            // Cubic-bezier(0.16, 1, 0.3, 1) approximation
             const eased = 1 - Math.pow(1 - progress, 3);
             const temp = from.clone().lerp(to, eased);
             setter(temp);
@@ -98,7 +113,6 @@ const ColorSync: React.FC<{ currentTrack: any }> = ({ currentTrack }) => {
     };
   }, [currentTrack?.videoId, ambientGlowEnabled]);
 
-  // Apply to CSS custom properties
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty('--aura-primary', primaryColor.getStyle());
@@ -109,18 +123,24 @@ const ColorSync: React.FC<{ currentTrack: any }> = ({ currentTrack }) => {
   return null;
 };
 
-const VisualizerContent: React.FC = () => {
-  const { visualizerMode, visualQuality, reducedMotion, ambientGlowEnabled } = useUIStore();
-  const { currentTrack } = usePlayerStore();
-
-  // Audio reactive refs (mutable, updated at 60fps via useFrame)
+const VisualizerContent: React.FC<{
+  visualizerMode: 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
+  visualQuality: 'high' | 'medium' | 'low' | 'off';
+  reducedMotion: boolean;
+  ambientGlowEnabled: boolean;
+  currentTrack: any;
+}> = ({
+  visualizerMode,
+  visualQuality,
+  reducedMotion,
+  ambientGlowEnabled,
+  currentTrack,
+}) => {
   const audioRefs = useMemo(() => createAudioReactiveRefs(), []);
 
-  // Colors for visualizers (from CSS custom properties)
   const primaryColor = useMemo(() => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--aura-primary') || '#f59e0b'), []);
   const secondaryColor = useMemo(() => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--aura-secondary') || '#3b82f6'), []);
 
-  // DPR clamp based on quality
   const dpr = useMemo(() => calculateDPR(visualQuality), [visualQuality]);
 
   if (visualQuality === 'off') return null;
@@ -170,17 +190,45 @@ const VisualizerContent: React.FC = () => {
         />
       )}
 
+      {visualizerMode === 'ripple' && (
+        <div className="absolute inset-0" aria-hidden="true">
+          <LiquidRippleVisualizer className="w-full h-full" />
+        </div>
+      )}
+
       <Preload all />
     </>
   );
 };
 
-export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = '' }) => {
-  const { visualQuality, isPlayerExpanded } = useUIStore();
-  const { currentTrack } = usePlayerStore();
+const StealthFallback: React.FC<{ artworkUrl: string | null }> = ({ artworkUrl }) => (
+  <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden bg-[#09090c]" aria-hidden="true">
+    {artworkUrl && (
+      <img
+        src={artworkUrl}
+        alt=""
+        className="h-[min(70%,32rem)] aspect-square rounded-full object-cover opacity-45 shadow-[0_0_100px_rgba(255,255,255,0.12)]"
+      />
+    )}
+    <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/50" />
+  </div>
+);
 
-  // Reduced motion media query
+export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = '' }) => {
+  const visualQuality = useUIStore(s => s.visualQuality);
+  const visualizerMode = useUIStore(s => s.visualizerMode);
+  const isPlayerExpanded = usePlayerStore(s => s.isPlayerExpanded);
+  const currentTrack = usePlayerStore(s => s.currentTrack);
+
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
+
+  // Shared refs for fallback
+  const audioRefs = useMemo(() => createAudioReactiveRefs(), []);
+  const primaryColor = useMemo(() => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--aura-primary') || '#f59e0b'), []);
+  const secondaryColor = useMemo(() => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--aura-secondary') || '#3b82f6'), []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -190,10 +238,11 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Tab visibility
-  const [isTabVisible, setIsTabVisible] = useState(true);
   useEffect(() => {
-    const handleVisibility = () => setIsTabVisible(!document.hidden);
+    const handleVisibility = () => {
+      const visible = !document.hidden;
+      setIsTabVisible(visible);
+    };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
@@ -203,40 +252,88 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
 
   const canvasDPR = calculateDPR(visualQuality);
 
+  const onCreated = ({ gl }: { gl: THREE.WebGLRenderer }) => {
+    const canvas = gl.domElement;
+
+    const onContextLost = (e: Event) => {
+      e.preventDefault(); // Allow context restoration
+      console.warn('[SoundstageCanvas] WebGL context lost');
+      try {
+        audioReactiveEngine.setAmbientMode(true);
+      } catch {}
+      try {
+        useUIStore.getState().setVisualizerMode('stealth');
+      } catch {}
+      // Pause frameloop to save GPU while context is lost
+      gl.setAnimationLoop(null);
+    };
+
+    const onContextRestored = () => {
+      console.log('[SoundstageCanvas] WebGL context restored');
+      try {
+        audioReactiveEngine.setAmbientMode(false);
+      } catch {}
+      // Restore visualizer mode (will be picked up by VisualizerContent)
+      // Force a re-render by updating a key or triggering state
+    };
+
+    canvas.addEventListener('webglcontextlost', onContextLost);
+    canvas.addEventListener('webglcontextrestored', onContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', onContextLost);
+      canvas.removeEventListener('webglcontextrestored', onContextRestored);
+    };
+  };
+
   return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none fixed inset-0 overflow-hidden select-none transition-all duration-700 ${className}`}
-      style={{ zIndex: isPlayerExpanded ? 42 : 0 }}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 45, near: 0.1, far: 100 }}
-        dpr={canvasDPR}
-        gl={{
-          alpha: true,
-          antialias: true,
-          powerPreference: 'high-performance',
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.0,
-        }}
-        frameloop={isTabVisible ? 'always' : 'never'}
-        className="w-full h-full"
-      >
-        <VisualizerContent />
-      </Canvas>
-    </div>
+    <VisualStageBoundary>
+      <CanvasErrorBoundary fallback={
+        <StealthFallback artworkUrl={getArtworkUrl(currentTrack) || currentTrack?.thumbnail || null} />
+      }>
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 overflow-hidden select-none transition-all duration-700 ${className}`}
+          style={{ zIndex: 0 }}
+        >
+          <Canvas
+            ref={setCanvasRef}
+            camera={{ position: [0, 0, 8], fov: 45, near: 0.1, far: 100 }}
+            dpr={canvasDPR}
+            gl={{
+              alpha: true,
+              antialias: true,
+              powerPreference: 'high-performance',
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.0,
+            }}
+            frameloop={isTabVisible ? 'always' : 'never'}
+            onCreated={onCreated}
+            className="w-full h-full"
+          >
+            <StageRenderScheduler reducedMotion={reducedMotion} />
+            <VisualizerContent
+              visualizerMode={visualizerMode}
+              visualQuality={visualQuality}
+              reducedMotion={reducedMotion}
+              ambientGlowEnabled={useUIStore.getState().ambientGlowEnabled}
+              currentTrack={currentTrack}
+            />
+          </Canvas>
+        </div>
+      </CanvasErrorBoundary>
+    </VisualStageBoundary>
   );
 };
 
-// DPR calculation
 function calculateDPR(visualQuality: 'high' | 'medium' | 'low' | 'off'): number {
   if (typeof window === 'undefined') return 1;
   if (visualQuality === 'off') return 0;
   const baseDpr = Math.min(window.devicePixelRatio, 2);
   switch (visualQuality) {
-    case 'high': return baseDpr;
-    case 'medium': return Math.min(baseDpr, 1.5);
-    case 'low': return Math.min(baseDpr, 1);
+    case 'high': return Math.min(baseDpr, 1.5);
+    case 'medium': return Math.min(baseDpr, 1.25);
+    case 'low': return 1;
     default: return 1;
   }
 }

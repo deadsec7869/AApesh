@@ -11,7 +11,7 @@ import {
   VUMeterData,
 } from '@/stores/useAudioDSPStore';
 import { usePlayerStore } from '@/stores/usePlayerStore';
-import { defaultPlaybackEngine } from '@/services/player/YouTubeIframeProvider';
+import { playbackController as defaultPlaybackEngine } from '@/services/player/runtime';
 import { controlButtonHover, controlButtonTap } from '@/lib/motion';
 
 const PRESET_LIST: EqualizerPreset[] = [
@@ -78,6 +78,7 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
 
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const localPlayback = currentTrack?.source === 'local';
 
   // Close on Escape key
   useEffect(() => {
@@ -91,18 +92,6 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  // VU Meter animation
-  useEffect(() => {
-    if (!isOpen) return;
-    let animationId: number;
-    const animate = () => {
-      // VU meter updates come from the store via audio engine
-      animationId = requestAnimationFrame(animate);
-    };
-    animate();
-    return () => cancelAnimationFrame(animationId);
-  }, [isOpen]);
 
   // Generate frequency response curve for visualization
   const curvePath = useMemo(() => {
@@ -158,9 +147,9 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6"
+        className="fixed inset-0 z-[60] pointer-events-none flex items-start justify-end p-3 sm:p-5 md:p-6 pb-32"
         onClick={onClose}
-        style={{ background: 'rgba(5, 5, 7, 0.85)', backdropFilter: 'blur(20px)' }}
+        style={{ background: 'transparent' }}
       >
         <motion.div
           initial={{ x: '100%', opacity: 0 }}
@@ -168,7 +157,7 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-5xl max-h-[92vh] flex flex-col"
+          className="pointer-events-auto relative w-full max-w-2xl max-h-[calc(100vh-160px)] flex flex-col"
           style={{
             background: 'rgba(14, 15, 20, 0.95)',
             backdropFilter: 'blur(40px) saturate(1.8)',
@@ -257,7 +246,7 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
             <div className="flex items-center gap-2 flex-wrap text-[10px] font-mono">
               <span className="liquid-glass-pill px-2.5 py-1 text-emerald-400 border-emerald-500/30">Speed: Active</span>
               <span className="liquid-glass-pill px-2.5 py-1 text-cyan-400 border-cyan-500/30">Spatial: Visual</span>
-              <span className="liquid-glass-pill px-2.5 py-1 text-neutral-500 border-white/10">HW EQ: IFrame</span>
+              <span className="liquid-glass-pill px-2.5 py-1 text-neutral-500 border-white/10">{localPlayback ? 'EQ: Active · Local' : 'EQ: Saved · Stream unavailable'}</span>
             </div>
           </div>
 
@@ -471,7 +460,7 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
                   </div>
                   <div className="liquid-glass-interactive p-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
                     <span className="text-neutral-400">Binaural / Multi-Channel DSP</span>
-                    <span className="text-[10px] font-mono text-neutral-500">Unavailable (IFrame)</span>
+                    <span className="text-[10px] font-mono text-neutral-500">Not implemented</span>
                   </div>
                 </div>
               </div>
@@ -514,10 +503,10 @@ export const EqualizerDrawer: React.FC<EqualizerDrawerProps> = ({ isOpen, onClos
               <div className="liquid-glass-shell-strong flex flex-col gap-3 p-5" style={{ background: 'rgba(5,5,7,0.6)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '20px' }}>
                 <div className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">STREAM DIAGNOSTICS</div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                  <div><span className="text-neutral-500 text-[9px]">PROVIDER</span><div className="text-neutral-200">YouTube IFrame</div></div>
-                  <div><span className="text-neutral-500 text-[9px]">CODEC</span><div className="text-neutral-200">Opus/AAC</div></div>
-                  <div><span className="text-neutral-500 text-[9px]">MAX BITRATE</span><div className="text-neutral-200">256 kbps</div></div>
-                  <div><span className="text-neutral-500 text-[9px]">DSP ROUTING</span><div className="text-amber-400/90">Isolated</div></div>
+                  <div><span className="text-neutral-500 text-[9px]">PROVIDER</span><div className="text-neutral-200">{localPlayback ? 'Local Audio' : 'YouTube IFrame'}</div></div>
+                  <div><span className="text-neutral-500 text-[9px]">CODEC</span><div className="text-neutral-200">{localPlayback ? 'File-dependent' : 'Provider-managed'}</div></div>
+                  <div><span className="text-neutral-500 text-[9px]">MAX BITRATE</span><div className="text-neutral-200">Not measured</div></div>
+                  <div><span className="text-neutral-500 text-[9px]">DSP ROUTING</span><div className="text-amber-400/90">{localPlayback ? 'Web Audio' : 'Isolated'}</div></div>
                 </div>
               </div>
             </div>

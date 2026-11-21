@@ -158,6 +158,15 @@ export class AudioReactiveEngine {
     return this.hasLiveAudio;
   }
 
+  /** Borrow analysis only. The playback provider retains ownership of audio routing. */
+  public setExternalAnalyser(analyser: AnalyserNode | null): void {
+    if (this.analyser === analyser) return;
+    this.analyser = analyser;
+    this.freqData = analyser ? new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount)) : null;
+    this.hasLiveAudio = analyser !== null;
+    this.features.analysisMode = analyser ? 'live_analyser' : 'ambient';
+  }
+
   /**
    * Toggle or set optional ambient mode (calm, non-pulsing ambient illumination)
    */

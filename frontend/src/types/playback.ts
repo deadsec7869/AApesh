@@ -7,6 +7,7 @@ export type PlaybackStatus =
   | 'paused'
   | 'buffering'
   | 'seeking'
+  | 'recovering'
   | 'ended'
   | 'error';
 

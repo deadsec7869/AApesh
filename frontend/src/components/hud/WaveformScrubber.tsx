@@ -1,375 +1,384 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-
-// Extend CanvasRenderingContext2D to include roundRect
-declare global {
-  interface CanvasRenderingContext2D {
-    roundRect(x: number, y: number, w: number, h: number, radii: number | number[]): void;
-  }
-}
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { formatTime } from '@/lib/utils';
 
 interface WaveformScrubberProps {
-  /** Waveform data as normalized array (0-1) */
   waveformData: number[] | null;
-  /** Current playback time in seconds */
   currentTime: number;
-  /** Total duration in seconds */
   duration: number;
-  /** Callback when user seeks */
   onSeek: (time: number) => void;
-  /** Whether waveform is loading */
   loading?: boolean;
-  /** Class name */
   className?: string;
-  /** Height of the waveform */
   height?: number;
+  bufferedFraction?: number | null;
+  abLoop?: { a: number | null; b: number | null };
+  onAbLoopChange?: (abLoop: { a: number | null; b: number | null }) => void;
 }
 
-/**
- * Elastic Liquid Waveform Scrubber
- *
- * Canvas-based waveform visualization with:
- * - Real-time playback progress overlay with aura gradient
- * - Hover timestamp tooltip with glass card
- * - Click/drag to seek with elastic spring physics
- * - Keyboard accessible (ArrowLeft/Right)
- * - Responsive to reduced motion
- * - Glowing progress fill with aura colors
- */
+const FALLBACK_BARS = Array.from({ length: 64 }, (_, i) => {
+  const t = i / 63;
+  return Math.max(0.15, Math.min(0.95, 0.25 + 0.65 * Math.abs(Math.sin(t * Math.PI * 5 + 0.4))));
+});
 
-export const WaveformScrubber = ({
+export function WaveformScrubber({
   waveformData,
   currentTime,
   duration,
   onSeek,
   loading = false,
   className = '',
-  height = 44,
-}: WaveformScrubberProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  height = 56,
+  bufferedFraction,
+  abLoop = { a: null, b: null },
+  onAbLoopChange,
+}: WaveformScrubberProps) {
+  const [preview, setPreview] = useState<number | null>(null);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [hoverPos, setHoverPos] = useState<number | null>(null);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [progressWidth, setProgressWidth] = useState(0);
+  const [draggingLoop, setDraggingLoop] = useState<'a' | 'b' | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Set CSS custom properties via ref
-  const setMousePosition = (x: string, y: string) => {
-    if (containerRef.current) {
-      containerRef.current.style.setProperty('--mouse-x', x);
-      containerRef.current.style.setProperty('--mouse-y', y);
-    }
-  };
+  const maximum = Number.isFinite(duration) && duration > 0 ? duration : 0;
+  const value = Math.max(
+    0,
+    Math.min(maximum, preview ?? (Number.isFinite(currentTime) ? currentTime : 0))
+  );
+  const played = maximum ? (value / maximum) * 100 : 0;
+  const buffered =
+    bufferedFraction !== null && bufferedFraction !== undefined && Number.isFinite(bufferedFraction)
+      ? Math.max(played, Math.min(100, bufferedFraction * 100))
+      : played;
 
-  // Reduced motion media query
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const loopA = abLoop.a !== null && maximum ? (abLoop.a / maximum) * 100 : null;
+  const loopB = abLoop.b !== null && maximum ? (abLoop.b / maximum) * 100 : null;
 
-  // Initialize mouse position for fallback
-  useEffect(() => {
-    setMousePosition('50%', '50%');
-  }, []);
+  const getTimeFromClientX = useCallback(
+    (clientX: number) => {
+      if (!containerRef.current || !maximum) return 0;
+      const rect = containerRef.current.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      return ratio * maximum;
+    },
+    [maximum]
+  );
 
-  // Draw waveform on canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !waveformData) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const palette = getComputedStyle(canvas);
-    const primary = palette.getPropertyValue('--aura-primary-rgb').trim() || '99, 102, 241';
-    const secondary = palette.getPropertyValue('--aura-secondary-rgb').trim() || primary;
-
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
-    const width = rect.width;
-    const height = rect.height;
-    const centerY = height / 2;
-    const maxAmplitude = height * 0.35;
-
-    // Clear
-    ctx.clearRect(0, 0, width, height);
-
-    if (loading) {
-      // Loading shimmer
-      const time = Date.now() / 1000;
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, 'rgba(255,255,255,0.03)');
-      gradient.addColorStop(0.5, 'rgba(255,255,255,0.08)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0.03)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-      return;
-    }
-
-    const data = waveformData;
-    const barWidth = Math.max(1, width / data.length);
-    const progress = duration > 0 ? currentTime / duration : 0;
-    const progressX = progress * width;
-
-    // Draw waveform bars with elastic liquid effect
-    for (let i = 0; i < data.length; i++) {
-      const x = i * barWidth;
-      const amplitude = data[i] * maxAmplitude;
-      const barHeight = Math.max(2, amplitude);
-
-      // Determine color based on progress
-      const isPlayed = x < progressX;
-      const baseColor = isPlayed
-        ? `rgba(${primary}, ${0.8 + 0.2 * Math.sin(Date.now() / 200 + i * 0.1)})`
-        : 'rgba(255, 255, 255, 0.12)';
-
-      // Elastic liquid bar with rounded caps
-      const barX = x + barWidth * 0.15;
-      const barW = barWidth * 0.7;
-      const radius = barW / 2;
-
-      ctx.fillStyle = baseColor;
-      ctx.beginPath();
-      ctx.roundRect(barX, centerY - barHeight / 2, barW, barHeight, radius);
-      ctx.fill();
-    }
-
-    // Draw progress fill with aura gradient
-    if (progress > 0) {
-      const gradient = ctx.createLinearGradient(0, 0, progressX, 0);
-      gradient.addColorStop(0, `rgb(${primary})`);
-      gradient.addColorStop(0.5, `rgba(${primary}, 0.8)`);
-      gradient.addColorStop(1, `rgb(${secondary})`);
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.roundRect(0, centerY - 3, progressX, 6, 3);
-      ctx.fill();
-    }
-
-    // Draw playhead with elastic droplet
-    if (!isDragging) {
-      const dropletSize = 14 + Math.sin(Date.now() / 150) * 1.5;
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = `rgb(${primary})`;
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-
-      ctx.beginPath();
-      ctx.ellipse(progressX, centerY, dropletSize / 2, dropletSize / 1.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Inner highlight
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.beginPath();
-      ctx.ellipse(progressX - dropletSize * 0.2, centerY - dropletSize * 0.2, dropletSize * 0.3, dropletSize * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-    }
-  }, [waveformData, currentTime, duration, loading, height]);
-
-  // Animate progress width for smooth elastic feel
-  useEffect(() => {
-    if (duration > 0) {
-      const targetProgress = (currentTime / duration) * 100;
-      setProgressWidth(targetProgress);
-    }
-  }, [currentTime, duration]);
-
-  // Handle mouse move for tooltip
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || duration <= 0) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const progress = Math.max(0, Math.min(1, x / rect.width));
-    const time = progress * duration;
-    setHoverTime(time);
-    setIsHovering(true);
-
-    // Update CSS custom properties for specular spotlight
-    const percentX = `${(x / rect.width) * 100}%`;
-    const percentY = `${(e.clientY / rect.height) * 100}%`;
-    setMousePosition(percentX, percentY);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !maximum) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    setHoverPos(x * 100);
+    setHoverTime(x * maximum);
   };
 
   const handleMouseLeave = () => {
-    setIsHovering(false);
+    setHoverPos(null);
     setHoverTime(null);
   };
 
-  // Handle click/drag to seek
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || duration <= 0) return;
-    setIsDragging(true);
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const progress = Math.max(0, Math.min(1, x / rect.width));
-    onSeek(progress * duration);
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!maximum || draggingLoop) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const time = getTimeFromClientX(e.clientX);
+    setIsScrubbing(true);
+    setPreview(time);
+    onSeek(time);
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing || !maximum) return;
+    const time = getTimeFromClientX(e.clientX);
+    setPreview(time);
+    onSeek(time);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    setIsScrubbing(false);
+    setPreview(null);
+  };
+
+  const handleLoopPointerDown = (e: React.PointerEvent<HTMLButtonElement>, which: 'a' | 'b') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingLoop(which);
   };
 
   useEffect(() => {
-    if (isDragging) {
-      const handleDrag = (e: MouseEvent) => {
-        if (!canvasRef.current || duration <= 0) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const progress = Math.max(0, Math.min(1, x / rect.width));
-        onSeek(progress * duration);
-      };
+    if (!draggingLoop) return;
 
-      window.addEventListener('mousemove', handleDrag);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleDrag);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, duration, onSeek]);
+    const onWindowPointerMove = (e: PointerEvent) => {
+      if (!maximum || !onAbLoopChange) return;
+      const rawTime = getTimeFromClientX(e.clientX);
+      if (draggingLoop === 'a') {
+        const upperBound = abLoop.b !== null ? Math.max(0, abLoop.b - 0.5) : maximum;
+        onAbLoopChange({ a: Math.min(rawTime, upperBound), b: abLoop.b });
+      } else {
+        const lowerBound = abLoop.a !== null ? Math.min(maximum, abLoop.a + 0.5) : 0;
+        onAbLoopChange({ a: abLoop.a, b: Math.max(rawTime, lowerBound) });
+      }
+    };
 
-  // Keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (duration <= 0) return;
-    const seekAmount = 5; // seconds
+    const onWindowPointerUp = () => {
+      setDraggingLoop(null);
+    };
+
+    window.addEventListener('pointermove', onWindowPointerMove);
+    window.addEventListener('pointerup', onWindowPointerUp);
+    return () => {
+      window.removeEventListener('pointermove', onWindowPointerMove);
+      window.removeEventListener('pointerup', onWindowPointerUp);
+    };
+  }, [draggingLoop, maximum, abLoop.a, abLoop.b, getTimeFromClientX, onAbLoopChange]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!maximum) return;
+    const step = maximum * 0.01;
+    let newValue: number | null = null;
+
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      onSeek(Math.max(0, currentTime - seekAmount));
+      newValue = Math.max(0, value - step);
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
-      onSeek(Math.min(duration, currentTime + seekAmount));
+      newValue = Math.min(maximum, value + step);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      newValue = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      newValue = maximum;
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      newValue = Math.max(0, value - maximum * 0.1);
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      newValue = Math.min(maximum, value + maximum * 0.1);
+    }
+
+    if (newValue !== null) {
+      onSeek(newValue);
     }
   };
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  if (!waveformData && !loading) {
+  if (loading || !maximum) {
     return (
       <div
         ref={containerRef}
-        className={`liquid-glass-interactive relative px-2 ${className}`}
-        style={{ height }}
-      role="slider"
-        aria-label="Playback progress"
+        className={`waveform-scrubber ${className}`}
+        style={{ height, minHeight: height }}
+        aria-busy={true}
+        role="slider"
+        aria-label="Playback position"
         aria-valuemin={0}
-        aria-valuemax={duration}
-        aria-valuenow={currentTime}
-        tabIndex={0}
+        aria-valuemax={Math.round(maximum)}
+        aria-valuenow={Math.round(value)}
+        aria-valuetext={`${formatTime(value)} of ${formatTime(maximum)}`}
         onKeyDown={handleKeyDown}
+        tabIndex={0}
       >
-        <div className="absolute inset-0 rounded-full bg-white/5" />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full transition-all duration-300 ease-spring-gentle"
-          style={{
-            width: `${progressWidth}%`,
-            background: 'linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)',
-            borderRadius: '9999px',
-          }}
-        />
-        {isHovering && hoverTime !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-xl whitespace-nowrap pointer-events-none z-10 liquid-glass-elevated"
-          >
-            <div className="flex items-center gap-2">
-              <span className="liquid-time">{formatTime(hoverTime)}</span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-white/10 text-white/70">
-                / {formatTime(duration)}
-              </span>
-            </div>
-          </motion.div>
-        )}
+        <div className="waveform-skeleton h-full" style={{ height }} />
+        {loading && <div className="loading-overlay">Loading waveform…</div>}
       </div>
     );
   }
 
+  const scrollerStyle = {
+    height,
+    minHeight: height,
+    '--waveform-height': `${height}px`,
+    '--played-width': `${played}%`,
+    '--buffered-width': `${buffered}%`,
+    '--loop-a': loopA !== null ? `${loopA}%` : '0%',
+    '--loop-b': loopB !== null ? `${loopB}%` : '100%',
+  } as React.CSSProperties;
+
   return (
     <div
       ref={containerRef}
-      className={`relative px-2 ${className}`}
-      style={{ height }}
+      className={`waveform-scrubber ${className}`}
+      style={scrollerStyle}
+      aria-busy={loading}
       role="slider"
-      aria-label="Playback progress"
+      aria-label="Playback position"
       aria-valuemin={0}
-      aria-valuemax={duration}
-      aria-valuenow={currentTime}
-      tabIndex={0}
+      aria-valuemax={Math.round(maximum)}
+      aria-valuenow={Math.round(value)}
+      aria-valuetext={`${formatTime(value)} of ${formatTime(maximum)}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       onKeyDown={handleKeyDown}
+      tabIndex={0}
     >
-      <canvas
-        ref={canvasRef}
-        className="block w-full h-full cursor-pointer select-none"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        style={{ touchAction: 'none' }}
+      {/* Waveform Bars */}
+      <div className="waveform-bars" role="img" aria-label="Audio waveform">
+        {waveformData && waveformData.length > 0
+          ? waveformData.map((amp, i) => (
+              <div
+                key={i}
+                className="waveform-bar"
+                style={
+                  {
+                    height: `${Math.max(2, amp * 100)}%`,
+                    left: `${(i / waveformData.length) * 100}%`,
+                    width: `${100 / waveformData.length}%`,
+                    '--bar-index': i,
+                    '--total-bars': waveformData.length,
+                  } as React.CSSProperties
+                }
+              />
+            ))
+          : FALLBACK_BARS.map((amp, i) => (
+              <div
+                key={i}
+                className="waveform-bar skeleton"
+                style={{
+                  height: `${amp * 100}%`,
+                  left: `${(i / FALLBACK_BARS.length) * 100}%`,
+                  width: `${100 / FALLBACK_BARS.length}%`,
+                }}
+              />
+            ))}
+      </div>
+
+      {/* Played Progress Fill */}
+      <div
+        className="waveform-progress"
+        style={{ width: `${played}%` }}
         aria-hidden="true"
       />
 
-      {/* Hover Tooltip */}
-      {isHovering && hoverTime !== null && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-xl whitespace-nowrap pointer-events-none z-10 liquid-glass-elevated"
-        >
-          <div className="flex items-center gap-2">
-            <span className="liquid-time">{formatTime(hoverTime)}</span>
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-white/10 text-white/70">
-              / {formatTime(duration)}
-            </span>
-          </div>
-        </motion.div>
-      )}
+      {/* Buffered Progress Fill */}
+      <div
+        className="waveform-buffered"
+        style={{ width: `${buffered}%` }}
+        aria-hidden="true"
+      />
 
-      {/* Progress indicator for reduced motion / visual reference */}
-      {reducedMotion && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-white/10 w-full"
-          />
-          <div
-            className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full transition-all duration-300 ease-spring-gentle"
-            style={{
-              width: `${progressWidth}%`,
-              background: 'linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)',
-              borderRadius: '9999px',
-            }}
-          />
+      {/* A-B Loop Region */}
+      {(abLoop.a !== null || abLoop.b !== null) && (
+        <div
+          className="waveform-loop-region"
+          style={{
+            left: `${loopA ?? 0}%`,
+            width: `${(loopB ?? 100) - (loopA ?? 0)}%`,
+          }}
+          role="region"
+          aria-label="A-B Loop Region"
+        >
+          <div className="waveform-loop-marker waveform-loop-a" aria-hidden="true" />
+          <div className="waveform-loop-marker waveform-loop-b" aria-hidden="true" />
+          <div className="waveform-loop-label">A-B Loop</div>
         </div>
       )}
 
-      {/* Live progress bar overlay for elastic feel */}
+      {/* Draggable A Marker */}
+      {abLoop.a !== null && loopA !== null && (
+        <button
+          type="button"
+          className="waveform-loop-marker-drag waveform-loop-a-drag"
+          style={{ left: `${loopA}%` }}
+          onPointerDown={(e) => handleLoopPointerDown(e, 'a')}
+          aria-label="Loop start point A"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (!maximum) return;
+            const step = maximum * 0.01;
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              onAbLoopChange?.({ a: Math.max(0, (abLoop.a ?? 0) - step), b: abLoop.b });
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              onAbLoopChange?.({
+                a: Math.min(abLoop.b ?? maximum, (abLoop.a ?? 0) + step),
+                b: abLoop.b,
+              });
+            }
+          }}
+        >
+          <span className="waveform-loop-marker-label">A</span>
+        </button>
+      )}
+
+      {/* Draggable B Marker */}
+      {abLoop.b !== null && loopB !== null && (
+        <button
+          type="button"
+          className="waveform-loop-marker-drag waveform-loop-b-drag"
+          style={{ left: `${loopB}%` }}
+          onPointerDown={(e) => handleLoopPointerDown(e, 'b')}
+          aria-label="Loop end point B"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (!maximum) return;
+            const step = maximum * 0.01;
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              onAbLoopChange?.({
+                a: abLoop.a,
+                b: Math.max(abLoop.a ?? 0, (abLoop.b ?? maximum) - step),
+              });
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              onAbLoopChange?.({ a: abLoop.a, b: Math.min(maximum, (abLoop.b ?? maximum) + step) });
+            }
+          }}
+        >
+          <span className="waveform-loop-marker-label">B</span>
+        </button>
+      )}
+
+      {/* Hover Tooltip */}
+      {hoverTime !== null && hoverPos !== null && (
+        <div
+          className="waveform-tooltip"
+          style={{ left: `${hoverPos}%` }}
+          aria-hidden="true"
+        >
+          {formatTime(hoverTime)}
+        </div>
+      )}
+
+      {/* Hover Preview Line */}
+      {hoverPos !== null && (
+        <div
+          className="waveform-hover-line"
+          style={{ left: `${hoverPos}%` }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Current Time Indicator */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 h-2 w-full pointer-events-none"
-        style={{
-          background: `linear-gradient(90deg, rgb(var(--aura-primary-rgb)) 0%, rgb(var(--aura-secondary-rgb)) 100%)`,
-          width: `${progressWidth}%`,
-          borderRadius: '9999px',
-          opacity: 0.15,
-        }}
+        className="waveform-current-time"
+        style={{ left: `${played}%` }}
+        aria-hidden="true"
+      >
+        <div className="waveform-current-time-marker" />
+        <div className="waveform-current-time-label">{formatTime(value)}</div>
+      </div>
+
+      {/* Hidden input for accessibility - hidden from AT since main div is slider */}
+      <input
+        type="range"
+        aria-label="Playback position"
+        aria-valuetext={`${formatTime(value)} of ${formatTime(maximum)}`}
+        min={0}
+        max={maximum || 1}
+        step={0.1}
+        value={value}
+        disabled={!maximum}
+        className="waveform-input"
+        aria-hidden="true"
+        data-testid="waveform-input"
+        onChange={(e) => onSeek(Number(e.target.value))}
       />
     </div>
   );
-};
+}

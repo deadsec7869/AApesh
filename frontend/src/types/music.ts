@@ -13,6 +13,7 @@ export interface ArtistBasic {
 }
 
 export interface Track {
+  source?: 'youtube' | 'local';
   videoId: string;
   title: string;
   artists: ArtistBasic[];

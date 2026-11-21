@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.core.config import settings
 from backend.app.db.database import init_db
+from backend.app.db import database
+from sqlalchemy import text
 from backend.app.api.routes import (
     home,
     search,
@@ -33,10 +35,13 @@ logger = logging.getLogger("aurora.api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Aurora Music database...")
-    init_db()
-    logger.info("Database initialized successfully.")
-    yield
-    logger.info("Aurora Music API shutting down.")
+    try:
+        init_db()
+        logger.info("Database initialized successfully.")
+        yield
+    finally:
+        database.engine.dispose()
+        logger.info("Aurora Music API shutting down.")
 
 
 app = FastAPI(
@@ -75,8 +80,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # Health Check
+@app.get("/health", include_in_schema=False)
 @app.get("/api/health", tags=["Health"])
 def health_check():
+    with database.engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
     return {
         "status": "healthy",
         "app": settings.APP_NAME,

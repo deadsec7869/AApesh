@@ -49,6 +49,10 @@ function getHashPalette(seed: string): ArtworkPalette {
 }
 
 const paletteCache = new Map<string, ArtworkPalette>();
+function cachePalette(url: string, palette: ArtworkPalette) {
+  if (paletteCache.size >= 64) paletteCache.delete(paletteCache.keys().next().value!);
+  paletteCache.set(url, palette);
+}
 
 export async function extractArtworkPalette(
   imageUrl?: string,
@@ -77,7 +81,7 @@ export async function extractArtworkPalette(
     const timer = setTimeout(() => {
       // Timeout fallback
       const palette = getHashPalette(seed);
-      paletteCache.set(imageUrl, palette);
+      cachePalette(imageUrl, palette);
       resolve(palette);
     }, 1200);
 
@@ -88,7 +92,7 @@ export async function extractArtworkPalette(
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           const p = getHashPalette(seed);
-          paletteCache.set(imageUrl, p);
+          cachePalette(imageUrl, p);
           resolve(p);
           return;
         }
@@ -119,7 +123,7 @@ export async function extractArtworkPalette(
 
         if (count === 0) {
           const p = getHashPalette(seed);
-          paletteCache.set(imageUrl, p);
+          cachePalette(imageUrl, p);
           resolve(p);
           return;
         }
@@ -135,12 +139,12 @@ export async function extractArtworkPalette(
           gradient: `radial-gradient(circle at 50% 25%, rgba(${avgR}, ${avgG}, ${avgB}, 0.22) 0%, rgba(7, 8, 11, 0.96) 80%)`,
         };
 
-        paletteCache.set(imageUrl, palette);
+        cachePalette(imageUrl, palette);
         resolve(palette);
       } catch {
         // CORS error fallback
         const p = getHashPalette(seed);
-        paletteCache.set(imageUrl, p);
+        cachePalette(imageUrl, p);
         resolve(p);
       }
     };
@@ -148,7 +152,7 @@ export async function extractArtworkPalette(
     img.onerror = () => {
       clearTimeout(timer);
       const p = getHashPalette(seed);
-      paletteCache.set(imageUrl, p);
+      cachePalette(imageUrl, p);
       resolve(p);
     };
 

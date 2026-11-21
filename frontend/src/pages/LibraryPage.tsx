@@ -15,6 +15,7 @@ import { useOfflineStore } from '@/stores/useOfflineStore';
 import { CreatePlaylistModal } from '@/components/common/CreatePlaylistModal';
 import { PlaylistImportModal } from '@/components/common/PlaylistImportModal';
 import { SpotlightCard } from '@/components/react-bits';
+import { LocalLibraryPanel } from '@/components/music/LocalLibraryPanel';
 
 export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -99,6 +100,7 @@ export const LibraryPage: React.FC = () => {
         </div>
       </div>
 
+      <LocalLibraryPanel />
       <div className="collection-tools">
         <label>
           Filter playlists
