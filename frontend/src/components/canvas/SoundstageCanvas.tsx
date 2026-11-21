@@ -1,6 +1,8 @@
 import { VisualStageBoundary } from '@/components/canvas/VisualStageBoundary';
 import { StageRenderScheduler } from '@/components/canvas/StageRenderScheduler';
 import { CanvasErrorBoundary } from '@/components/canvas/CanvasErrorBoundary';
+import { LumnRimGlow } from './LumnRimGlow';
+import { LumnPrismStage } from './LumnPrismStage';
 import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { Canvas, extend } from '@react-three/fiber';
 import { useStageFrame as useFrame } from '@/components/canvas/useStageFrame';
@@ -24,11 +26,13 @@ extend(THREE);
  * SoundstageCanvas - Full-viewport R3F Spatial Canvas
  *
  * Runs behind the HUD (pointer-events-none, z-0).
- * Switches between 4 visualizer modes:
- * 1. Ferrofluid Core - Organic acoustic wave mesh
- * 2. Cymatics Grid - Frequency-bin height field
- * 3. Starfield Drift - Cosmic particle atmosphere
- * 4. Stealth (GPU Eco) - Minimal geometric form
+ * Switches between visualizer modes:
+ * 1. Lumn Prism Stage — High-craft 3D Liquid Glass sculpture (signature mode)
+ * 2. Ferrofluid Core — Organic acoustic wave mesh (polished)
+ * 3. Cymatics Grid — Frequency-bin height field (polished)
+ * 4. Starfield Drift — Cosmic particle atmosphere (polished)
+ * 5. Liquid Ripple — 2D canvas ripple overlay
+ * 6. Stealth (GPU Eco) — Minimal geometric form
  *
  * Audio-reactive via Web Audio AnalyserNode with harmonic fallback.
  * Color palette driven by artwork with 800ms cubic-bezier transitions.
@@ -128,7 +132,7 @@ const ColorSync: React.FC<{ currentTrack: any }> = ({ currentTrack }) => {
 };
 
 const VisualizerContent: React.FC<{
-  visualizerMode: 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
+  visualizerMode: 'lumn' | 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
   visualQuality: 'high' | 'medium' | 'low' | 'off';
   reducedMotion: boolean;
   ambientGlowEnabled: boolean;
@@ -154,6 +158,18 @@ const VisualizerContent: React.FC<{
       <AudioUpdater refs={audioRefs} />
       <ColorSync currentTrack={currentTrack} />
 
+      {/* Lumn Prism Stage — Signature High-Craft 3D Liquid Glass Sculpture */}
+      {visualizerMode === 'lumn' && (
+        <LumnPrismStage
+          visualQuality={visualQuality}
+          reducedMotion={reducedMotion}
+          currentTrack={currentTrack}
+          isPlaying={usePlayerStore.getState().isPlaying}
+          visualizerMode="lumn"
+        />
+      )}
+
+      {/* Upgraded Secondary Modes — Polished shaders with Fresnel glow, balanced exposure */}
       {visualizerMode === 'ferrofluid' && (
         <FerrofluidCore
           quality={visualQuality}
@@ -306,6 +322,10 @@ export const SoundstageCanvas: React.FC<SoundstageCanvasProps> = ({ className = 
           className={`pointer-events-none absolute inset-0 overflow-hidden select-none transition-all duration-700 ${className}`}
           style={{ zIndex: 0 }}
         >
+          {/* Lumn Ambient Rim Glow — z-5, frames the stage viewport */}
+          <LumnRimGlow />
+
+          {/* R3F Canvas — z-0, contains 3D scene */}
           <Canvas
             ref={setCanvasRef}
             camera={{ position: [0, 0, 8], fov: 45, near: 0.1, far: 100 }}

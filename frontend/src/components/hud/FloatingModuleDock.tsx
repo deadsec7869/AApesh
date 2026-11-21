@@ -62,7 +62,7 @@ const MODULES = [
     icon: SlidersHorizontal,
     tabs: [
       { id: 'lyrics', label: 'Synced Lyrics', icon: Mic2 },
-      { id: 'eq', label: '10-Band EQ', icon: SlidersHorizontal },
+      { id: 'eq', label: '10-Band EQ', icon: EqualizerIcon },
     ],
   },
 ] as const;
@@ -161,9 +161,9 @@ export const FloatingModuleDock: React.FC<FloatingModuleDockProps> = ({ classNam
       aria-label="Module dock"
     >
       <div className="relative flex h-full w-full flex-col">
-        {/* Desktop: 3 equal columns side-by-side */}
+        {/* Desktop: 3 equal columns side-by-side, anchored to bottom */}
         {isDesktop && (
-          <div className="flex h-full w-full flex-1 gap-3 pointer-events-none">
+          <div className="flex h-full w-full flex-1 gap-3 pointer-events-none items-end">
             {orderedModules.map((module, moduleIndex) => (
               <ModuleColumn
                 key={module.id}
@@ -327,7 +327,7 @@ const ModuleColumn: React.FC<ModuleColumnProps> = ({
 
   return (
     <div className="relative flex h-full w-full flex-col flex-1 min-w-0 pointer-events-auto overflow-hidden">
-      {/* Expanded Content */}
+      {/* Expanded Content - grows upward from bottom */}
       <AnimatePresence mode="wait">
         {isExpanded && (
           <motion.div
@@ -357,7 +357,7 @@ const ModuleColumn: React.FC<ModuleColumnProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Collapsed Pill at bottom of column */}
+      {/* Collapsed Pill at bottom of column - anchored to bottom */}
       <motion.button
         type="button"
         draggable
@@ -573,7 +573,7 @@ const OverviewTabContent: React.FC = () => {
               <button
                 type="button"
                 className="btn-ghost px-4 py-1.5 text-xs inline-flex items-center"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode('discover')}
               >
                 <Search size={14} className="mr-1.5" /> Find music
               </button>
@@ -905,11 +905,6 @@ const QueueTabContent: React.FC = () => {
 const PlaylistsTabContent: React.FC = () => {
   const navigate = useNavigate();
   const { playlists } = useLibraryStore();
-  const { isInitialized, initialize } = useOfflineStore();
-
-  useEffect(() => {
-    if (!isInitialized) initialize();
-  }, [isInitialized, initialize]);
 
   return (
     <div className="flex flex-col h-full">
@@ -1068,6 +1063,9 @@ const LyricsTabContent: React.FC = () => {
                   ? 'bg-white/10 text-white ring-1 ring-white/20'
                   : 'text-tertiary hover:text-white hover:bg-white/5'
               }`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seekToLine(i); } }}
             >
               <span className="block whitespace-pre-wrap">{line.text}</span>
             </div>

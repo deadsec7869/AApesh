@@ -1,13 +1,28 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type VisualizerMode = 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
+export type VisualizerMode = 'lumn' | 'ferrofluid' | 'cymatics' | 'starfield' | 'stealth' | 'ripple';
+export type LumnMode = 'music-sync' | 'idle' | 'still';
 
 export interface UIState {
   // Visualizer
   visualizerMode: VisualizerMode;
   setVisualizerMode: (mode: VisualizerMode) => void;
   cycleVisualizerMode: () => void;
+
+  // Lumn Ambient Rim Lighting
+  lumnMode: LumnMode;
+  setLumnMode: (mode: LumnMode) => void;
+  lumnThickness: number;      // 1-24px
+  setLumnThickness: (px: number) => void;
+  lumnIntensity: number;      // 0-100%
+  setLumnIntensity: (pct: number) => void;
+  lumnColorSync: boolean;     // true = sample from artwork, false = custom colors
+  setLumnColorSync: (enabled: boolean) => void;
+  lumnCustomPrimary: string;  // hex color
+  setLumnCustomPrimary: (color: string) => void;
+  lumnCustomSecondary: string; // hex color
+  setLumnCustomSecondary: (color: string) => void;
 
   // Zen / Ambient Mode
   zenMode: boolean;
@@ -69,17 +84,18 @@ export interface UIState {
   setAmbientGlowEnabled: (enabled: boolean) => void;
 
   // View Mode
-  viewMode: 'stage' | 'grid' | 'stealth';
+  viewMode: 'discover' | 'studio' | 'stage';
   setViewMode: (mode: UIState['viewMode']) => void;
 }
 
-const VISUALIZER_MODES: VisualizerMode[] = ['ferrofluid', 'cymatics', 'starfield', 'stealth', 'ripple'];
+const VISUALIZER_MODES: VisualizerMode[] = ['lumn', 'ferrofluid', 'cymatics', 'starfield', 'stealth', 'ripple'];
+const LUMN_MODES: LumnMode[] = ['music-sync', 'idle', 'still'];
 
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
       // Visualizer
-      visualizerMode: 'ferrofluid',
+      visualizerMode: 'lumn',
       setVisualizerMode: (mode) => set({ visualizerMode: mode }),
       cycleVisualizerMode: () => {
         const current = get().visualizerMode;
@@ -87,6 +103,20 @@ export const useUIStore = create<UIState>()(
         const next = VISUALIZER_MODES[(idx + 1) % VISUALIZER_MODES.length];
         set({ visualizerMode: next });
       },
+
+      // Lumn Ambient Rim Lighting
+      lumnMode: 'music-sync',
+      setLumnMode: (mode) => set({ lumnMode: mode }),
+      lumnThickness: 8,
+      setLumnThickness: (px) => set({ lumnThickness: Math.max(1, Math.min(24, px)) }),
+      lumnIntensity: 70,
+      setLumnIntensity: (pct) => set({ lumnIntensity: Math.max(0, Math.min(100, pct)) }),
+      lumnColorSync: true,
+      setLumnColorSync: (enabled) => set({ lumnColorSync: enabled }),
+      lumnCustomPrimary: '#f59e0b',
+      setLumnCustomPrimary: (color) => set({ lumnCustomPrimary: color }),
+      lumnCustomSecondary: '#3b82f6',
+      setLumnCustomSecondary: (color) => set({ lumnCustomSecondary: color }),
 
       // Zen Mode
       zenMode: false,
@@ -145,7 +175,7 @@ export const useUIStore = create<UIState>()(
       setVisualQuality: (quality) => set({ visualQuality: quality }),
 
       // View Mode
-      viewMode: 'stage',
+      viewMode: 'discover',
       setViewMode: (mode) => set({ viewMode: mode }),
 
       // Ambient Glow
@@ -157,11 +187,18 @@ export const useUIStore = create<UIState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         visualizerMode: state.visualizerMode,
+        lumnMode: state.lumnMode,
+        lumnThickness: state.lumnThickness,
+        lumnIntensity: state.lumnIntensity,
+        lumnColorSync: state.lumnColorSync,
+        lumnCustomPrimary: state.lumnCustomPrimary,
+        lumnCustomSecondary: state.lumnCustomSecondary,
         zenMode: state.zenMode,
         leftDockCollapsed: state.leftDockCollapsed,
         visualQuality: state.visualQuality,
         ambientGlowEnabled: state.ambientGlowEnabled,
         reducedMotion: state.reducedMotion,
+        viewMode: state.viewMode,
       }),
     }
   )

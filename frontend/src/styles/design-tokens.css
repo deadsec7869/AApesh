@@ -1,71 +1,96 @@
 /* ==========================================================================
    AAPESH / SONIC EDITORIAL — DESIGN TOKEN SYSTEM
    Noomo Beat inspired: Deep void canvas, liquid glass, editorial typography
+   Enhanced with Lumn-style ambient rim lighting & true optical Liquid Glass
    ========================================================================== */
 
 :root {
   /* ---- Void Canvas ---- */
-  --color-void: #030305;
-  --color-ink: #0a0a0d;
+  --color-void: #000000;
+  --color-ink: #0a0a0b;
   --color-graphite: #141418;
   --color-charcoal: #1e1e24;
   --color-slate: #2a2a32;
   --color-steel: #3a3a44;
 
   /* ---- Text Hierarchy ---- */
-  --text-primary: #fafafa;
+  --text-primary: #ffffff;
   --text-secondary: #e4e4e7;
   --text-tertiary: #a1a1aa;
   --text-muted: #71717a;
   --text-inverse: #0a0a0d;
 
   /* ---- Accent System (artwork-derived, stable fallback) ---- */
-  --accent-primary: #f5c042;          /* Warm amber */
-  --accent-primary-rgb: 245, 192, 66;
-  --accent-secondary: #38bdf8;        /* Sky blue */
-  --accent-secondary-rgb: 56, 189, 248;
+  --accent-primary: #f59e0b;          /* Warm amber */
+  --accent-primary-rgb: 245, 158, 11;
+  --accent-secondary: #3b82f6;        /* Sky blue */
+  --accent-secondary-rgb: 59, 130, 246;
   --accent-tertiary: #f472b6;         /* Rose */
   --accent-tertiary-rgb: 244, 114, 182;
   --accent-success: #4ade80;          /* Green */
   --accent-success-rgb: 74, 222, 128;
 
+  /* ---- Waveform (preserved) ---- */
+  --wave-cyan: #06b6d4;
+  --wave-gold: #fbbf24;
+  --wave-playhead: #ffffff;
+
+  /* ---- Lumn Dynamic Accents (set via JS from artwork) ---- */
+  --lumn-primary: #f59e0b;           /* default amber */
+  --lumn-secondary: #3b82f6;         /* default blue */
+  --lumn-glow: rgba(245, 158, 11, 0.12);
+  --lumn-primary-rgb: 245, 158, 11;
+  --lumn-secondary-rgb: 59, 130, 246;
+
   /* ---- Glass Material System (4 levels) ---- */
   /* Level 1: Shell — Primary floating panels (AppLayout, modals) */
-  --glass-shell-bg: rgba(255, 255, 255, 0.035);
-  --glass-shell-bg-strong: rgba(255, 255, 255, 0.055);
+  --glass-shell-bg: rgba(255, 255, 255, 0.01);
+  --glass-shell-bg-strong: rgba(255, 255, 255, 0.03);
   --glass-shell-border: rgba(255, 255, 255, 0.08);
-  --glass-shell-border-hover: rgba(255, 255, 255, 0.14);
-  --glass-shell-blur: blur(24px) saturate(160%);
+  --glass-shell-border-hover: rgba(255, 255, 255, 0.16);
+  --glass-shell-blur: blur(4px) saturate(180%);
   --glass-shell-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
-    0 20px 50px -12px rgba(0, 0, 0, 0.6);
+    inset 0 1px 1px rgba(255, 255, 255, 0.10),
+    0 24px 64px -16px rgba(0, 0, 0, 0.6);
 
   /* Level 2: Pill — Docks, tabs, action buttons (BottomTransportDock, TopHUD) */
-  --glass-pill-bg: rgba(255, 255, 255, 0.045);
-  --glass-pill-bg-strong: rgba(255, 255, 255, 0.07);
-  --glass-pill-border: rgba(255, 255, 255, 0.09);
-  --glass-pill-blur: blur(20px) saturate(180%);
+  --glass-pill-bg: rgba(16, 16, 20, 0.88);
+  --glass-pill-bg-strong: rgba(16, 16, 20, 0.95);
+  --glass-pill-border: rgba(255, 255, 255, 0.08);
+  --glass-pill-blur: blur(24px) saturate(180%);
   --glass-pill-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.12),
-    0 10px 30px -8px rgba(0, 0, 0, 0.5);
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
 
   /* Level 3: Interactive — Track cards, queue items, controls */
-  --glass-interactive-bg: rgba(255, 255, 255, 0.025);
-  --glass-interactive-bg-hover: rgba(255, 255, 255, 0.055);
-  --glass-interactive-border: rgba(255, 255, 255, 0.06);
-  --glass-interactive-blur: blur(16px) saturate(150%);
+  --glass-interactive-bg: rgba(16, 16, 20, 0.6);
+  --glass-interactive-bg-hover: rgba(255, 255, 255, 0.05);
+  --glass-interactive-border: rgba(255, 255, 255, 0.08);
+  --glass-interactive-blur: blur(16px) saturate(180%);
   --glass-interactive-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 6px 20px -4px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 28px -6px rgba(0, 0, 0, 0.45);
 
-  /* Level 4: Elevated — Tooltips, dropdowns, popovers */
-  --glass-elevated-bg: rgba(10, 10, 13, 0.92);
-  --glass-elevated-border: rgba(255, 255, 255, 0.12);
-  --glass-elevated-blur: blur(32px) saturate(180%);
+  /* Level 4: Elevated — Tooltips, dropdowns, popovers, expanded modules */
+  --glass-elevated-bg: rgba(16, 16, 20, 0.88);
+  --glass-elevated-border: rgba(255, 255, 255, 0.08);
+  --glass-elevated-blur: blur(28px) saturate(190%);
   --glass-elevated-shadow:
-    0 24px 60px -16px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 24px 64px -16px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  /* Strong tier (popovers, primary CTAs, expanded modules) */
+  --glass-strong-bg: rgba(16, 16, 20, 0.88);
+  --glass-strong-blur: blur(28px) saturate(190%);
+  --glass-strong-shadow:
+    0 24px 64px -16px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  /* Dark tier for bright content */
+  --glass-dark-bg: rgba(0, 0, 0, 0.4);
+  --glass-dark-border: rgba(255, 255, 255, 0.12);
 
   /* ---- Radius Scale ---- */
   --radius-xs: 6px;
@@ -93,7 +118,7 @@
   /* ---- Layout Dimensions ---- */
   --sidebar-width: 280px;
   --sidebar-collapsed: 72px;
-  --top-hud-height: 56px;
+  --top-hud-height: 48px;  /* h-12 */
   --bottom-dock-height: 84px;
   --content-max-width: 1400px;
   --content-gap: 24px;
@@ -105,8 +130,9 @@
   --motion-slow: 320ms;
   --motion-slower: 480ms;
 
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --ease-sharp: cubic-bezier(0.4, 0, 1, 1);
 
@@ -114,6 +140,7 @@
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
   --font-display: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-accent: 'Noto Nastaliq Urdu', serif;
 
   --text-display-xl: clamp(48px, 5vw, 72px) / 1.05 var(--font-display);
   --text-display-lg: clamp(36px, 4vw, 52px) / 1.08 var(--font-display);
@@ -151,29 +178,32 @@
   --focus-ring-offset: 2px;
 
   /* ---- Z-Index Scale ---- */
-  --z-backdrop: -10;      /* SoundstageCanvas / LiquidRippleVisualizer */
-  --z-background: 0;      /* App background */
-  --z-content: 10;        /* Main content */
-  --z-sticky: 20;         /* Sticky headers */
-  --z-studio-bar: 25;     /* TopStudioBar */
+  --z-backdrop: -10;       /* SoundstageCanvas / LiquidRippleVisualizer */
+  --z-background: 0;       /* App background */
+  --z-aura-stage: 5;       /* AuraStage */
+  --z-lumn-rim-glow: 5;    /* LumnRimGlow - frames stage */
+  --z-content: 10;         /* Main content */
+  --z-stage-visuals: 0;    /* R3F canvas inside stage */
+  --z-module-dock: 10;     /* FloatingModuleDock cards */
+  --z-top-studio-bar: 40;  /* TopStudioBar */
   --z-drawer-backdrop: 30; /* Drawer overlays */
-  --z-drawer: 40;         /* Drawer panels */
-  --z-module-dock: 45;    /* FloatingModuleDock cards */
-  --z-dock: 50;           /* Bottom transport dock */
-  --z-modal: 60;          /* Modals */
-  --z-popover: 70;        /* Popovers */
-  --z-toast: 80;          /* Toasts */
-  --z-tooltip: 90;        /* Tooltips */
+  --z-drawer: 40;          /* Drawer panels */
+  --z-dock: 50;            /* Bottom transport dock */
+  --z-modal: 60;           /* Modals */
+  --z-popover: 70;         /* Popovers (Lumn Light) */
+  --z-toast: 80;           /* Toasts */
+  --z-tooltip: 90;         /* Tooltips */
+  --z-grain: 100;          /* Film grain overlay */
 }
 
 /* Module Card Dimensions */
 :root {
   --module-card-width: 380px;
-  --module-card-height-collapsed: 48px;
+  --module-card-height-collapsed: 44px;  /* h-11 */
   --module-card-height-expanded: 420px;
   --module-card-width-mobile: 100%;
   --module-card-height-mobile: 380px;
-  --module-gap: 16px;
+  --module-gap: 12px;  /* gap-3 */
   --waveform-height: 56px;
   --transport-height: 64px;
 }
@@ -229,7 +259,7 @@
 }
 
 /* ==========================================================================
-   RUNTIME AURA COLORS (set by AuraStage from artwork)
+   RUNTIME AURA COLORS (set by AuraStage / LumnRimGlow from artwork)
    ========================================================================== */
 :root {
   --aura-primary: var(--accent-primary);
@@ -274,4 +304,261 @@
     --text-secondary: CanvasText;
     --text-tertiary: CanvasText;
   }
+}
+
+/* ==========================================================================
+   UTILITY CLASSES — Liquid Glass surfaces
+   ========================================================================== */
+
+/* Subtle tier (nav, chips, cards) */
+.liquid-glass {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  background: var(--glass-shell-bg);
+  background-blend-mode: luminosity;
+  -webkit-backdrop-filter: var(--glass-shell-blur);
+  backdrop-filter: var(--glass-shell-blur);
+  box-shadow: var(--glass-shell-shadow);
+}
+.liquid-glass::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.45) 0%,
+    rgba(255,255,255,0.15) 20%,
+    rgba(255,255,255,0) 40%,
+    rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.15) 80%,
+    rgba(255,255,255,0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* Strong tier (popovers, primary CTAs, expanded modules) */
+.liquid-glass-strong {
+  background: var(--glass-strong-bg);
+  -webkit-backdrop-filter: var(--glass-strong-blur);
+  backdrop-filter: var(--glass-strong-blur);
+  box-shadow: var(--glass-strong-shadow);
+}
+.liquid-glass-strong::before {
+  --rim-a: 0.5;
+  --rim-b: 0.2;
+}
+
+/* Dark tier for bright content */
+.liquid-glass-dark {
+  background: var(--glass-dark-bg);
+}
+.liquid-glass-dark::before {
+  --rim-a: 0.3;
+  --rim-b: 0.1;
+}
+
+/* No rim variant (for menus/sheets) */
+.liquid-glass-norim::before { content: none; }
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .liquid-glass { background: rgba(255,255,255,.08); }
+  .liquid-glass-strong { background: rgba(255,255,255,.12); }
+}
+
+/* Pill variant (for docks, tabs) */
+.glass-pill {
+  background: var(--glass-pill-bg);
+  -webkit-backdrop-filter: var(--glass-pill-blur);
+  backdrop-filter: var(--glass-pill-blur);
+  border: 1px solid var(--glass-pill-border);
+  box-shadow: var(--glass-pill-shadow);
+  border-radius: var(--radius-pill);
+  position: relative;
+}
+.glass-pill::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 12px;
+  right: 12px;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+/* Interactive (track cards, queue items) */
+.glass-interactive {
+  background: var(--glass-interactive-bg);
+  -webkit-backdrop-filter: var(--glass-interactive-blur);
+  backdrop-filter: var(--glass-interactive-blur);
+  border: 1px solid var(--glass-interactive-border);
+  box-shadow: var(--glass-interactive-shadow);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  transition: background var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out);
+}
+
+/* Elevated (tooltips, dropdowns, modals) */
+.glass-elevated {
+  background: var(--glass-elevated-bg);
+  -webkit-backdrop-filter: var(--glass-elevated-blur);
+  backdrop-filter: var(--glass-elevated-blur);
+  border: 1px solid var(--glass-elevated-border);
+  box-shadow: var(--glass-elevated-shadow);
+  border-radius: var(--radius-xl);
+  position: relative;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM
+   ========================================================================== */
+.btn {
+  @apply glass-pill;
+  transition: all var(--motion-fast) var(--ease-out);
+}
+.btn:hover {
+  background: var(--glass-pill-bg-strong);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: scale(0.96);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--focus-ring), var(--glass-pill-shadow);
+}
+
+.btn-primary {
+  @apply glass-pill;
+  background: linear-gradient(135deg, rgb(var(--accent-primary-rgb)) 0%, rgb(var(--accent-secondary-rgb)) 100%) !important;
+  border-color: transparent !important;
+  color: var(--text-inverse) !important;
+  font-weight: var(--weight-semibold);
+}
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.015);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    0 16px 40px -10px rgba(var(--accent-primary-rgb), 0.35);
+}
+
+.btn-ghost {
+  @apply glass-interactive;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+.btn-ghost:hover {
+  background: var(--glass-interactive-bg-hover) !important;
+}
+
+/* ==========================================================================
+   SLIDER / SCRUBBER
+   ========================================================================== */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  height: 4px;
+  transition: height var(--motion-fast) var(--ease-out);
+  position: relative;
+}
+.slider:hover { height: 8px; }
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.88) 100%);
+  cursor: pointer;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.15),
+    0 0 12px rgba(var(--accent-primary-rgb), 0.25);
+  opacity: 1;
+  transition: transform var(--motion-fast) var(--ease-spring), box-shadow var(--motion-fast) var(--ease-out);
+}
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(255, 255, 255, 0.25),
+    0 0 20px rgba(var(--accent-primary-rgb), 0.4);
+}
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.5), 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #ffffff; cursor: pointer; border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.5); }
+.slider::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, rgb(var(--accent-primary-rgb)) 0%, rgb(var(--accent-secondary-rgb)) 100%) !important;
+  border-radius: var(--radius-pill);
+  height: 4px;
+}
+
+/* ==========================================================================
+   TABS / SEGMENTED CONTROL
+   ========================================================================== */
+.tabs {
+  @apply glass-pill;
+  padding: 4px;
+  display: inline-flex;
+  gap: 4px;
+}
+.tab {
+  @apply glass-pill;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: all var(--motion-fast) var(--ease-out);
+}
+.tab[data-state="active"] {
+  background: var(--glass-strong-bg) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--glass-strong-shadow);
+}
+
+/* ==========================================================================
+   FILM GRAIN OVERLAY
+   ========================================================================== */
+.page-grain {
+  position: fixed; inset: 0; z-index: var(--z-grain); pointer-events: none; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-grain { opacity: 0.015; }
+}
+
+/* ==========================================================================
+   FOCUS VISIBLE
+   ========================================================================== */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==========================================================================
+   SELECTION
+   ========================================================================== */
+::selection {
+  background: rgba(var(--accent-primary-rgb), 0.25);
+  color: var(--text-primary);
 }

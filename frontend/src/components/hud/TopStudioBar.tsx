@@ -18,6 +18,12 @@ import {
   Grid,
   Menu,
   X,
+  Sun,
+  Droplet,
+  Palette,
+  Music,
+  Circle,
+  Pause,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useEqualizerStore } from '@/stores/useEqualizerStore';
@@ -32,7 +38,8 @@ const VIEW_MODES = [
 ] as const;
 
 const VISUALIZER_MODES = [
-  { id: 'ripple', label: 'Liquid Ripple', icon: Sparkles },
+  { id: 'lumn', label: 'Lumn Prism', icon: Sparkles },
+  { id: 'ripple', label: 'Liquid Ripple', icon: Droplet },
   { id: 'ferrofluid', label: 'Ferrofluid', icon: Zap },
   { id: 'cymatics', label: 'Cymatics', icon: Radio },
   { id: 'starfield', label: 'Starfield', icon: Headphones },
@@ -54,16 +61,38 @@ export const TopStudioBar: React.FC<TopStudioBarProps> = ({
   const location = useLocation();
   const { currentTrack, playTrack, queue } = usePlayerStore();
   const { toggleOpen: toggleEqualizer, spatialAudio, toggleSpatialAudio } = useEqualizerStore();
-  const { viewMode, setViewMode, visualizerMode, setVisualizerMode } = useUIStore();
+  const {
+    viewMode,
+    setViewMode,
+    visualizerMode,
+    setVisualizerMode,
+    lumnMode,
+    setLumnMode,
+    lumnThickness,
+    setLumnThickness,
+    lumnIntensity,
+    setLumnIntensity,
+    lumnColorSync,
+    setLumnColorSync,
+    lumnCustomPrimary,
+    setLumnCustomPrimary,
+    lumnCustomSecondary,
+    setLumnCustomSecondary,
+  } = useUIStore();
 
   const [showVisualizerMenu, setShowVisualizerMenu] = useState(false);
+  const [showLumnPopover, setShowLumnPopover] = useState(false);
   const visualizerMenuRef = useRef<HTMLDivElement>(null);
+  const lumnPopoverRef = useRef<HTMLDivElement>(null);
 
-  // Close visualizer menu on click outside
+  // Close menus on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (visualizerMenuRef.current && !visualizerMenuRef.current.contains(e.target as Node)) {
         setShowVisualizerMenu(false);
+      }
+      if (lumnPopoverRef.current && !lumnPopoverRef.current.contains(e.target as Node)) {
+        setShowLumnPopover(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -85,6 +114,25 @@ export const TopStudioBar: React.FC<TopStudioBarProps> = ({
     if (path.startsWith('/history')) return 'History';
     if (path.startsWith('/settings')) return 'Settings';
     return 'AAPESH';
+  };
+
+  // Lumn mode icon mapping
+  const getLumnModeIcon = (mode: string) => {
+    switch (mode) {
+      case 'music-sync': return <Music className="w-4 h-4 shrink-0" />;
+      case 'idle': return <Circle className="w-4 h-4 shrink-0" />;
+      case 'still': return <Pause className="w-4 h-4 shrink-0" />;
+      default: return <Music className="w-4 h-4 shrink-0" />;
+    }
+  };
+
+  const getLumnModeLabel = (mode: string) => {
+    switch (mode) {
+      case 'music-sync': return 'Music Sync';
+      case 'idle': return 'Idle';
+      case 'still': return 'Still';
+      default: return 'Music Sync';
+    }
   };
 
   return (
@@ -136,8 +184,175 @@ export const TopStudioBar: React.FC<TopStudioBarProps> = ({
           ))}
         </nav>
 
-        {/* Right: Visualizer Dropdown + ⌘K Search + YT Stream Badge + Offline + Zen */}
+        {/* Right: Lumn Light Popover + Visualizer Dropdown + ⌘K Search + YT Stream Badge + Offline + Spatial + Zen */}
         <div className="flex items-center gap-1.5 pr-1 pointer-events-auto">
+          {/* Lumn Light Popover — Signature Feature */}
+          <div className="relative" ref={lumnPopoverRef}>
+            <button
+              onClick={() => setShowLumnPopover(!showLumnPopover)}
+              aria-label={`Lumn Light: ${getLumnModeLabel(lumnMode)}`}
+              aria-expanded={showLumnPopover}
+              aria-haspopup="dialog"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all text-tertiary hover:text-white"
+              style={{
+                background: 'rgba(16, 16, 20, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '9999px',
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+              }}
+            >
+              {getLumnModeIcon(lumnMode)}
+              <span className="hidden sm:inline">Lumn</span>
+            </button>
+
+            {showLumnPopover && (
+              <div
+                className="absolute right-0 top-full mt-2 w-72 z-50 animate-in fade-in zoom-in-95 duration-150 liquid-glass-strong rounded-xl p-4"
+                style={{
+                  boxShadow: '0 24px 60px -16px rgba(0, 0, 0, 0.7)',
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider">
+                    LUMN LIGHT
+                  </div>
+                  <span className="text-[10px] text-tertiary">Colors from artwork</span>
+                </div>
+
+                {/* Animation Mode */}
+                <div className="mb-4">
+                  <label className="text-[10px] font-medium text-tertiary uppercase tracking-wider block mb-2">
+                    Animation Mode
+                  </label>
+                  <div className="flex items-center gap-1 p-1 rounded-lg liquid-glass" style={{ background: 'rgba(16,16,20,0.6)' }}>
+                    {['music-sync', 'idle', 'still'].map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setLumnMode(mode as any)}
+                        aria-label={getLumnModeLabel(mode)}
+                        aria-pressed={lumnMode === mode}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs transition-all ${
+                          lumnMode === mode
+                            ? 'bg-white/10 text-white ring-1 ring-white/20 shadow-sm font-semibold'
+                            : 'text-tertiary hover:text-white'
+                        }`}
+                      >
+                        {getLumnModeIcon(mode)}
+                        <span className="hidden sm:inline">{getLumnModeLabel(mode)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Thickness Slider */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-[10px] mb-1">
+                    <span className="font-medium text-tertiary">Thickness</span>
+                    <span className="font-mono text-white">{lumnThickness}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="24"
+                    value={lumnThickness}
+                    onChange={(e) => setLumnThickness(Number(e.target.value))}
+                    className="slider w-full"
+                                      />
+                </div>
+
+                {/* Intensity Slider */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-[10px] mb-1">
+                    <span className="font-medium text-tertiary">Intensity</span>
+                    <span className="font-mono text-white">{lumnIntensity}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={lumnIntensity}
+                    onChange={(e) => setLumnIntensity(Number(e.target.value))}
+                    className="slider w-full"
+                                      />
+                </div>
+
+                {/* Color Sync Toggle */}
+                <div className="mb-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <button
+                      onClick={() => setLumnColorSync(!lumnColorSync)}
+                      aria-label={lumnColorSync ? 'Disable album color sync' : 'Enable album color sync'}
+                      aria-pressed={lumnColorSync}
+                      className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                        lumnColorSync
+                          ? 'bg-white/10 text-white ring-1 ring-white/20 shadow-sm'
+                          : 'text-tertiary hover:text-white'
+                      }`}
+                    >
+                      <Palette className="w-4 h-4 shrink-0" />
+                      <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-tertiary whitespace-nowrap">
+                        {lumnColorSync ? 'Album Sync' : 'Custom Colors'}
+                      </span>
+                    </button>
+                    <div className="text-left">
+                      <div className="text-xs font-medium text-white">Album Color Sync</div>
+                      <div className="text-[10px] text-tertiary">
+                        {lumnColorSync ? 'Primary & secondary sampled from artwork' : 'Use custom gradient below'}
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Custom Color Pickers (shown when Album Sync is off) */}
+                {!lumnColorSync && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <label className="text-[10px] font-medium text-tertiary block mb-1">Custom Primary</label>
+                      <div className="relative">
+                        <input
+                          type="color"
+                          value={lumnCustomPrimary}
+                          onChange={(e) => setLumnCustomPrimary(e.target.value)}
+                          className="w-full h-10 rounded-lg border border-white/10 bg-white/5 cursor-pointer appearance-none"
+                        />
+                        <div className="absolute inset-0 rounded-lg pointer-events-none bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-tertiary block mb-1">Custom Secondary</label>
+                      <div className="relative">
+                        <input
+                          type="color"
+                          value={lumnCustomSecondary}
+                          onChange={(e) => setLumnCustomSecondary(e.target.value)}
+                          className="w-full h-10 rounded-lg border border-white/10 bg-white/5 cursor-pointer appearance-none"
+                        />
+                        <div className="absolute inset-0 rounded-lg pointer-events-none bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live preview swatch */}
+                <div className="rounded-lg p-3 liquid-glass" style={{ background: 'rgba(16,16,20,0.6)' }}>
+                  <div className="text-[10px] font-medium text-tertiary mb-2">Live Preview</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg" style={{
+                      background: `linear-gradient(135deg, ${lumnColorSync ? 'rgb(var(--lumn-primary-rgb))' : lumnCustomPrimary} 0%, ${lumnColorSync ? 'rgb(var(--lumn-secondary-rgb))' : lumnCustomSecondary} 100%)`,
+                      boxShadow: '0 0 20px rgba(var(--lumn-primary-rgb), 0.3)',
+                    }} />
+                    <div className="text-[10px] text-tertiary">
+                      Thickness: {lumnThickness}px<br/>
+                      Intensity: {lumnIntensity}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Visualizer Mode Dropdown */}
           <div className="relative" ref={visualizerMenuRef}>
             <button
